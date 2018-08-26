@@ -1,0 +1,41 @@
+#!/usr/bin/env python                                               
+# _____         _           _       _     _       
+#|  _  |___ ___| |_ ___ ___| |_ ___|_|___| |_ ___ 
+#|   __|  _| . |  _| . |   |  _|  _| |  _| '_|_ -|
+#|__|  |_| |___|_| |___|_|_|_| |_| |_|___|_,_|___|
+# A simple wrapper that makes it slightly painless to use winetricks with Proton prefixes
+# Script by Sirmentio, Copyright 2018, Licensed under the GPLv3!
+                                                 
+import os, sys, subprocess
+# Prerequisite check
+prereqfail = False
+# Check if $STEAM_DIR is a valid environment variable, otherwise use the default.
+if os.environ.get('STEAM_DIR') == None:
+    steamdir = str(os.environ.get('HOME') + "/.steam/")
+    print("[INFO] Dunno where Steam is, checking "+str(steamdir)+". To avoid this consider setting $STEAM_DIR")
+else:
+    steamdir = os.environ.get('STEAM_DIR')
+    print("Current Steam directory is... "+steamdir)
+if os.path.exists("/usr/bin/winetricks") == False:
+    print("[ERROR!] Winetricks isn't installed, please install winetricks in order to use this script!")
+    prereqfail = True
+if os.path.isdir(steamdir+"steamapps/compatdata/") == False:
+    print("[ERROR!] Proton prefix folder not found, do you have the Steam beta installed? Is $STEAM_DIR set correctly?")
+    prereqfail = True
+# If one or more checks fail, don't do anything in the script.
+if prereqfail == True:
+    print("[FATAL] Sorry, one or more errors prevents this script from being used, check the console for details...")
+    sys.exit(-1)
+# If nothing has failed, move on.
+# Join any of the commandline arguments
+gameid = sys.argv[1]
+actions = ' '.join(sys.argv[2:])
+# Check if the current id is valid.
+if os.path.isdir(steamdir+"steamapps/compatdata/"+gameid) == False:
+    print("[FATAL] You don't seem to have a game with that ID, is it installed and Proton compatible? You can usually get the game ID via the store page URL.")
+    sys.exit(-1)
+# Finally, let's run winetricks with the specified prefix folder.
+prefixdir = steamdir+"steamapps/compatdata/"+gameid+"/"
+os.environ["WINEPREFIX"] = prefixdir
+print("Prefix directory is at "+os.environ.get('WINEPREFIX'))
+subprocess.call(['winetricks', actions])
