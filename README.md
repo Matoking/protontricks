@@ -20,5 +20,12 @@ If you have a different Steam directory (Like I do due to Arch's silly directory
 
 [Wanna see Protontricks in action?](https://asciinema.org/a/B1c5EdNOA3njQTRLtDVtYH9XK)
 
+# Installation
+I'd say the easiest way to install is by doing the following commands:
+```sh
+wget https://raw.githubusercontent.com/Sirmentio/protontricks/master/protontricks && chmod +x protontricks
+sudo mv protontricks /usr/bin/protontricks
+```
+
 # Contact
 If you'd like, you can hit me up on twitter @Sirmentio, or on the Linux Gaming Discord, I don't talk nuch there but I'd be happy to hear from anyone who has something to say!
