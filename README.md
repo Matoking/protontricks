@@ -12,7 +12,7 @@ This is a simple wrapper script that uses Winetricks to allow you to specify the
 # Usage
 The basic usage is as follows:
 
-```protontricks <STEAM GAME ID> <ACTIONS```
+```protontricks <STEAM GAME ID> <ACTIONS>```
 
 Since this is a wrapper, all syntax that works for Winetricks will potentially work for Protontricks. If you neecd a specific game ID, check the store page's URL for the ID itself.
 
