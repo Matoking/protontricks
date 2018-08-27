@@ -27,9 +27,8 @@ if prereqfail == True:
     print("[FATAL] Sorry, one or more errors prevents this script from being used, check the console for details...")
     sys.exit(-1)
 # If nothing has failed, move on.
-# Join any of the commandline arguments
+# Argument 1 is the steam game ID, so add it as a variable here.
 gameid = sys.argv[1]
-actions = ' '.join(sys.argv[2:])
 # Check if the current id is valid.
 if os.path.isdir(steamdir+"steamapps/compatdata/"+gameid) == False:
     print("[FATAL] You don't seem to have a game with that ID, is it installed and Proton compatible? You can usually get the game ID via the store page URL.")
@@ -38,4 +37,4 @@ if os.path.isdir(steamdir+"steamapps/compatdata/"+gameid) == False:
 prefixdir = steamdir+"steamapps/compatdata/"+gameid+"/"
 os.environ["WINEPREFIX"] = prefixdir
 print("Prefix directory is at "+os.environ.get('WINEPREFIX'))
-subprocess.call(['winetricks', actions])
+subprocess.call(['winetricks']+sys.argv[2:])
