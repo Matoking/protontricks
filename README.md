@@ -28,4 +28,4 @@ sudo mv protontricks /usr/bin/protontricks
 ```
 
 # Contact
-If you'd like, you can hit me up on twitter @Sirmentio, or on the Linux Gaming Discord, I don't talk nuch there but I'd be happy to hear from anyone who has something to say!
+If you'd like, you can hit me up on twitter @Sirmentio, or on the Linux Gaming Discord, I don't talk much there but I'd be happy to hear from anyone who has something to say!
