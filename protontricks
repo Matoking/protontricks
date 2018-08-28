@@ -88,7 +88,8 @@ def get_game_prefix_dir(steam_dir, game_id):
     paths = [steam_dir] + library_folders
 
     for path in paths:
-        prefix_dir = os.path.join(path, "steamapps", "compatdata", game_id)
+        prefix_dir = os.path.join(
+            path, "steamapps", "compatdata", game_id, "pfx")
 
         if os.path.isdir(prefix_dir):
             # Found the game's prefix dir
