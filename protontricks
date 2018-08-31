@@ -33,6 +33,17 @@ def find_steam_dir():
     return None
 
 
+def get_proton_version(steam_dir):
+    dirs = os.listdir(steam_dir + "/common")
+
+    for dir in dirs:
+        if "Proton" in dir:
+            match = re.match("Proton (\d*\.?\d+)", dir)
+            if match:
+                return match.group(1)
+    return None
+
+
 def get_game_prefix_dir(steam_dir, game_id):
     """
     Try to find the game's Wine prefix directory in one of the Steam library
@@ -131,11 +142,36 @@ if __name__ == "__main__":
               "in order to use this script!")
         prereq_fail = True
 
+    if os.environ.get('PROTON_VERSION') is None:
+        proton_version = get_proton_version(steam_dir + "/steamapps")
+        if proton_version:
+            print(
+                "[INFO] Found proton version {}. You can also define "
+                "the proton version manually using $PROTON_VERSION".format(proton_version))
+        else:
+            print(
+                "[ERROR!] Proton version could not be found automatically and "
+                "environment variable $PROTON_VERSION isn't set!")
+            prereq_fail = True
+    else:
+        proton_version = os.environ.get('PROTON_VERSION')
+        print("[INFO] Proton version set to {}".format(proton_version))
+
     # If one or more checks fail, don't do anything in the script.
     if prereq_fail is True:
         print("[FATAL] Sorry, one or more errors prevents this script from "
               "being used, check the console for details...")
         sys.exit(-1)
+
+    if os.environ.get('WINE') is None:
+        print("[INFO] WINE environment variable is not available "
+              "Setting WINE environment variable to proton bundled version")
+        os.environ["WINE"] = steam_dir + "/steamapps/common/Proton " + proton_version + "/dist/bin/wine"
+
+    if os.environ.get('WINESERVER') is None:
+        print("[INFO] WINESERVER environment variable is not available "
+              "Setting WINESERVER environment variable to proton bundled version")
+        os.environ["WINESERVER"] = steam_dir + "/steamapps/common/Proton " + proton_version + "/dist/bin/wineserver"
 
     # If nothing has failed, move on.
     # Argument 1 is the steam game ID, so add it as a variable here.
