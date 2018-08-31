@@ -29,6 +29,11 @@ def find_steam_dir():
         # correct directory
         if os.path.isdir(os.path.join(steam_dir, "steamapps")):
             return steam_dir
+        # Some users may have imported their imported their install from
+        # Windows, this checks for the "capitalized" version of the
+        # Steam library directory.
+        elif os.path.isdir(os.path.join(steam_dir, "SteamApps")):
+            return steam_dir
 
     return None
 
