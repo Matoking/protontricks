@@ -142,10 +142,20 @@ if __name__ == "__main__":
         steam_dir = os.environ.get('STEAM_DIR')
         print("[INFO] Steam directory set to {}".format(steam_dir))
 
-    if os.path.exists("/usr/bin/winetricks") is False:
-        print("[ERROR!] Winetricks isn't installed, please install winetricks "
-              "in order to use this script!")
-        prereq_fail = True
+    if os.environ.get('WINETRICKS') is None:
+        print("[INFO] WINETRICKS environment variable is not available. "
+              "Falling back to /usr/bin/winetricks")
+        os.environ["WINETRICKS"] = "/usr/bin/winetricks"
+        if os.path.exists("/usr/bin/winetricks") is False:
+            print("[ERROR!] Winetricks isn't installed, please install winetricks "
+                  "in order to use this script!")
+            prereq_fail = True
+    else:
+        print("[INFO] Winetricks path is set to {}".format(os.environ.get('WINETRICKS')))
+        if os.path.exists(os.environ.get('WINETRICKS')) is False:
+            print("[ERROR!] The WINETRICKS path is invalid, please make sure "
+                  "Winetricks is installed in that path!")
+            prereq_fail = True
 
     if os.environ.get('PROTON_VERSION') is None:
         proton_version = get_proton_version(steam_dir + "/steamapps")
@@ -196,4 +206,4 @@ if __name__ == "__main__":
     print(
         "[INFO] Found the prefix directory at {}".format(os.environ.get('WINEPREFIX'))
     )
-    subprocess.call(['winetricks'] + sys.argv[2:])
+    subprocess.call([os.environ.get('WINETRICKS')] + sys.argv[2:])
