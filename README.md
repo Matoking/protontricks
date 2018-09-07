@@ -18,6 +18,8 @@ Since this is a wrapper, all syntax that works for Winetricks will potentially w
 
 If you have a different Steam directory (Like I do due to Arch's silly directory tomfoolery), you can export $STEAM_DIR to the directory where Steam is.
 
+If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` to the location of your local winetricks installation. As well, you can set ``$PROTON_VERSION`` to a specific version manually.
+
 [Wanna see Protontricks in action?](https://asciinema.org/a/B1c5EdNOA3njQTRLtDVtYH9XK)
 
 # Installation
