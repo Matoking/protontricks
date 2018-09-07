@@ -16,7 +16,7 @@ The basic usage is as follows:
 
 Since this is a wrapper, all syntax that works for Winetricks will potentially work for Protontricks. If you need a specific game ID, check the store page's URL for the ID itself.
 
-If you have a different Steam directory (Like I do due to Arch's silly directory tomfoolery), you can export $STEAM_DIR to the directory where Steam is.
+If you have a different Steam directory (Like I do due to Arch's silly directory tomfoolery), you can export ``$STEAM_DIR`` to the directory where Steam is.
 
 If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` to the location of your local winetricks installation. As well, you can set ``$PROTON_VERSION`` to a specific version manually.
 
