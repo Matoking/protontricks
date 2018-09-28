@@ -63,9 +63,12 @@ def get_current_proton_version(steam_dir):
     # "Proton 3.7 Beta" format used as the app's directory name
     parts = match.group(2).split("_")
 
+    # Translate version string "37" to "3.7" and "316" to "3.16"
+    # FIXME: Since 3+ digit version numbers without the dot are ambiguous,
+    # this could break in the future if protontricks uses the wrong major.minor
+    # version number
     version = parts[1]
-    version = "".join(["{}.".format(dig) for dig in version])
-    version = version[:-1]
+    version = "{}.{}".format(version[0], version[1:])
 
     if len(parts) == 3:
         # This is usually 'beta', but play it safe and assume other names are
