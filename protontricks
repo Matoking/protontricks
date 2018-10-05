@@ -38,21 +38,52 @@ def find_steam_dir():
     return None
 
 
-def get_proton_version(steam_dir):
-    dirs = os.listdir(steam_dir + "/common")
-
-    for dir in dirs:
-        if "Proton" in dir:
-            match = re.match("Proton (\d*\.?\d+)", dir)
-            if match:
-                return match.group(1)
-    return None
-
-
-def get_game_prefix_dir(steam_dir, game_id):
+def get_current_proton_version(steam_dir):
     """
-    Try to find the game's Wine prefix directory in one of the Steam library
-    folders
+    Get the current Proton installation used by Steam
+    and return its app name with the version number (eg. "Proton 3.7 Beta")
+    """
+    config_vdf_path = os.path.join(steam_dir, "config", "config.vdf")
+
+    with open(config_vdf_path, "r") as f:
+        content = f.read()
+
+    # Search config.vdf for a line containing the current Proton installation:
+    # "name"     "proton_37_beta"
+    # There's also a package on PyPi to parse the actual VDF, but this should
+    # work good enough and keep the script self-contained
+    pattern = re.compile(r'(\t\t\t\t\t\t"name"\s+")(proton\w+)')
+
+    match = pattern.search(content)
+
+    if not match:
+        return None
+
+    # Now transform the snake case name "proton_37_beta" to
+    # "Proton 3.7 Beta" format used as the app's directory name
+    parts = match.group(2).split("_")
+
+    # Translate version string "37" to "3.7" and "316" to "3.16"
+    # FIXME: Since 3+ digit version numbers without the dot are ambiguous,
+    # this could break in the future if protontricks uses the wrong major.minor
+    # version number
+    version = parts[1]
+    version = "{}.{}".format(version[0], version[1:])
+
+    if len(parts) == 3:
+        # This is usually 'beta', but play it safe and assume other names are
+        # possible after version
+        release_phase = " {}".format(parts[2].capitalize())
+    else:
+        release_phase = ""
+
+    return "Proton {}{}".format(version, release_phase)
+
+
+def get_steam_lib_dirs(steam_dir):
+    """
+    Return a list of any Steam directories including any user-added
+    Steam library folders
     """
     def parse_library_folders(data):
         """
@@ -101,15 +132,38 @@ def get_game_prefix_dir(steam_dir, game_id):
         # are set?
         library_folders = []
 
-    paths = [steam_dir] + library_folders
+    return [steam_dir] + library_folders
 
-    for path in paths:
+
+def get_game_prefix_dir(steam_lib_dirs, game_id):
+    """
+    Try to find the game's Wine prefix directory in one of the Steam library
+    folders
+    """
+    for path in steam_lib_dirs:
         prefix_dir = os.path.join(
             path, "steamapps", "compatdata", game_id, "pfx")
 
         if os.path.isdir(prefix_dir):
             # Found the game's prefix dir
             return prefix_dir
+
+    return None
+
+
+def get_proton_dir(steam_lib_dirs, proton_version):
+    """
+    Try to find the Proton installation in one of the Steam library folders,
+    preferring the `proton_version` version of Proton
+    """
+    for path in steam_lib_dirs:
+        dirs = os.listdir(os.path.join(path, "steamapps", "common"))
+
+        for app_name in dirs:
+            if "Proton" in app_name:
+                app_path = os.path.join(path, "steamapps", "common", app_name)
+                if proton_version == app_name:
+                    return app_path
 
     return None
 
@@ -146,31 +200,53 @@ if __name__ == "__main__":
         print("[INFO] WINETRICKS environment variable is not available. "
               "Falling back to /usr/bin/winetricks")
         os.environ["WINETRICKS"] = "/usr/bin/winetricks"
-        if os.path.exists("/usr/bin/winetricks") is False:
-            print("[ERROR!] Winetricks isn't installed, please install winetricks "
-                  "in order to use this script!")
+        if not os.path.exists("/usr/bin/winetricks"):
+            print("[ERROR!] Winetricks isn't installed, please install "
+                  "winetricks in order to use this script!")
             prereq_fail = True
     else:
-        print("[INFO] Winetricks path is set to {}".format(os.environ.get('WINETRICKS')))
-        if os.path.exists(os.environ.get('WINETRICKS')) is False:
+        print(
+            "[INFO] Winetricks path is set to {}".format(
+                os.environ.get('WINETRICKS')
+            )
+        )
+        if not os.path.exists(os.environ.get('WINETRICKS')):
             print("[ERROR!] The WINETRICKS path is invalid, please make sure "
                   "Winetricks is installed in that path!")
             prereq_fail = True
 
-    if os.environ.get('PROTON_VERSION') is None:
-        proton_version = get_proton_version(steam_dir + "/steamapps")
+    steam_lib_dirs = get_steam_lib_dirs(steam_dir)
+
+    if not os.environ.get("PROTON_VERSION"):
+        # If $PROTON_VERSION isn't set, find the currently used Proton
+        # installation automatically
+        proton_version = get_current_proton_version(steam_dir)
         if proton_version:
             print(
-                "[INFO] Found proton version {}. You can also define "
-                "the proton version manually using $PROTON_VERSION".format(proton_version))
+                "[INFO] Found active Proton installation: {}".format(
+                    proton_version
+                )
+            )
         else:
-            print(
-                "[ERROR!] Proton version could not be found automatically and "
-                "environment variable $PROTON_VERSION isn't set!")
-            prereq_fail = True
+            print("[ERROR!] Current Proton installation couldn't be found "
+                  "automatically and $PROTON_VERSION wasn't set")
+            sys.exit(-1)
     else:
-        proton_version = os.environ.get('PROTON_VERSION')
-        print("[INFO] Proton version set to {}".format(proton_version))
+        print("[INFO] Using preferred Proton installation {}".format(
+            proton_version
+        ))
+        proton_version = os.environ.get("PROTON_VERSION")
+
+
+    proton_dir = get_proton_dir(
+        steam_lib_dirs=steam_lib_dirs, proton_version=proton_version
+    )
+
+    if proton_dir:
+        print("[INFO] Using Proton installation at {}".format(proton_dir))
+    else:
+        print("[ERROR!] Proton installation could not be found!")
+        prereq_fail = True
 
     # If one or more checks fail, don't do anything in the script.
     if prereq_fail is True:
@@ -179,21 +255,24 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     if os.environ.get('WINE') is None:
-        print("[INFO] WINE environment variable is not available "
-              "Setting WINE environment variable to proton bundled version")
-        os.environ["WINE"] = steam_dir + "/steamapps/common/Proton " + proton_version + "/dist/bin/wine"
+        print("[INFO] WINE environment variable is not available. "
+              "Setting WINE environment variable to Proton bundled version")
+        os.environ["WINE"] = os.path.join(proton_dir, "dist", "bin", "wine")
 
     if os.environ.get('WINESERVER') is None:
-        print("[INFO] WINESERVER environment variable is not available "
-              "Setting WINESERVER environment variable to proton bundled version")
-        os.environ["WINESERVER"] = steam_dir + "/steamapps/common/Proton " + proton_version + "/dist/bin/wineserver"
+        print("[INFO] WINESERVER environment variable is not available. "
+              "Setting WINESERVER environment variable to Proton bundled "
+              "version")
+        os.environ["WINESERVER"] = os.path.join(
+            proton_dir, "dist", "bin", "wineserver")
 
     # If nothing has failed, move on.
     # Argument 1 is the steam game ID, so add it as a variable here.
     game_id = sys.argv[1]
 
     # Try to find the game's Wine prefix folder
-    prefix_dir = get_game_prefix_dir(steam_dir=steam_dir, game_id=game_id)
+    prefix_dir = get_game_prefix_dir(
+        steam_lib_dirs=steam_lib_dirs, game_id=game_id)
     if not prefix_dir:
         print("[FATAL] You don't seem to have a game with that ID, is it "
               "installed, Proton compatible and have you launched it at least "
@@ -204,6 +283,8 @@ if __name__ == "__main__":
     os.environ["WINEPREFIX"] = prefix_dir
 
     print(
-        "[INFO] Found the prefix directory at {}".format(os.environ.get('WINEPREFIX'))
+        "[INFO] Found the prefix directory at {}".format(
+            os.environ.get('WINEPREFIX')
+        )
     )
     subprocess.call([os.environ.get('WINETRICKS')] + sys.argv[2:])
