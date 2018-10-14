@@ -336,6 +336,8 @@ if __name__ == "__main__":
 
     # Finally, let's run winetricks with the specified prefix folder.
     os.environ["WINEPREFIX"] = prefix_path
+    # Unset WINEARCH, which might be set for another Wine installation
+    os.environ.pop("WINEARCH", "")
 
     print(
         "[INFO] Found the prefix directory at {}".format(
