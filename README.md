@@ -2,7 +2,7 @@
 A simple wrapper that does winetricks things for Proton enabled games, requires Winetricks.
 
 # What is it?
-This is a simple wrapper script that uses Winetricks to allow you to specify the Steam game ID rather than the full length directory to the Proton prefix itself, I'd thought this would be easier for some so I decided to upload it for everyone to use!
+This is a simple wrapper script that uses Winetricks to allow you to specify the game's App ID rather than the full length directory to the Proton prefix itself, I thought this would be easier for some so I decided to upload it for everyone to use!
 
 # Requirements
 * Python 3 or newer
@@ -12,9 +12,15 @@ This is a simple wrapper script that uses Winetricks to allow you to specify the
 # Usage
 The basic usage is as follows:
 
-```protontricks <STEAM GAME ID> <ACTIONS>```
+```
+# Find your game's App ID by searching for it
+protontricks -s <GAME NAME>
 
-Since this is a wrapper, all syntax that works for Winetricks will potentially work for Protontricks. If you need a specific game ID, check the store page's URL for the ID itself.
+# Run winetricks for the game
+protontricks <APPID> <ACTIONS>
+```
+
+Since this is a wrapper, all syntax that works for Winetricks will potentially work for Protontricks.
 
 If you have a different Steam directory (Like I do due to Arch's silly directory tomfoolery), you can export ``$STEAM_DIR`` to the directory where Steam is.
 
