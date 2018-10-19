@@ -34,6 +34,10 @@ I'd say the easiest way to install is by doing the following commands:
 wget https://raw.githubusercontent.com/Sirmentio/protontricks/master/protontricks && chmod +x protontricks
 sudo mv protontricks /usr/bin/protontricks
 ```
+## Unofficial packages
+Currently, the following is the current unofficial packages that can make installing and updating much easier. These are not maintained by me because I currently don't have the capacity of knowing how to make distro packages. Feel free to contribute and try to maintain your own distro packages and add them here.
+* [Arch Linux](https://aur.archlinux.org/packages/protontricks-git/)
+* Ubuntu (Nonexistent?)
 
 # Contact
 If you'd like, you can hit me up on twitter @Sirmentio, or on the Linux Gaming Discord, I don't talk much there but I'd be happy to hear from anyone who has something to say!
