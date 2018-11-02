@@ -85,6 +85,11 @@ class SteamApp(object):
         with open(path, "r") as f:
             content = f.read()
 
+        # App manifest may be completely empty for some reason.
+        # In that case, skip it
+        if content.strip() == "":
+            return None
+
         appid = int(re.search(r'(\t"appid"\s+")([0-9]+)', content).group(2))
         name = re.search(r'(\t"name"\s+")([\w\W]+?)"\n', content).group(2)
         prefix_path = os.path.join(
@@ -231,9 +236,10 @@ def get_steam_apps(steam_lib_dirs):
             os.path.join(path, "steamapps", "appmanifest_*.acf")
         )
 
-        steam_apps += [
-            SteamApp.from_appmanifest(path) for path in appmanifest_paths
-        ]
+        for path in appmanifest_paths:
+            steam_app = SteamApp.from_appmanifest(path)
+            if steam_app:
+                steam_apps.append(steam_app)
 
     return steam_apps
 
