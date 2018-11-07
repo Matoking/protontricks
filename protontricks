@@ -11,6 +11,7 @@ import binascii
 import glob
 import os
 import re
+import shutil
 import string
 import struct
 import subprocess
@@ -289,9 +290,11 @@ if __name__ == "__main__":
 
     if os.environ.get('WINETRICKS') is None:
         print("[INFO] WINETRICKS environment variable is not available. "
-              "Falling back to /usr/bin/winetricks")
-        os.environ["WINETRICKS"] = "/usr/bin/winetricks"
-        if not os.path.exists("/usr/bin/winetricks"):
+              "Searching from $PATH.")
+        winetricks_path = shutil.which("winetricks")
+        if winetricks_path:
+            os.environ["WINETRICKS"] = winetricks_path
+        else:
             print("[ERROR!] Winetricks isn't installed, please install "
                   "winetricks in order to use this script!")
             prereq_fail = True
