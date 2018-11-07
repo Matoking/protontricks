@@ -115,6 +115,7 @@ def find_steam_dir():
         # correct directory
         if os.path.isdir(os.path.join(steam_dir, "steamapps")):
             return steam_dir
+            
         # Some users may have imported their imported their install from
         # Windows, this checks for the "capitalized" version of the
         # Steam library directory.
@@ -211,8 +212,12 @@ def get_steam_lib_dirs(steam_dir):
         return library_folders
 
     # Try finding Steam library folders using libraryfolders.vdf in Steam root
-    folders_vdf_path = os.path.join(
-        steam_dir, "steamapps", "libraryfolders.vdf")
+    if os.path.isdir(os.path.join(steam_dir, "steamapps")):
+        folders_vdf_path = os.path.join(
+            steam_dir, "steamapps", "libraryfolders.vdf")
+    elif os.path.isdir(os.path.join(steam_dir, "SteamApps")):
+         folders_vdf_path = os.path.join(
+            steam_dir, "SteamApps", "libraryfolders.vdf")
     try:
         with open(folders_vdf_path, "r") as f:
             library_folders = parse_library_folders(f.read())
@@ -232,9 +237,14 @@ def get_steam_apps(steam_lib_dirs):
     steam_apps = []
 
     for path in steam_lib_dirs:
-        appmanifest_paths = glob.glob(
-            os.path.join(path, "steamapps", "appmanifest_*.acf")
-        )
+        if os.path.isdir(os.path.join(steam_dir, "steamapps")):
+            appmanifest_paths = glob.glob(
+                os.path.join(path, "steamapps", "appmanifest_*.acf")
+            )
+        elif os.path.isdir(os.path.join(steam_dir, "SteamApps")):
+            appmanifest_paths = glob.glob(
+                os.path.join(path, "SteamApps", "appmanifest_*.acf")
+            )
 
         for path in appmanifest_paths:
             steam_app = SteamApp.from_appmanifest(path)
@@ -244,22 +254,15 @@ def get_steam_apps(steam_lib_dirs):
     return steam_apps
 
 
-def get_usage():
-    """
-    Return this usage when we can't proceed with protontricks functionality
-    """
-    print("Usage:\n"
-          "\n"
-          "Run winetricks for game with APPID\n"
-          "$ protontricks APPID COMMAND\n"
-          "\n"
-          "Search installed games to find the APPID\n"
-          "$ protontricks -s GAME_NAME")
-
-
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        get_usage()
+        print("Usage:\n"
+              "\n"
+              "Run winetricks for game with APPID\n"
+              "$ protontricks APPID COMMAND\n"
+              "\n"
+              "Search installed games to find the APPID\n"
+              "$ protontricks -s GAME_NAME")
         sys.exit(0)
 
     # Prerequisite check
@@ -383,14 +386,11 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         # Find game by appid
+        game_appid = int(sys.argv[1])
         try:
-            game_appid = int(sys.argv[1])
             game_app = next(
                 app for app in steam_apps
                 if app.appid == game_appid and app.prefix_path_exists)
-        except ValueError:
-            get_usage()
-            sys.exit(0)
         except StopIteration:
             game_app = None
 
