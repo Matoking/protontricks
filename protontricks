@@ -238,15 +238,22 @@ def get_steam_apps(steam_lib_dirs):
     return steam_apps
 
 
+def get_usage():
+    """
+    Return this usage when we can't proceed with protontricks functionality
+    """
+    print("Usage:\n"
+          "\n"
+          "Run winetricks for game with APPID\n"
+          "$ protontricks APPID COMMAND\n"
+          "\n"
+          "Search installed games to find the APPID\n"
+          "$ protontricks -s GAME_NAME")
+
+
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        print("Usage:\n"
-              "\n"
-              "Run winetricks for game with APPID\n"
-              "$ protontricks APPID COMMAND\n"
-              "\n"
-              "Search installed games to find the APPID\n"
-              "$ protontricks -s GAME_NAME")
+        get_usage()
         sys.exit(0)
 
     # Prerequisite check
@@ -370,11 +377,14 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         # Find game by appid
-        game_appid = int(sys.argv[1])
         try:
+            game_appid = int(sys.argv[1])
             game_app = next(
                 app for app in steam_apps
                 if app.appid == game_appid and app.prefix_path_exists)
+        except ValueError:
+            get_usage()
+            sys.exit(0)
         except StopIteration:
             game_app = None
 
