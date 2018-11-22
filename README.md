@@ -18,6 +18,9 @@ protontricks -s <GAME NAME>
 
 # Run winetricks for the game
 protontricks <APPID> <ACTIONS>
+
+# Run the protontricks GUI
+protontricks gui
 ```
 
 Since this is a wrapper, all syntax that works for Winetricks will potentially work for Protontricks.
