@@ -85,9 +85,9 @@ class SteamApp(object):
         with open(path, "r") as f:
             content = f.read()
 
-        # App manifest may be completely empty for some reason.
+        # App manifest may be completely empty or a pre-allocated zero'd block.
         # In that case, skip it
-        if content.strip() == "":
+        if content.strip() == "" or content[0] == '\0':
             return None
 
         appid = int(re.search(r'(\t"appid"\s+")([0-9]+)', content).group(2))
