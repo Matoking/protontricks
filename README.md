@@ -29,7 +29,7 @@ If you have a different Steam directory (Like I do due to Arch's silly directory
 
 If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` to the location of your local winetricks installation. As well, you can set ``$PROTON_VERSION`` to a specific version manually.
 
-[Wanna see Protontricks in action?](https://asciinema.org/a/B1c5EdNOA3njQTRLtDVtYH9XK)
+[Wanna see Protontricks in action?](https://asciinema.org/a/i2uqz1uZXYACl9NAHYbuZ3TCT)
 
 # Installation
 I'd say the easiest way to install is by doing the following commands:
