@@ -360,6 +360,22 @@ if __name__ == "__main__":
         os.environ["WINESERVER"] = os.path.join(
             proton_app.install_path, "dist", "bin", "wineserver")
 
+    if sys.argv[1].lower() == "gui":
+        combo_values = "|".join([f'{app.name}: {app.appid}' for app in steam_apps])
+        try:
+            choice = subprocess.check_output(['zenity', '--forms', '--text=Steam Game Library',
+                                              '--title=Choose Game', '--add-combo', 'Pick a library game',
+                                              '--combo-values', combo_values])
+            choice_id = str(choice).rsplit(':')[-1]
+            choice_id = ''.join(x for x in choice_id if x.isdigit())
+            sys.argv = [sys.argv[0], choice_id, '--gui']
+
+        except subprocess.CalledProcessError:
+            print("Zenity returned an error or cancel was clicked")
+            sys.exit(0)
+        except OSError:
+            print("Zenity was not found")
+
     if sys.argv[1] == "-s":
         # Search for games
         search_query = " ".join(sys.argv[2:])
