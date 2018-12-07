@@ -361,7 +361,7 @@ if __name__ == "__main__":
             proton_app.install_path, "dist", "bin", "wineserver")
 
     if sys.argv[1].lower() == "gui":
-        combo_values = "|".join(['{app.name}: {app.appid}' for app in steam_apps])
+        combo_values = "|".join(['{}: {}'.format(app.name, app.appid) for app in steam_apps])
         try:
             choice = subprocess.check_output(['zenity', '--forms', '--text=Steam Game Library',
                                               '--title=Choose Game', '--add-combo', 'Pick a library game',
