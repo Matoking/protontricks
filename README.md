@@ -40,6 +40,7 @@ sudo mv protontricks /usr/bin/protontricks
 ## Unofficial packages
 Currently, the following is the current unofficial packages that can make installing and updating much easier. These are not maintained by me because I currently don't have the capacity of knowing how to make distro packages. Feel free to contribute and try to maintain your own distro packages and add them here.
 * [Arch Linux](https://aur.archlinux.org/packages/protontricks-git/)
+* [Gentoo](https://gpo.zugaina.org/app-emulation/protontricks)
 * Ubuntu (Nonexistent?)
 
 # Contact
