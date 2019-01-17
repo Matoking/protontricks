@@ -1,0 +1,3 @@
+include versioneer.py
+include LICENSE
+include src/protontricks/_version.py
