@@ -9,8 +9,8 @@ import vdf
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
-    "find_current_proton_app", "get_steam_lib_paths", "get_steam_apps",
-    "get_custom_proton_installations"
+    "find_steam_proton_app", "find_proton_app", "get_steam_lib_paths",
+    "get_steam_apps", "get_custom_proton_installations"
 )
 
 COMMON_STEAM_DIRS = [
@@ -160,7 +160,7 @@ def find_steam_path():
     return found_steam_path
 
 
-def find_current_proton_app(steam_path, steam_apps):
+def find_steam_proton_app(steam_path, steam_apps):
     """
     Get the current Proton installation used by Steam
     and return a SteamApp object
@@ -171,27 +171,30 @@ def find_current_proton_app(steam_path, steam_apps):
         content = f.read()
 
     vdf_data = vdf.loads(content)
-    tool_mapping = vdf_data["InstallConfigStore"]["Software"]["Valve"]["Steam"]["ToolMapping"]["0"]
+    tool_mapping = (
+        vdf_data["InstallConfigStore"]["Software"]["Valve"]["Steam"]
+                ["ToolMapping"]["0"]
+    )
     name = tool_mapping["name"]
 
-    # We've got the name;
+    # We've got the name,
     # now there are two possible ways to find the installation
     # 1. It's a custom Proton installation, and we simply need to find
-    #    a Steam app by its display name
+    #    a SteamApp by its display name
     # 2. It's a production Proton installation, in which case we need
-    #    to parse a binary configuration file
+    #    to parse a binary configuration file to find the App ID
 
     # Let's try option 1 first
     try:
         app = next(app for app in steam_apps if app.name == name)
         logger.info(
-            "Found active Proton installation: {}".format(app.name)
+            "Found active custom Proton installation: {}".format(app.name)
         )
         return app
     except StopIteration:
         pass
 
-    # Since option 1 didn't work, try option 2:
+    # Try option 2:
     # Find the corresponding App ID from <steam_path>/appcache/appinfo.vdf
     appinfo_path = os.path.join(steam_path, "appcache", "appinfo.vdf")
 
@@ -199,7 +202,9 @@ def find_current_proton_app(steam_path, steam_apps):
         appinfo = str(binascii.hexlify(f.read()), "utf-8")
 
     # In ASCII, the substring we're looking for looks like this
+    # ```
     # proton_316_beta..appid.
+    # ```
     appid_regex = "({name_ascii}0002617070696400)([a-z0-9]{{8}})".format(
         name_ascii=str(binascii.hexlify(bytes(name, "utf-8")), "utf-8")
     )
@@ -216,6 +221,38 @@ def find_current_proton_app(steam_path, steam_apps):
         return app
     except StopIteration:
         return None
+
+
+def find_proton_app(steam_path, steam_apps):
+    """
+    Find the Proton app, using either $PROTON_VERSION or the one
+    currently configured in Steam
+    """
+    if os.environ.get("PROTON_VERSION"):
+        proton_version = os.environ.get("PROTON_VERSION")
+        try:
+            proton_app = next(
+                app for app in steam_apps if app.name == proton_version)
+            logger.info(
+                 "Found requested Proton version: {}".format(proton_app.name)
+            )
+            return proton_app
+        except StopIteration:
+            logger.error(
+                "$PROTON_VERSION was set but matching Proton installation "
+                "could not be found."
+            )
+            return None
+
+    proton_app = find_steam_proton_app(
+        steam_path=steam_path, steam_apps=steam_apps)
+
+    if not proton_app:
+        logger.error(
+            "Active Proton installation could not be found automatically."
+        )
+
+    return proton_app
 
 
 def get_steam_lib_paths(steam_path):

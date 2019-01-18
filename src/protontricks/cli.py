@@ -15,7 +15,7 @@ import subprocess
 import os
 import logging
 
-from protontricks.steam import (find_current_proton_app, find_steam_path,
+from protontricks.steam import (find_proton_app, find_steam_path,
                                 get_steam_apps, get_steam_lib_paths,
                                 get_custom_proton_installations)
 from protontricks.winetricks import (get_winetricks_path,
@@ -45,6 +45,7 @@ def main():
         description=(
             "Wrapper for running Winetricks commands for "
             "Steam Play/Proton games.\n"
+            "\n"
             "Usage:\n"
             "\n"
             "Run winetricks for game with APPID\n"
@@ -54,7 +55,15 @@ def main():
             "$ protontricks -s GAME_NAME\n"
             "\n"
             "Launch the Protontricks GUI\n"
-            "$ protontricks --gui"
+            "$ protontricks --gui\n"
+            "\n"
+            "Environment variables:\n"
+            "\n"
+            "PROTON_VERSION: name of the preferred Proton installation\n"
+            "STEAM_DIR: path to custom Steam installation\n"
+            "WINETRICKS: path to a custom 'winetricks' executable\n"
+            "WINE: path to a custom 'wine' executable\n"
+            "WINESERVER: path to a custom 'wineserver' executable"
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -107,26 +116,12 @@ def main():
     steam_apps = get_steam_apps(steam_path, steam_lib_paths)
 
     # 5. Find active Proton version
-    if not os.environ.get("PROTON_VERSION"):
-        # If $PROTON_VERSION isn't set, find the currently used Proton
-        # installation automatically
-        proton_app = find_current_proton_app(
-            steam_path=steam_path, steam_apps=steam_apps)
-        if not proton_app:
-            print(
-                "Current Proton installation couldn't be found "
-                "automatically and $PROTON_VERSION wasn't set"
-            )
-            sys.exit(-1)
-    else:
-        proton_version = os.environ.get("PROTON_VERSION")
-        try:
-            proton_app = next(
-                app for app in steam_apps
-                if app.name == proton_version)
-        except StopIteration:
-            print("Proton installation could not be found!")
-            sys.exit(-1)
+    proton_app = find_proton_app(
+        steam_path=steam_path, steam_apps=steam_apps)
+
+    if not proton_app:
+        print("Proton installation could not be found!")
+        sys.exit(-1)
 
     # Run the GUI
     if args.gui:
