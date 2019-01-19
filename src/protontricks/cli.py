@@ -104,6 +104,11 @@ def main():
 
     # 1. Find Steam path
     steam_path = find_steam_path()
+    if not steam_path:
+        print(
+            "Steam installation directory could not be found."
+        )
+        sys.exit(-1)
 
     # 2. Find Winetricks
     winetricks_path = get_winetricks_path()
@@ -145,7 +150,7 @@ def main():
         search_query = " ".join(args.search)
         matching_apps = [
             app for app in steam_apps
-            if not app.is_proton and app.name_contains(search_query)
+            if app.prefix_path_exists and app.name_contains(search_query)
         ]
 
         if matching_apps:
@@ -163,6 +168,12 @@ def main():
             )
         else:
             print("Found no games.")
+
+        print(
+            "\n"
+            "NOTE: A game must be launched at least once before protontricks "
+            "can find the game."
+        )
         return
 
     # If neither search or GUI are set, do a normal Winetricks command

@@ -15,32 +15,31 @@ def get_winetricks_path():
     """
     Return to the path to 'winetricks' executable or return None if not found
     """
-    if os.environ.get('WINETRICKS') is None:
+    if os.environ.get('WINETRICKS'):
         logger.info(
-            "WINETRICKS environment variable is not available. "
-            "Searching from $PATH.")
-        winetricks_path = shutil.which("winetricks")
-        if winetricks_path:
-            return winetricks_path
-        else:
-            return None
-            raise RuntimeError(
-                "Winetricks isn't installed, please install "
-                "winetricks in order to use this script!"
-            )
-    else:
-        logger.info(
-            "[INFO] Winetricks path is set to {}".format(
-                os.environ.get('WINETRICKS')
-            )
+            "Winetricks path is set to %s", os.environ.get('WINETRICKS')
         )
         if not os.path.exists(os.environ.get('WINETRICKS')):
-            raise RuntimeError(
+            logger.error(
                 "The WINETRICKS path is invalid, please make sure "
                 "Winetricks is installed in that path!"
             )
+            return None
 
         return os.environ.get("WINETRICKS")
+
+    logger.info(
+        "WINETRICKS environment variable is not available. "
+        "Searching from $PATH.")
+    winetricks_path = shutil.which("winetricks")
+
+    if winetricks_path:
+        return winetricks_path
+
+    logger.error(
+        "'winetricks' executable could not be found automatically."
+    )
+    return None
 
 
 def run_winetricks_command(

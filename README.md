@@ -25,7 +25,7 @@ protontricks <APPID> <ACTIONS>
 # Run the protontricks GUI
 protontricks --gui
 
-# Print winetricks' help message
+# Print the protontricks help message
 protontricks --help
 ```
 

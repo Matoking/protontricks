@@ -127,37 +127,40 @@ def find_steam_path():
     Try to discover default Steam dir using common locations and return the
     first one that matches
     """
-    if os.environ.get("STEAM_DIR"):
-        return os.environ.get("STEAM_DIR")
-
-    found_steam_path = None
-
-    for steam_path in COMMON_STEAM_DIRS:
-        # If it has a 'steamapps' subdirectory, we can be certain it's the
-        # correct directory
-        if os.path.isdir(os.path.join(steam_path, "steamapps")):
-            found_steam_path = steam_path
-            break
-
-        # Some users may have imported their imported their install from
-        # Windows, this checks for the "capitalized" version of the
-        # Steam library directory.
-        elif os.path.isdir(os.path.join(steam_path, "SteamApps")):
-            found_steam_path = steam_path
-            break
-
-    if not found_steam_path:
-        raise RuntimeError(
-            "Steam path couldn't be found automatically and environment "
-            "variable $STEAM_DIR isn't set!"
+    def has_steamapps_dir(path):
+        """
+        Return True if the path either has a 'steamapps' or a 'SteamApps'
+        subdirectory, False otherwise
+        """
+        return (
+            # 'steamapps' is the usual name under Linux Steam installations
+            os.path.isdir(os.path.join(path, "steamapps"))
+            # 'SteamApps' name appears in installations imported from Windows
+            or os.path.isdir(os.path.join(path, "SteamApps"))
         )
 
-    logger.info(
-        "Found Steam directory at {}. You can also define Steam directory "
-        "manually using $STEAM_DIR".format(found_steam_path)
-    )
+    if os.environ.get("STEAM_DIR"):
+        steam_path = os.environ.get("STEAM_DIR")
+        if has_steamapps_dir(steam_path):
+            logger.info(
+                "Found a valid Steam installation at {}.".format(steam_path)
+            )
+            return steam_path
 
-    return found_steam_path
+        logger.error(
+            "$STEAM_DIR was provided but didn't point to a valid Steam "
+            "installation."
+        )
+
+        return None
+
+    for steam_path in COMMON_STEAM_DIRS:
+        if has_steamapps_dir(steam_path):
+            logger.info(
+                "Found Steam directory at {}. You can also define Steam "
+                "directory manually using $STEAM_DIR".format(steam_path)
+            )
+            return steam_path
 
 
 def find_steam_proton_app(steam_path, steam_apps):
@@ -301,6 +304,7 @@ def get_steam_lib_paths(steam_path):
     elif os.path.isdir(os.path.join(steam_path, "SteamApps")):
         folders_vdf_path = os.path.join(
             steam_path, "SteamApps", "libraryfolders.vdf")
+
     try:
         with open(folders_vdf_path, "r") as f:
             library_folders = parse_library_folders(f.read())
