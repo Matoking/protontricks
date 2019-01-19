@@ -15,6 +15,7 @@ import subprocess
 import os
 import logging
 
+from protontricks import __version__
 from protontricks.steam import (find_proton_app, find_steam_path,
                                 get_steam_apps, get_steam_lib_paths,
                                 get_custom_proton_installations)
@@ -78,6 +79,10 @@ def main():
         help="Launch the Protontricks GUI.")
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs="*")
+    parser.add_argument(
+        "-V", "--version", action="version",
+        version="%(prog)s ({})".format(__version__)
+    )
 
     args = parser.parse_args()
 
