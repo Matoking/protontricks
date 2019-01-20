@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Added
+ - Game-specific Proton installations are now detected.
+
+### Fixed
+ - Proton installations are now detected properly again in newer Steam Beta releases.
+
 ## [1.1] - 2019-01-20
 ### Added
  - Custom Proton installations in `STEAM_DIR/compatibilitytools.d` are now detected. See [Sirmentio/protontricks#31](https://github.com/Sirmentio/protontricks/issues/31).

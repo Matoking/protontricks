@@ -127,7 +127,7 @@ def main():
 
     # 5. Find active Proton version
     proton_app = find_proton_app(
-        steam_path=steam_path, steam_apps=steam_apps)
+        steam_path=steam_path, steam_apps=steam_apps, appid=args.appid)
 
     if not proton_app:
         print("Proton installation could not be found!")

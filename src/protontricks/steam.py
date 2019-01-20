@@ -163,22 +163,61 @@ def find_steam_path():
             return steam_path
 
 
-def find_steam_proton_app(steam_path, steam_apps):
+def find_steam_proton_app(steam_path, steam_apps, appid=None):
     """
     Get the current Proton installation used by Steam
     and return a SteamApp object
+
+    If 'appid' is provided, try to find the app-specific Proton installation
+    if one is configured
     """
+    # 1. Find the name of Proton installation in use
+    #    from STEAM_DIR/config/config.vdf
+    # 2. If the Proton installation's name can be found directly
+    #    in the list of apps we discovered earlier, return that
+    # 3. ...or if the name can't be found that way, parse
+    #    the file in STEAM_DIR/appcache/appinfo.vdf to find the Proton
+    #    installation's App ID
     config_vdf_path = os.path.join(steam_path, "config", "config.vdf")
 
     with open(config_vdf_path, "r") as f:
         content = f.read()
 
     vdf_data = vdf.loads(content)
-    tool_mapping = (
-        vdf_data["InstallConfigStore"]["Software"]["Valve"]["Steam"]
-                ["ToolMapping"]["0"]
-    )
-    name = tool_mapping["name"]
+    # ToolMapping seems to be used in older Steam beta releases
+    try:
+        tool_mapping = (
+            vdf_data["InstallConfigStore"]["Software"]["Valve"]["Steam"]
+                    ["ToolMapping"]
+        )
+    except KeyError:
+        tool_mapping = {}
+
+    # CompatToolMapping seems to be the name used in newer Steam releases
+    # We'll prioritize this if it exists
+    try:
+        compat_tool_mapping = (
+            vdf_data["InstallConfigStore"]["Software"]["Valve"]["Steam"]
+                    ["CompatToolMapping"]
+        )
+    except KeyError:
+        compat_tool_mapping = {}
+
+    name = None
+
+    # The name of potential names in order of priority
+    potential_names = [
+        compat_tool_mapping.get(str(appid), {}).get("name", None),
+        compat_tool_mapping.get("0", {}).get("name", None),
+        tool_mapping.get(str(appid), {}).get("name", None),
+        tool_mapping.get("0", {}).get("name", None)
+    ]
+    # Get the first name that was valid
+    try:
+        name = next(name for name in potential_names if name)
+    except StopIteration:
+        logger.error("No Proton installation found in config.vdf")
+        return None
 
     # We've got the name,
     # now there are two possible ways to find the installation
@@ -226,10 +265,13 @@ def find_steam_proton_app(steam_path, steam_apps):
         return None
 
 
-def find_proton_app(steam_path, steam_apps):
+def find_proton_app(steam_path, steam_apps, appid=None):
     """
     Find the Proton app, using either $PROTON_VERSION or the one
     currently configured in Steam
+
+    If 'appid' is provided, use it to find the app-specific Proton installation
+    if one is configured
     """
     if os.environ.get("PROTON_VERSION"):
         proton_version = os.environ.get("PROTON_VERSION")
@@ -248,7 +290,7 @@ def find_proton_app(steam_path, steam_apps):
             return None
 
     proton_app = find_steam_proton_app(
-        steam_path=steam_path, steam_apps=steam_apps)
+        steam_path=steam_path, steam_apps=steam_apps, appid=appid)
 
     if not proton_app:
         logger.error(
