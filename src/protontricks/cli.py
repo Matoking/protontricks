@@ -78,7 +78,7 @@ def main():
         "--gui", action="store_true",
         help="Launch the Protontricks GUI.")
     parser.add_argument("appid", type=int, nargs="?", default=None)
-    parser.add_argument("winetricks_command", nargs="*")
+    parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
         "-V", "--version", action="version",
         version="%(prog)s ({})".format(__version__)

@@ -48,3 +48,8 @@ Or if you only want to install protontricks for the local user:
 ```sh
 python3 -m pip install --user git+https://github.com/Matoking/protontricks.git
 ```
+
+If you want to install a specific version (in this case **1.1.1**):
+```sh
+python3 -m pip install git+https://github.com/Matoking/protontricks.git@1.1.1
+```
