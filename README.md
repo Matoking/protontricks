@@ -22,6 +22,9 @@ protontricks -s <GAME NAME>
 # Run winetricks for the game
 protontricks <APPID> <ACTIONS>
 
+# Run a custom command within game's installation directory
+protontricks -c <COMMAND> <APPID>
+
 # Run the protontricks GUI
 protontricks --gui
 

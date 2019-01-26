@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased] - 2019-01-21
+### Added
+ - Add a `-c` parameter to run shell commands in the game's installation directory with relevant Wine environment variables.
+
 ### Fixed
  - All arguments are now correctly passed to winetricks.
 

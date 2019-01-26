@@ -19,9 +19,9 @@ from protontricks import __version__
 from protontricks.steam import (find_proton_app, find_steam_path,
                                 get_steam_apps, get_steam_lib_paths,
                                 get_custom_proton_installations)
-from protontricks.winetricks import (get_winetricks_path,
-                                     run_winetricks_command)
+from protontricks.winetricks import get_winetricks_path
 from protontricks.gui import select_steam_app_with_gui
+from protontricks.util import run_command
 
 logger = logging.getLogger("protontricks")
 
@@ -75,6 +75,12 @@ def main():
         "-s", "--search", type=str, dest="search", nargs="+",
         required=False, help="Search for game(s) with the given name")
     parser.add_argument(
+        "-c", "--command", type=str, dest="command",
+        required=False,
+        help="Run a command in the game's installation directory with "
+             "Wine-related environment variables set. "
+             "The command is passed to the shell as-is without being escaped.")
+    parser.add_argument(
         "--gui", action="store_true",
         help="Launch the Protontricks GUI.")
     parser.add_argument("appid", type=int, nargs="?", default=None)
@@ -86,16 +92,17 @@ def main():
 
     args = parser.parse_args()
 
+    do_command = bool(args.command)
     do_search = bool(args.search)
     do_gui = bool(args.gui)
     do_winetricks = bool(args.appid and args.winetricks_command)
 
-    if not do_search and not do_gui and not do_winetricks:
+    if not do_command and not do_search and not do_gui and not do_winetricks:
         parser.print_help()
         return
 
     # Don't allow more than one action
-    if sum([do_search, do_gui, do_winetricks]) != 1:
+    if sum([do_search, do_gui, do_winetricks, do_command]) != 1:
         print("Only one action can be performed at a time.")
         parser.print_help()
         return
@@ -136,12 +143,12 @@ def main():
     # Run the GUI
     if args.gui:
         steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
-        run_winetricks_command(
+        run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            command=["--gui"]
+            command=[winetricks_path, "--gui"]
         )
         return
     # Perform a search
@@ -194,12 +201,24 @@ def main():
         )
         sys.exit(-1)
 
-    run_winetricks_command(
-        steam_path=steam_path,
-        winetricks_path=winetricks_path,
-        proton_app=proton_app,
-        steam_app=steam_app,
-        command=args.winetricks_command)
+    if args.winetricks_command:
+        run_command(
+            steam_path=steam_path,
+            winetricks_path=winetricks_path,
+            proton_app=proton_app,
+            steam_app=steam_app,
+            command=[winetricks_path] + args.winetricks_command)
+    elif args.command:
+        run_command(
+            steam_path=steam_path,
+            winetricks_path=winetricks_path,
+            proton_app=proton_app,
+            steam_app=steam_app,
+            command=args.command,
+            # Pass the command directly into the shell *without*
+            # escaping it
+            cwd=steam_app.install_path,
+            shell=True)
 
 
 if __name__ == "__main__":
