@@ -35,6 +35,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  - Corrupted appmanifest files are now skipped. See [Sirmentio/protontricks#36](https://github.com/Sirmentio/protontricks/pull/36).
  - Display a proper error message when $STEAM_DIR doesn't point to a valid Steam installation. See [Sirmentio/protontricks#46](https://github.com/Sirmentio/protontricks/issues/46).
 
-## [1.0] - 2019-01-16
+## 1.0 - 2019-01-16
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
+
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.1.1...HEAD
+[1.1.1]: https://github.com/Matoking/protontricks/compare/1.1...1.1.1
+[1.1]: https://github.com/Matoking/protontricks/compare/1.0...1.1
