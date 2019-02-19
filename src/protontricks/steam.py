@@ -228,7 +228,7 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     # We've got the name,
     # now there are two possible ways to find the installation
     # 1. It's a custom Proton installation, and we simply need to find
-    #    a SteamApp by its display name
+    #    a SteamApp by its internal name
     # 2. It's a production Proton installation, in which case we need
     #    to parse a binary configuration file to find the App ID
 
@@ -391,13 +391,6 @@ def get_custom_proton_installations(steam_path):
             vdf_data["compatibilitytools"]["compat_tools"].keys())[0]
         tool_info = vdf_data["compatibilitytools"]["compat_tools"][
             internal_name]
-        # 'display_name' is optional. If it's not included,
-        # the internal name is used as display name
-        display_name = (
-            tool_info["display_name"]
-            if "display_name" in tool_info
-            else internal_name
-        )
 
         install_path = tool_info["install_path"]
         from_oslist = tool_info["from_oslist"]
@@ -415,7 +408,7 @@ def get_custom_proton_installations(steam_path):
             install_path = os.path.join(comp_root, install_path)
 
         custom_proton_apps.append(
-            SteamApp(name=display_name, install_path=install_path)
+            SteamApp(name=internal_name, install_path=install_path)
         )
 
     return custom_proton_apps
