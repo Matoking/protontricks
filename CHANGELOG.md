@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - All arguments are now correctly passed to winetricks.
  - Games that haven't been launched at least once are now excluded properly.
+ - Custom Proton versions with custom display names now work properly.
 
 ## [1.1.1] - 2019-01-20
 ### Added
