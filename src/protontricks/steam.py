@@ -43,12 +43,18 @@ class SteamApp(object):
     @property
     def prefix_path_exists(self):
         """
-        Returns True if the app has a Wine prefix directory
+        Returns True if the app has a Wine prefix directory that has been
+        launched at least once
         """
         if not self.prefix_path:
             return False
 
-        return os.path.exists(self.prefix_path)
+        # 'pfx' directory is incomplete until the game has been launched
+        # once, so check for 'pfx.lock' as well
+        return (
+            os.path.exists(self.prefix_path)
+            and os.path.exists(os.path.join(self.prefix_path, "..", "pfx.lock"))
+        )
 
     def name_contains(self, s):
         """
@@ -439,6 +445,11 @@ def get_steam_apps(steam_path, steam_lib_dirs):
 
     # Get the custom Proton installations as well
     steam_apps += get_custom_proton_installations(steam_path=steam_path)
+
+    # Exclude games that haven't been launched yet
+    steam_apps = [
+        app for app in steam_apps if app.prefix_path_exists or app.is_proton
+    ]
 
     # Sort the apps by their names
     steam_apps.sort(key=lambda app: app.name)
