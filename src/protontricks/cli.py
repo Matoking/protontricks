@@ -83,6 +83,9 @@ def main():
     parser.add_argument(
         "--gui", action="store_true",
         help="Launch the Protontricks GUI.")
+    parser.add_argument(
+        "--runtime", action="store_true", default=False,
+        help="Run protontricks using Steam Runtime")
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
@@ -142,13 +145,21 @@ def main():
 
     # Run the GUI
     if args.gui:
+        if args.runtime:
+            runtime_cmd = [
+                os.path.join(
+                    steam_path, "ubuntu12_32", "steam-runtime", "run.sh")
+            ]
+        else:
+            runtime_cmd = []
+
         steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            command=[winetricks_path, "--gui"]
+            command=runtime_cmd + [winetricks_path, "--gui"]
         )
         return
     # Perform a search
@@ -201,20 +212,38 @@ def main():
         )
         sys.exit(-1)
 
+
     if args.winetricks_command:
+        if args.runtime:
+            runtime_cmd = [
+                os.path.join(
+                    steam_path, "ubuntu12_32", "steam-runtime", "run.sh")
+            ]
+        else:
+            runtime_cmd = []
+
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            command=[winetricks_path] + args.winetricks_command)
+            command=runtime_cmd + [winetricks_path] + args.winetricks_command)
     elif args.command:
+        if args.runtime:
+            runtime_cmd = "'{}' ".format(
+                os.path.join(
+                    steam_path, "ubuntu12_32", "steam-runtime", "run.sh"
+                )
+            )
+        else:
+            runtime_cmd = ""
+
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            command=args.command,
+            command=runtime_cmd + args.command,
             # Pass the command directly into the shell *without*
             # escaping it
             cwd=steam_app.install_path,

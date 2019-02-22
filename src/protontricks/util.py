@@ -40,6 +40,10 @@ def run_command(
     os.environ["WINETRICKS"] = winetricks_path
     os.environ["WINEPREFIX"] = steam_app.prefix_path
 
+    os.environ["PATH"] = os.path.join(
+        proton_app.install_path, "dist", "bin"
+    ) + os.pathsep + os.environ["PATH"]
+
     # Unset WINEARCH, which might be set for another Wine installation
     os.environ.pop("WINEARCH", "")
 
