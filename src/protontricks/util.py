@@ -47,6 +47,7 @@ def run_command(
     # Unset WINEARCH, which might be set for another Wine installation
     os.environ.pop("WINEARCH", "")
 
+    logger.info("Attempting to run sp.call::{command}".format(command=command))
     try:
         subprocess.call(command, **kwargs)
     finally:

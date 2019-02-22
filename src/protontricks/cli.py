@@ -13,6 +13,7 @@ import argparse
 import shutil
 import subprocess
 import os
+import shlex
 import logging
 
 from . import __version__
@@ -113,7 +114,7 @@ def main():
     enable_logging(args.verbose)
 
     # 1. Find Steam path
-    steam_path = find_steam_path()
+    steam_path, steam_root = find_steam_path()
     if not steam_path:
         print(
             "Steam installation directory could not be found."
@@ -133,7 +134,7 @@ def main():
     steam_lib_paths = get_steam_lib_paths(steam_path)
 
     # 4. Find any Steam apps
-    steam_apps = get_steam_apps(steam_path, steam_lib_paths)
+    steam_apps = get_steam_apps(steam_root, steam_lib_paths)
 
     # 5. Find active Proton version
     proton_app = find_proton_app(
@@ -148,7 +149,7 @@ def main():
         if args.runtime:
             runtime_cmd = [
                 os.path.join(
-                    steam_path, "ubuntu12_32", "steam-runtime", "run.sh")
+                    steam_root, "ubuntu12_32", "steam-runtime", "run.sh")
             ]
         else:
             runtime_cmd = []
@@ -217,7 +218,7 @@ def main():
         if args.runtime:
             runtime_cmd = [
                 os.path.join(
-                    steam_path, "ubuntu12_32", "steam-runtime", "run.sh")
+                    steam_root, "ubuntu12_32", "steam-runtime", "run.sh")
             ]
         else:
             runtime_cmd = []
@@ -232,8 +233,7 @@ def main():
         if args.runtime:
             runtime_cmd = "'{}' ".format(
                 os.path.join(
-                    steam_path, "ubuntu12_32", "steam-runtime", "run.sh"
-                )
+                    steam_root, "ubuntu12_32", "steam-runtime", "run.sh")
             )
         else:
             runtime_cmd = ""
