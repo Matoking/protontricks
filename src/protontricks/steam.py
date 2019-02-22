@@ -144,6 +144,11 @@ def find_steam_path():
             # 'SteamApps' name appears in installations imported from Windows
             or os.path.isdir(os.path.join(path, "SteamApps"))
         )
+    #as far as @admalledd can tell, this should always be correct for the tools root:
+    steam_root = os.path.join(os.environ["HOME"],".steam","root")
+    if not os.path.isdir(os.path.join(steam_root,'ubuntu12_32')):
+        #Check that runtime dir exists, if not make root=path and hope
+        steam_root=None
 
     if os.environ.get("STEAM_DIR"):
         steam_path = os.environ.get("STEAM_DIR")
@@ -151,7 +156,8 @@ def find_steam_path():
             logger.info(
                 "Found a valid Steam installation at {}.".format(steam_path)
             )
-            return steam_path
+            if not steam_root: steam_root=steam_path
+            return steam_path,steam_root
 
         logger.error(
             "$STEAM_DIR was provided but didn't point to a valid Steam "
@@ -166,7 +172,8 @@ def find_steam_path():
                 "Found Steam directory at {}. You can also define Steam "
                 "directory manually using $STEAM_DIR".format(steam_path)
             )
-            return steam_path
+            if not steam_root: steam_root=steam_path
+            return steam_path,steam_root
 
 
 def find_steam_proton_app(steam_path, steam_apps, appid=None):
@@ -364,11 +371,11 @@ def get_steam_lib_paths(steam_path):
     return [steam_path] + library_folders
 
 
-def get_custom_proton_installations(steam_path):
+def get_custom_proton_installations(steam_root):
     """
     Return a list of custom Proton installations as a list of SteamApp objects
     """
-    comp_root = os.path.join(steam_path, "compatibilitytools.d")
+    comp_root = os.path.join(steam_root, "compatibilitytools.d")
 
     if not os.path.isdir(comp_root):
         return []
@@ -414,7 +421,7 @@ def get_custom_proton_installations(steam_path):
     return custom_proton_apps
 
 
-def get_steam_apps(steam_path, steam_lib_dirs):
+def get_steam_apps(steam_root, steam_lib_dirs):
     """
     Find all the installed Steam apps and return them as a list of SteamApp
     objects
@@ -437,7 +444,7 @@ def get_steam_apps(steam_path, steam_lib_dirs):
                 steam_apps.append(steam_app)
 
     # Get the custom Proton installations as well
-    steam_apps += get_custom_proton_installations(steam_path=steam_path)
+    steam_apps += get_custom_proton_installations(steam_root=steam_root)
 
     # Exclude games that haven't been launched yet
     steam_apps = [
