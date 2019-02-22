@@ -15,13 +15,13 @@ import subprocess
 import os
 import logging
 
-from protontricks import __version__
-from protontricks.steam import (find_proton_app, find_steam_path,
+from . import __version__
+from .steam import (find_proton_app, find_steam_path,
                                 get_steam_apps, get_steam_lib_paths,
                                 get_custom_proton_installations)
-from protontricks.winetricks import get_winetricks_path
-from protontricks.gui import select_steam_app_with_gui
-from protontricks.util import run_command
+from .winetricks import get_winetricks_path
+from .gui import select_steam_app_with_gui
+from .util import run_command
 
 logger = logging.getLogger("protontricks")
 
