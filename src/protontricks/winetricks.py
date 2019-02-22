@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 
-from protontricks.util import run_command
+from .util import run_command
 
 __all__ = ("get_winetricks_path",)
 
