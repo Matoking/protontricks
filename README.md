@@ -38,7 +38,7 @@ If you have a different Steam directory, you can export ``$STEAM_DIR`` to the di
 
 If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` to the location of your local winetricks installation. You can also set ``$PROTON_VERSION`` to a specific Proton version manually.
 
-[Wanna see Protontricks in action?](https://asciinema.org/a/i2uqz1uZXYACl9NAHYbuZ3TCT)
+[Wanna see Protontricks in action?](https://asciinema.org/a/229323)
 
 # Installation
 You can easily install the latest development version using `pip`
