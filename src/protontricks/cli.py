@@ -18,8 +18,8 @@ import logging
 
 from . import __version__
 from .steam import (find_proton_app, find_steam_path,
-                                get_steam_apps, get_steam_lib_paths,
-                                get_custom_proton_installations)
+                    get_steam_apps, get_steam_lib_paths,
+                    get_custom_proton_installations)
 from .winetricks import get_winetricks_path
 from .gui import select_steam_app_with_gui
 from .util import run_command
@@ -212,7 +212,6 @@ def main():
             "$ protontricks -s <GAME NAME>"
         )
         sys.exit(-1)
-
 
     if args.winetricks_command:
         if args.runtime:

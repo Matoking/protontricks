@@ -48,6 +48,7 @@ def run_command(
     os.environ.pop("WINEARCH", "")
 
     logger.info("Attempting to run sp.call::{command}".format(command=command))
+
     try:
         subprocess.call(command, **kwargs)
     finally:

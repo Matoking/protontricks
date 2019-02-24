@@ -132,6 +132,10 @@ def find_steam_path():
     """
     Try to discover default Steam dir using common locations and return the
     first one that matches
+
+    Return (steam_path, steam_root), where steam_path points to
+    "~/.steam/steam" (contains "appcache", "config" and "steamapps")
+    and "~/.steam/root" (contains "ubuntu12_32" and "compatibilitytools.d")
     """
     def has_steamapps_dir(path):
         """
@@ -144,11 +148,14 @@ def find_steam_path():
             # 'SteamApps' name appears in installations imported from Windows
             or os.path.isdir(os.path.join(path, "SteamApps"))
         )
-    #as far as @admalledd can tell, this should always be correct for the tools root:
-    steam_root = os.path.join(os.environ["HOME"],".steam","root")
-    if not os.path.isdir(os.path.join(steam_root,'ubuntu12_32')):
-        #Check that runtime dir exists, if not make root=path and hope
-        steam_root=None
+
+    # as far as @admalledd can tell,
+    # this should always be correct for the tools root:
+    steam_root = os.path.join(os.path.expanduser("~"), ".steam", "root")
+
+    if not os.path.isdir(os.path.join(steam_root, "ubuntu12_32")):
+        # Check that runtime dir exists, if not make root=path and hope
+        steam_root = None
 
     if os.environ.get("STEAM_DIR"):
         steam_path = os.environ.get("STEAM_DIR")
@@ -156,8 +163,10 @@ def find_steam_path():
             logger.info(
                 "Found a valid Steam installation at {}.".format(steam_path)
             )
-            if not steam_root: steam_root=steam_path
-            return steam_path,steam_root
+
+            if not steam_root:
+                steam_root = steam_path
+            return steam_path, steam_root
 
         logger.error(
             "$STEAM_DIR was provided but didn't point to a valid Steam "
@@ -172,8 +181,9 @@ def find_steam_path():
                 "Found Steam directory at {}. You can also define Steam "
                 "directory manually using $STEAM_DIR".format(steam_path)
             )
-            if not steam_root: steam_root=steam_path
-            return steam_path,steam_root
+            if not steam_root:
+                steam_root = steam_path
+            return steam_path, steam_root
 
 
 def find_steam_proton_app(steam_path, steam_apps, appid=None):
