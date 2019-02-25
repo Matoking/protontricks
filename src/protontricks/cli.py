@@ -17,7 +17,7 @@ import shlex
 import logging
 
 from . import __version__
-from .steam import (find_proton_app, find_steam_path,
+from .steam import (find_proton_app, find_steam_path, find_steam_runtime_path,
                     get_steam_apps, get_steam_lib_paths,
                     get_custom_proton_installations)
 from .winetricks import get_winetricks_path
@@ -65,7 +65,10 @@ def main():
             "STEAM_DIR: path to custom Steam installation\n"
             "WINETRICKS: path to a custom 'winetricks' executable\n"
             "WINE: path to a custom 'wine' executable\n"
-            "WINESERVER: path to a custom 'wineserver' executable"
+            "WINESERVER: path to a custom 'wineserver' executable\n"
+            "STEAM_RUNTIME: 1 = enable Steam Runtime, 0 = disable Steam "
+            "Runtime, valid path = custom Steam Runtime path, "
+            "empty = enable automatically (default)"
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -85,7 +88,7 @@ def main():
         "--gui", action="store_true",
         help="Launch the Protontricks GUI.")
     parser.add_argument(
-        "--runtime", action="store_true", default=False,
+        "--no-runtime", action="store_true", default=False,
         help="Run protontricks using Steam Runtime")
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
@@ -121,7 +124,25 @@ def main():
         )
         sys.exit(-1)
 
-    # 2. Find Winetricks
+    # 2. Find Steam Runtime if enabled
+    steam_runtime_path = None
+    runtime_enabled = False
+
+    if os.environ.get("STEAM_RUNTIME", "") != "0" and not args.no_runtime:
+        runtime_enabled = True
+        steam_runtime_path = find_steam_runtime_path(steam_root=steam_root)
+
+        if not steam_runtime_path:
+            print("Steam Runtime was enabled but couldn't be found!")
+            sys.exit(-1)
+    else:
+        logger.info("Steam Runtime disabled.")
+
+    if runtime_enabled and not steam_runtime_path:
+        print("Steam Runtime not found!")
+        sys.exit(-1)
+
+    # 3. Find Winetricks
     winetricks_path = get_winetricks_path()
     if not winetricks_path:
         print(
@@ -130,13 +151,13 @@ def main():
         )
         sys.exit(-1)
 
-    # 3. Find any Steam library folders
+    # 4. Find any Steam library folders
     steam_lib_paths = get_steam_lib_paths(steam_path)
 
-    # 4. Find any Steam apps
+    # 5. Find any Steam apps
     steam_apps = get_steam_apps(steam_root, steam_lib_paths)
 
-    # 5. Find active Proton version
+    # 6. Find active Proton version
     proton_app = find_proton_app(
         steam_path=steam_path, steam_apps=steam_apps, appid=args.appid)
 
@@ -146,21 +167,14 @@ def main():
 
     # Run the GUI
     if args.gui:
-        if args.runtime:
-            runtime_cmd = [
-                os.path.join(
-                    steam_root, "ubuntu12_32", "steam-runtime", "run.sh")
-            ]
-        else:
-            runtime_cmd = []
-
         steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            command=runtime_cmd + [winetricks_path, "--gui"]
+            steam_runtime_path=steam_runtime_path,
+            command=[winetricks_path, "--gui"]
         )
         return
     # Perform a search
@@ -214,35 +228,21 @@ def main():
         sys.exit(-1)
 
     if args.winetricks_command:
-        if args.runtime:
-            runtime_cmd = [
-                os.path.join(
-                    steam_root, "ubuntu12_32", "steam-runtime", "run.sh")
-            ]
-        else:
-            runtime_cmd = []
-
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            command=runtime_cmd + [winetricks_path] + args.winetricks_command)
+            steam_runtime_path=steam_runtime_path,
+            command=[winetricks_path] + args.winetricks_command)
     elif args.command:
-        if args.runtime:
-            runtime_cmd = "'{}' ".format(
-                os.path.join(
-                    steam_root, "ubuntu12_32", "steam-runtime", "run.sh")
-            )
-        else:
-            runtime_cmd = ""
-
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            command=runtime_cmd + args.command,
+            command=args.command,
+            steam_runtime_path=steam_runtime_path,
             # Pass the command directly into the shell *without*
             # escaping it
             cwd=steam_app.install_path,

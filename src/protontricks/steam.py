@@ -9,8 +9,8 @@ import vdf
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
-    "find_steam_proton_app", "find_proton_app", "get_steam_lib_paths",
-    "get_steam_apps", "get_custom_proton_installations"
+    "find_steam_proton_app", "find_proton_app", "find_steam_runtime_path",
+    "get_steam_lib_paths", "get_steam_apps", "get_custom_proton_installations"
 )
 
 COMMON_STEAM_DIRS = [
@@ -184,6 +184,38 @@ def find_steam_path():
             if not steam_root:
                 steam_root = steam_path
             return steam_path, steam_root
+
+
+def find_steam_runtime_path(steam_root):
+    """
+    Find the Steam Runtime either using the STEAM_RUNTIME env or
+    steam_root
+    """
+    env_steam_runtime = os.environ.get("STEAM_RUNTIME", "")
+
+    if env_steam_runtime == "0":
+        # User has disabled Steam Runtime
+        logger.info("STEAM_RUNTIME is 0. Disabling Steam Runtime.")
+        return None
+    elif os.path.isdir(env_steam_runtime):
+        # User has a custom Steam Runtime
+        logger.info(
+            "Using custom Steam Runtime at %s", env_steam_runtime)
+        return env_steam_runtime
+    elif env_steam_runtime in ["1", ""]:
+        # User has enabled Steam Runtime or doesn't have STEAM_RUNTIME set;
+        # default to enabled Steam Runtime in either case
+        steam_runtime_path = os.path.join(
+            steam_root, "ubuntu12_32", "steam-runtime")
+
+        logger.info(
+            "Using default Steam Runtime at %s", steam_runtime_path)
+        return steam_runtime_path
+
+    logger.error(
+        "Path in STEAM_RUNTIME doesn't point to a valid Steam Runtime!")
+
+    return None
 
 
 def find_steam_proton_app(steam_path, steam_apps, appid=None):
