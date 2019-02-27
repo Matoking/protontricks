@@ -4,14 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - 2019-01-21
+## [Unreleased] - 2019-02-27
 ### Added
  - Add a `-c` parameter to run shell commands in the game's installation directory with relevant Wine environment variables.
+ - Steam Runtime is now supported and used by default unless disabled with `--no-runtime` flag or `STEAM_RUNTIME` environment variable.
 
 ### Fixed
  - All arguments are now correctly passed to winetricks.
  - Games that haven't been launched at least once are now excluded properly.
  - Custom Proton versions with custom display names now work properly.
+ - `PATH` environment variable is modified to prevent conflicts with system-wide Wine binaries.
+ - Steam installation is handled correctly if `~/.steam/steam` and `~/.steam/root` point to different directories.
 
 ## [1.1.1] - 2019-01-20
 ### Added
