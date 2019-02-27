@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - 2019-02-27
+## [1.2] - 2019-02-27
 ### Added
  - Add a `-c` parameter to run shell commands in the game's installation directory with relevant Wine environment variables.
  - Steam Runtime is now supported and used by default unless disabled with `--no-runtime` flag or `STEAM_RUNTIME` environment variable.
@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.2...HEAD
+[1.2]: https://github.com/Matoking/protontricks/compare/1.1.1...1.2
 [1.1.1]: https://github.com/Matoking/protontricks/compare/1.1...1.1.1
 [1.1]: https://github.com/Matoking/protontricks/compare/1.0...1.1
