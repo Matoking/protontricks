@@ -1,18 +1,24 @@
-# protontricks
-This is a fork of the original project created by sirmentio.
-The original repository is available at [Sirmentio/protontricks](https://github.com/Sirmentio/protontricks).
+protontricks
+============
+
+[![image](https://img.shields.io/pypi/v/protontricks.svg)](https://pypi.org/project/protontricks/)
 
 A simple wrapper that does winetricks things for Proton enabled games, requires Winetricks.
 
+This is a fork of the original project created by sirmentio. The original repository is available at [Sirmentio/protontricks](https://github.com/Sirmentio/protontricks).
+
 # What is it?
+
 This is a simple wrapper script that allows you to easily run Winetricks commands for Steam Play/Proton games. This is often useful when a game requires closed-source runtime libraries that are not included with Proton.
 
 # Requirements
+
 * Python 3.4 or newer
 * Winetricks
 * Steam Client Beta (comes with Proton)
 
 # Usage
+
 The basic usage is as follows:
 
 ```
@@ -32,7 +38,7 @@ protontricks --gui
 protontricks --help
 ```
 
-Since this is a wrapper, all commands that work for Winetricks will likely work for Protontricks as well
+Since this is a wrapper, all commands that work for Winetricks will likely work for Protontricks as well.
 
 If you have a different Steam directory, you can export ``$STEAM_DIR`` to the directory where Steam is.
 
@@ -41,18 +47,45 @@ If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` 
 [Wanna see Protontricks in action?](https://asciinema.org/a/229323)
 
 # Installation
-You can easily install the latest development version using `pip`
-(included with all Python 3.4+ installations):
+
+You can install Protontricks using an unofficial package or **pip**.
+
+## Unofficial packages
+
+Unofficial packages allow easier installation and updates using distro-specific package managers. Unofficial packages are maintained by community members and might be out-of-date compared to releases on PyPI.
+
+* Arch Linux ([release](https://aur.archlinux.org/packages/protontricks/), [git](https://aur.archlinux.org/packages/protontricks-git/))
+
+If you maintain an unofficial package for Protontricks, feel free to create a pull request adding an entry to this section!
+
+## Pip/PyPI
+
+You can use pip to install the latest version on PyPI or the git repository. This method should work in any system where Python 3 is available.
+
+**Note that this installation method might cause conflicts with your distro's package manager. To prevent this, you can try installing the package only for the current user or use an unofficial package.**
+
+**You will need to install pip and setuptools first.** Install the correct packages depending on your distribution:
+
+* Arch Linux: `sudo pacman -S python-pip python-setuptools`
+* Debian-based (Ubuntu, Linux Mint): `sudo apt install python3-pip python3-setuptools`
+* Fedora: `sudo dnf install python3-pip python3-setuptools`
+
+To install the latest release using `pip`:
 ```sh
-python3 -m pip install git+https://github.com/Matoking/protontricks.git
+sudo python3 -m pip install protontricks
 ```
 
-Or if you only want to install protontricks for the local user:
+To upgrade to the latest release:
 ```sh
-python3 -m pip install --user git+https://github.com/Matoking/protontricks.git
+sudo python3 -m pip install --upgrade protontricks
 ```
 
-If you want to install a specific version (in this case **1.1.1**):
+To install protontricks only for the current user:
 ```sh
-python3 -m pip install git+https://github.com/Matoking/protontricks.git@1.1.1
+python3 -m pip install --user protontricks
+```
+
+To install the latest development version (requires `git`):
+```sh
+sudo python3 -m pip install git+https://github.com/Matoking/protontricks.git
 ```
