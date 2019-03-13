@@ -157,17 +157,20 @@ def main():
     # 5. Find any Steam apps
     steam_apps = get_steam_apps(steam_root, steam_lib_paths)
 
-    # 6. Find active Proton version
-    proton_app = find_proton_app(
-        steam_path=steam_path, steam_apps=steam_apps, appid=args.appid)
-
-    if not proton_app:
-        print("Proton installation could not be found!")
-        sys.exit(-1)
+    # it's too early to find proton here, as it cannot be found if no globally active proton version is set.
+    # having no proton at this point is no problem as:
+    # 	1. not all commands require proton(search)
+    #	2. a specific steam-app will be chosen in gui mode, which might use a different proton version than the one found here
 
     # Run the GUI
     if args.gui:
         steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
+        # 6. Find proton version of selected app
+        proton_app = find_proton_app(
+        	steam_path=steam_path, steam_apps=steam_apps, appid=steam_app.appid)
+        if not proton_app:
+        	print("Proton installation could not be found!")
+        	sys.exit(-1)
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
@@ -208,7 +211,13 @@ def main():
             "can find the game."
         )
         return
+	# 6. Find globally active Proton version now
+    proton_app = find_proton_app(
+        steam_path=steam_path, steam_apps=steam_apps, appid=args.appid)
 
+    if not proton_app:
+        print("Proton installation could not be found!")
+        sys.exit(-1)
     # If neither search or GUI are set, do a normal Winetricks command
     # Find game by appid
     steam_appid = int(args.appid)
