@@ -48,9 +48,9 @@ If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` 
 
 # Installation
 
-You can install Protontricks using an unofficial package or **pip**.
+You can install Protontricks using an unofficial package or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
 
-## Unofficial packages
+## Unofficial packages (recommended)
 
 Unofficial packages allow easier installation and updates using distro-specific package managers. Unofficial packages are maintained by community members and might be out-of-date compared to releases on PyPI.
 
@@ -58,11 +58,46 @@ Unofficial packages allow easier installation and updates using distro-specific 
 
 If you maintain an unofficial package for Protontricks, feel free to create a pull request adding an entry to this section!
 
-## Pip/PyPI
+## pipx (recommended)
+
+You can use pipx to install the latest version on PyPI or the git repository for the current user. Installing protontricks using pipx is recommended if an unofficial package doesn't exist for your Linux distro.
+
+**pipx requires Python 3.6 or newer.**
+
+**You will need to install pip and virtualenv first.** Install the correct packages depending on your distribution:
+
+* Arch Linux: `sudo pacman -S python-pip python-setuptools python-virtualenv`
+* Debian-based (Ubuntu, Linux Mint): `sudo apt install python3-pip python3-setuptools python3-venv`
+* Fedora: `sudo dnf install python3-pip python3-setuptools python3-libs`
+
+After installing pip and virtualenv, run the following commands to install pipx for the current user.
+
+```sh
+python3 -m pip install --user pipx
+~/.local/bin/pipx ensurepath
+```
+
+Close and reopen your terminal. After that, you can install protontricks.
+
+```sh
+pipx install protontricks
+```
+
+To upgrade to the latest release:
+```sh
+pipx upgrade protontricks
+```
+
+To install the latest development version (requires `git`):
+```sh
+pipx install --spec git+https://github.com/Matoking/protontricks.git protontricks
+```
+
+## pip (not recommended)
 
 You can use pip to install the latest version on PyPI or the git repository. This method should work in any system where Python 3 is available.
 
-**Note that this installation method might cause conflicts with your distro's package manager. To prevent this, you can try installing the package only for the current user or use an unofficial package.**
+**Note that this installation method might cause conflicts with your distro's package manager. To prevent this, consider using the pipx method or an unofficial package instead.**
 
 **You will need to install pip and setuptools first.** Install the correct packages depending on your distribution:
 
