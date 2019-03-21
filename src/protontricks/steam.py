@@ -173,7 +173,7 @@ def find_steam_path():
             "installation."
         )
 
-        return None
+        return None, None
 
     for steam_path in COMMON_STEAM_DIRS:
         if has_steamapps_dir(steam_path):
@@ -184,6 +184,8 @@ def find_steam_path():
             if not steam_root:
                 steam_root = steam_path
             return steam_path, steam_root
+
+    return None, None
 
 
 def find_steam_runtime_path(steam_root):

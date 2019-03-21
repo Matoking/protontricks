@@ -64,7 +64,7 @@ You can use pipx to install the latest version on PyPI or the git repository for
 
 **pipx requires Python 3.6 or newer.**
 
-**You will need to install pip and virtualenv first.** Install the correct packages depending on your distribution:
+**You will need to install pip, setuptools and virtualenv first.** Install the correct packages depending on your distribution:
 
 * Arch Linux: `sudo pacman -S python-pip python-setuptools python-virtualenv`
 * Debian-based (Ubuntu, Linux Mint): `sudo apt install python3-pip python3-setuptools python3-venv`
