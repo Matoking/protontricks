@@ -162,6 +162,15 @@ def main():
 
     # Run the GUI
     if args.gui:
+        has_installed_apps = any([
+            app for app in steam_apps if app.prefix_path_exists and app.appid
+        ])
+
+        if not has_installed_apps:
+            print("Found no games. You need to launch a game at least once "
+                  "before protontricks can find it.")
+            sys.exit(-1)
+
         steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
 
         # 6. Find Proton version of selected app

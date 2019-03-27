@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Use the correct Proton installation when selecting a Steam app using the GUI.
  - Print a proper error message if Steam isn't found.
+ - Print an error message when GUI is enabled and no games were found.
 
 ## [1.2] - 2019-02-27
 ### Added
