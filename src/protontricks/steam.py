@@ -115,9 +115,12 @@ class SteamApp(object):
             logger.info("Skipping empty appmanifest {}".format(path))
             return None
 
-        # Some games use mixed case appid (e.g., Anomaly Korea and Cogs use appID),
-        # work around this by converting all keys to lower case.
-        app_state = {k.lower():v for k,v in app_state.items()}
+        # The app ID field can be named 'appID' or 'appid'.
+        # 'appid' is more common, but certain appmanifest
+        # files (created by old Steam clients?) also use 'appID'.
+        #
+        # Use case-insensitive field names to deal with these.
+        app_state = {k.lower(): v for k, v in app_state.items()}
         appid = int(app_state["appid"])
         name = app_state["name"]
         prefix_path = os.path.join(
