@@ -372,30 +372,12 @@ def get_steam_lib_paths(steam_path):
         """
         Parse the Steam library folders in the VDF file using the given data
         """
-        # VDF key & value pairs have the following syntax:
-        # \t"<KEY>"\t\t"<VALUE>"
-        pattern = re.compile(r'\t"([^"]*)"\t\t"([^"]*)"')
-
-        lines = data.split("\n")
-
-        # Skip the header and the last line
-        lines = lines[2:]
-        lines = lines[:-2]
-
-        library_folders = []
-
-        for line in lines:  # Skip the header and the last line
-            match = pattern.search(line)
-            key, value = match.group(1), match.group(2)
-
-            # Keys corresponding to library folders are integers. Other keys
-            # we can skip.
-            try:
-                key = int(key)
-            except ValueError:
-                continue
-
-            library_folders.append(value)
+        vdf_data = vdf.loads(data)
+        # Library folders have integer field names in ascending order
+        library_folders = [
+            value for key, value in vdf_data["LibraryFolders"].items()
+            if key.isdigit()
+        ]
 
         logger.info(
             "Found {} Steam library folders".format(len(library_folders))
