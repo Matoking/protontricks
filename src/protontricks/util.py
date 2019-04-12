@@ -60,6 +60,12 @@ def run_command(
 
     os.environ["WINETRICKS"] = winetricks_path
     os.environ["WINEPREFIX"] = steam_app.prefix_path
+    os.environ["WINELOADER"] = os.environ["WINE"]
+    os.environ["WINEDLLPATH"] = "".join([
+        os.path.join(proton_app.install_path, "dist", "lib64", "wine"),
+        os.pathsep,
+        os.path.join(proton_app.install_path, "dist", "lib", "wine")
+    ])
 
     os.environ["PATH"] = os.path.join(
         proton_app.install_path, "dist", "bin"
