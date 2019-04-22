@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-__all__ = ("select_steam_app_with_gui",)
+__all__ = ("select_steam_app_with_gui","select_windows_executable_with_gui",)
 
 
 def select_steam_app_with_gui(steam_apps):
@@ -30,6 +30,23 @@ def select_steam_app_with_gui(steam_apps):
             app for app in steam_apps
             if app.appid == appid)
         return steam_app
+    except subprocess.CalledProcessError:
+        raise RuntimeError("Zenity returned an error or cancel was clicked")
+    except OSError:
+        raise RuntimeError("Zenity was not found")
+
+def select_windows_executable_with_gui():
+    """
+    Prompt the user to select a windows executable to be run with Proton
+    in a SteamApp's environment.
+    
+    Return the path to the selected executable
+    """
+    try:
+        return subprocess.check_output([
+            'zenity', '--file-selection', '--title=Choose Windows Executable',
+            '--file-filter=*.exe', '--file-filter=*'
+        ])
     except subprocess.CalledProcessError:
         raise RuntimeError("Zenity returned an error or cancel was clicked")
     except OSError:

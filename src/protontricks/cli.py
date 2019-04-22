@@ -17,7 +17,8 @@ from . import __version__
 from .steam import (find_proton_app, find_steam_path, find_steam_runtime_path,
                     get_steam_apps, get_steam_lib_paths)
 from .winetricks import get_winetricks_path
-from .gui import select_steam_app_with_gui
+from .gui import (select_steam_app_with_gui,
+                  select_windows_executable_with_gui)
 from .util import run_command
 
 logger = logging.getLogger("protontricks")
@@ -86,6 +87,9 @@ def main():
     parser.add_argument(
         "--no-runtime", action="store_true", default=False,
         help="Run protontricks using Steam Runtime")
+    parser.add_argument(
+        "--wine", action="store_true",
+        help="Run something with proton in a given game's bottle")
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
@@ -97,15 +101,17 @@ def main():
 
     do_command = bool(args.command)
     do_search = bool(args.search)
-    do_gui = bool(args.gui)
-    do_winetricks = bool(args.appid and args.winetricks_command)
+    do_gui = bool(args.gui and not args.wine)
+    do_wine = bool(args.appid and args.wine and not args.gui)
+    do_wine_gui = bool(args.gui and args.wine)
+    do_winetricks = bool(args.appid and args.winetricks_command and not args.wine)
 
-    if not do_command and not do_search and not do_gui and not do_winetricks:
+    if not do_command and not do_search and not do_gui and not do_winetricks and not do_wine and not do_wine_gui:
         parser.print_help()
         return
 
     # Don't allow more than one action
-    if sum([do_search, do_gui, do_winetricks, do_command]) != 1:
+    if sum([do_search, do_gui, do_winetricks, do_command, do_wine, do_wine_gui]) != 1:
         print("Only one action can be performed at a time.")
         parser.print_help()
         return
@@ -181,14 +187,26 @@ def main():
             print("Proton installation could not be found!")
             sys.exit(-1)
 
-        run_command(
-            steam_path=steam_path,
-            winetricks_path=winetricks_path,
-            proton_app=proton_app,
-            steam_app=steam_app,
-            steam_runtime_path=steam_runtime_path,
-            command=[winetricks_path, "--gui"]
-        )
+        if args.wine:
+            executable = select_windows_executable_with_gui()
+            wine_path = os.path.join(proton_app.install_path, "dist", "bin", "wine")
+            run_command(
+                steam_path=steam_path,
+                winetricks_path=winetricks_path,
+                proton_app=proton_app,
+                steam_app=steam_app,
+                steam_runtime_path=steam_runtime_path,
+                command=[wine_path, executable]
+            )
+        else:
+            run_command(
+                steam_path=steam_path,
+                winetricks_path=winetricks_path,
+                proton_app=proton_app,
+                steam_app=steam_app,
+                steam_runtime_path=steam_runtime_path,
+                command=[winetricks_path, "--gui"]
+            )
         return
     # Perform a search
     elif args.search:
@@ -248,7 +266,16 @@ def main():
         )
         sys.exit(-1)
 
-    if args.winetricks_command:
+    if args.wine:
+        wine_path = os.path.join(proton_app.install_path, "dist", "bin", "wine")
+        run_command(
+            steam_path=steam_path,
+            winetricks_path=winetricks_path,
+            proton_app=proton_app,
+            steam_app=steam_app,
+            steam_runtime_path=steam_runtime_path,
+            command=[wine_path] + args.winetricks_command)
+    elif args.winetricks_command:
         run_command(
             steam_path=steam_path,
             winetricks_path=winetricks_path,
