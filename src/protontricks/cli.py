@@ -85,7 +85,7 @@ def main():
         help="Launch the Protontricks GUI.")
     parser.add_argument(
         "--no-runtime", action="store_true", default=False,
-        help="Run protontricks using Steam Runtime")
+        help="Disable Steam Runtime")
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
