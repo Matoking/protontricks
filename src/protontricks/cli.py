@@ -230,6 +230,20 @@ def main():
         print("Proton installation could not be found!")
         sys.exit(-1)
 
+    # Run command in WINEPREFIX when appid is not set.
+    # If WINEPREFIX is not set a sane default will be chosen
+    if not args.appid:
+      if args.command:
+        run_command(
+            steam_path=steam_path,
+            winetricks_path=winetricks_path,
+            proton_app=proton_app,
+            steam_app=None,
+            command=args.command,
+            steam_runtime_path=steam_runtime_path,
+            shell=True)
+        return
+
     # If neither search or GUI are set, do a normal Winetricks command
     # Find game by appid
     steam_appid = int(args.appid)

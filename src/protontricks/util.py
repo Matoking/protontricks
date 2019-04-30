@@ -58,8 +58,21 @@ def run_command(
             proton_app.install_path, "dist", "bin", "wineserver"
         )
 
+    if steam_app:
+        os.environ["WINEPREFIX"] = steam_app.prefix_path
+    else:
+        # Use already set WINEPREFIX or sane default if we're running without
+        # an appid
+        os.environ["WINEPREFIX"] = os.environ.get(
+            "WINEPREFIX", os.path.join(os.environ.get(
+                "XDG_DATA_DIR", os.path.join(
+                    os.environ.get("HOME"), ".local", "share")),
+                    "protontricks"))
+        if not os.path.exists(os.environ["WINEPREFIX"]):
+            os.makedirs(os.environ["WINEPREFIX"])
+        logger.info("WINEPREFIX: {0}".format(os.environ["WINEPREFIX"]))
+
     os.environ["WINETRICKS"] = winetricks_path
-    os.environ["WINEPREFIX"] = steam_app.prefix_path
     os.environ["WINELOADER"] = os.environ["WINE"]
     os.environ["WINEDLLPATH"] = "".join([
         os.path.join(proton_app.install_path, "dist", "lib64", "wine"),

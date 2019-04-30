@@ -36,6 +36,9 @@ protontricks --gui
 
 # Print the protontricks help message
 protontricks --help
+
+# Run a command in a WINEPREFIX with Proton
+WINEPREFIX="<prefix_path>" protontricks -c <command>
 ```
 
 Since this is a wrapper, all commands that work for Winetricks will likely work for Protontricks as well.
