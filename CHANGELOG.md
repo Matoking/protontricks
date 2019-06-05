@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.2.2]
 ### Fixed
  - Set `WINEDLLPATH` and `WINELOADER` environment variables.
  - Add a workaround for a Zenity bug that causes the GUI to crash when certain versions of Zenity are used.
@@ -59,7 +59,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.2.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.2.2...HEAD
+[1.2.2]: https://github.com/Matoking/protontricks/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/Matoking/protontricks/compare/1.2...1.2.1
 [1.2]: https://github.com/Matoking/protontricks/compare/1.1.1...1.2
 [1.1.1]: https://github.com/Matoking/protontricks/compare/1.1...1.1.1
