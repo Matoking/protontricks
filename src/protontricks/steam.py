@@ -257,41 +257,20 @@ def get_appinfo_sections(path):
 
         section_size = struct.calcsize(STRUCT_SECTION)
         while True:
-            # We don't actually need to parse the actual fields prior
-            # to the VDF section.
-            # Still, here they're for posterity's sake:
-            #
-            # (appid, file_size, infostate, last_updated, access_token,
-            #  sha_hash, change_number) = struct.unpack(
-            #     STRUCT_SECTION, data[i:i+section_size]
-            # )
+            # We don't need any of the fields besides 'entry_size',
+            # which is used to determine the length of the variable-length VDF
+            # field.
+            # Still, here they are for posterity's sake.
+            (appid, entry_size, infostate, last_updated, access_token,
+             sha_hash, change_number) = struct.unpack(
+                 STRUCT_SECTION, data[i:i+section_size])
+            vdf_section_size = entry_size - 40
 
             i += section_size
-
-            # The VDF library we're using doesn't have an API to parse streams
-            # containing binary VDF sections, so parse each section
-            # in two passes:
-            #
-            # First pass to figure out how long the VDF section is; vdf
-            # will spit out an error containing the actual length when it
-            # reaches the end
-            #
-            # Second pass to actually deserialize the VDF section
-            # FIXME: Replace this nonsense with something better.
-            try:
-                # Figure out how long the VDF section is
-                vdf.binary_loads(data[i:])
-            except SyntaxError as exc:
-                error = str(exc)
-                if error.startswith("Binary VDF ended at index"):
-                    section_length = int(error.split(" ")[5].replace(",", ""))
-                else:
-                    raise
-
-            # Now load the actual VDF section
-            vdf_d = vdf.binary_loads(data[i:i+section_length])
+            vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
             sections.append(vdf_d)
-            i += section_length
+
+            i += vdf_section_size
 
             if i == len(data) - 4:
                 return sections
@@ -303,8 +282,6 @@ def get_proton_appid(compat_tool_name, appinfo_path):
     used in STEAM_DIR/config/config.vdf
     """
     # Parse appinfo.vdf
-    # TODO: It takes a few seconds to parse the file. Look into speeding this
-    # up if possible.
     vdf_sections = get_appinfo_sections(appinfo_path)
 
     for section in vdf_sections:
