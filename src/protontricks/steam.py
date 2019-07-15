@@ -1,10 +1,11 @@
-import os
-import string
-import re
 import binascii
-import struct
 import glob
 import logging
+import os
+import re
+import string
+import struct
+
 import vdf
 
 __all__ = (
@@ -226,6 +227,100 @@ def find_steam_runtime_path(steam_root):
     return None
 
 
+STRUCT_HEADER = "<4sL"
+STRUCT_SECTION = "<LLLLQ20sL"
+
+
+def get_appinfo_sections(path):
+    """
+    Parse an appinfo.vdf file and return all the deserialized binary VDF
+    objects inside it
+    """
+    # appinfo.vdf is not actually a (binary) VDF file, but a binary file
+    # containing multiple binary VDF sections.
+    # File structure based on comment from vdf developer:
+    # https://github.com/ValvePython/vdf/issues/13#issuecomment-321700244
+    with open(path, "rb") as f:
+        data = f.read()
+        i = 0
+
+        # Parse the header
+        header_size = struct.calcsize(STRUCT_HEADER)
+        magic, universe = struct.unpack(STRUCT_HEADER, data[0:header_size])
+
+        i += header_size
+
+        if magic != b"'DV\x07":
+            raise SyntaxError("Invalid file magic number")
+
+        sections = []
+
+        section_size = struct.calcsize(STRUCT_SECTION)
+        while True:
+            # We don't actually need to parse the actual fields prior
+            # to the VDF section.
+            # Still, here they're for posterity's sake:
+            #
+            # (appid, file_size, infostate, last_updated, access_token,
+            #  sha_hash, change_number) = struct.unpack(
+            #     STRUCT_SECTION, data[i:i+section_size]
+            # )
+
+            i += section_size
+
+            # The VDF library we're using doesn't have an API to parse streams
+            # containing binary VDF sections, so parse each section
+            # in two passes:
+            #
+            # First pass to figure out how long the VDF section is; vdf
+            # will spit out an error containing the actual length when it
+            # reaches the end
+            #
+            # Second pass to actually deserialize the VDF section
+            # FIXME: Replace this nonsense with something better.
+            try:
+                # Figure out how long the VDF section is
+                vdf.binary_loads(data[i:])
+            except SyntaxError as exc:
+                error = str(exc)
+                if error.startswith("Binary VDF ended at index"):
+                    section_length = int(error.split(" ")[5].replace(",", ""))
+                else:
+                    raise
+
+            # Now load the actual VDF section
+            vdf_d = vdf.binary_loads(data[i:i+section_length])
+            sections.append(vdf_d)
+            i += section_length
+
+            if i == len(data) - 4:
+                return sections
+
+
+def get_proton_appid(compat_tool_name, appinfo_path):
+    """
+    Get the App ID for Proton installation by the compat tool name
+    used in STEAM_DIR/config/config.vdf
+    """
+    # Parse appinfo.vdf
+    # TODO: It takes a few seconds to parse the file. Look into speeding this
+    # up if possible.
+    vdf_sections = get_appinfo_sections(appinfo_path)
+
+    for section in vdf_sections:
+        if section.get("appinfo", {}).get("common", {}).get("name", "") != \
+                "SteamPlay 2.0 Manifests":
+            continue
+
+        # Found the SteamPlay manifest, which should have the app ID
+        return section["appinfo"]["extended"]["compat_tools"].get(
+            compat_tool_name, {}).get("appid", None)
+
+    logger.error("Could not find the Steam Play manifest in appinfo.vdf")
+
+    return None
+
+
 def find_steam_proton_app(steam_path, steam_apps, appid=None):
     """
     Get the current Proton installation used by Steam
@@ -277,12 +372,12 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     ]
     # Get the first name that was valid
     try:
-        name = next(name for name in potential_names if name)
+        compat_tool_name = next(name for name in potential_names if name)
     except StopIteration:
         logger.error("No Proton installation found in config.vdf")
         return None
 
-    # We've got the name,
+    # We've got the name from config.vdf,
     # now there are two possible ways to find the installation
     # 1. It's a custom Proton installation, and we simply need to find
     #    a SteamApp by its internal name
@@ -302,20 +397,11 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     # Try option 2:
     # Find the corresponding App ID from <steam_path>/appcache/appinfo.vdf
     appinfo_path = os.path.join(steam_path, "appcache", "appinfo.vdf")
+    proton_appid = get_proton_appid(compat_tool_name, appinfo_path)
 
-    with open(appinfo_path, "rb") as f:
-        appinfo = str(binascii.hexlify(f.read()), "utf-8")
-
-    # In ASCII, the substring we're looking for looks like this
-    # ```
-    # proton_316_beta..appid.
-    # ```
-    appid_regex = "({name_ascii}0002617070696400)([a-z0-9]{{8}})".format(
-        name_ascii=str(binascii.hexlify(bytes(name, "utf-8")), "utf-8")
-    )
-    # The second group contains the App ID as a 32-bit integer in little-endian
-    proton_appid = re.search(appid_regex, appinfo).group(2)
-    proton_appid = struct.unpack("<I", binascii.unhexlify(proton_appid))[0]
+    if not proton_appid:
+        logger.error("Could not find Proton's App ID from appinfo.vdf")
+        return None
 
     # We've now got the appid. Return the corresponding SteamApp
     try:
