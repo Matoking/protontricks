@@ -285,13 +285,15 @@ def get_proton_appid(compat_tool_name, appinfo_path):
     vdf_sections = get_appinfo_sections(appinfo_path)
 
     for section in vdf_sections:
-        if section.get("appinfo", {}).get("common", {}).get("name", "") != \
-                "SteamPlay 2.0 Manifests":
+        if not section.get("appinfo", {}).get("extended", {}).get(
+                "compat_tools", None):
             continue
 
-        # Found the SteamPlay manifest, which should have the app ID
-        return section["appinfo"]["extended"]["compat_tools"].get(
-            compat_tool_name, {}).get("appid", None)
+        if compat_tool_name in section["appinfo"]["extended"]["compat_tools"]:
+            return (
+                section["appinfo"]["extended"]["compat_tools"]
+                       [compat_tool_name]["appid"]
+            )
 
     logger.error("Could not find the Steam Play manifest in appinfo.vdf")
 
