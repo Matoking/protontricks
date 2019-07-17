@@ -281,7 +281,7 @@ def get_proton_appid(compat_tool_name, appinfo_path):
     Get the App ID for Proton installation by the compat tool name
     used in STEAM_DIR/config/config.vdf
     """
-    # Parse appinfo.vdf
+    # Parse all the individual VDF sections in appinfo.vdf to a list
     vdf_sections = get_appinfo_sections(appinfo_path)
 
     for section in vdf_sections:
@@ -289,11 +289,32 @@ def get_proton_appid(compat_tool_name, appinfo_path):
                 "compat_tools", None):
             continue
 
-        if compat_tool_name in section["appinfo"]["extended"]["compat_tools"]:
-            return (
-                section["appinfo"]["extended"]["compat_tools"]
-                       [compat_tool_name]["appid"]
-            )
+        compat_tools = section["appinfo"]["extended"]["compat_tools"]
+
+        for default_name, entry in compat_tools.items():
+            # A single compatibility tool may have multiple valid names
+            # eg. "proton_316" and "proton_316_beta"
+            aliases = [default_name]
+
+            # Each compat tool entry can also contain an 'aliases' field
+            # with a different compat tool name
+            if "aliases" in entry:
+                # All of the appinfo.vdf files encountered so far
+                # only have a single string inside the "aliases" field,
+                # but let's assume the field could be a list of strings
+                # as well
+                if isinstance(entry["aliases"], str):
+                    aliases.append(entry["aliases"])
+                elif isinstance(entry["aliases"], list):
+                    aliases += entry["aliases"]
+                else:
+                    raise TypeError(
+                        "Unexpected type {} for 'fields' in "
+                        "appinfo.vdf".format(type(aliases))
+                    )
+
+            if compat_tool_name in aliases:
+                return entry["appid"]
 
     logger.error("Could not find the Steam Play manifest in appinfo.vdf")
 
