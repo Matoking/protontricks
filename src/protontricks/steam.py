@@ -227,8 +227,8 @@ def find_steam_runtime_path(steam_root):
     return None
 
 
-STRUCT_HEADER = "<4sL"
-STRUCT_SECTION = "<LLLLQ20sL"
+APPINFO_STRUCT_HEADER = "<4sL"
+APPINFO_STRUCT_SECTION = "<LLLLQ20sL"
 
 
 def get_appinfo_sections(path):
@@ -245,8 +245,10 @@ def get_appinfo_sections(path):
         i = 0
 
         # Parse the header
-        header_size = struct.calcsize(STRUCT_HEADER)
-        magic, universe = struct.unpack(STRUCT_HEADER, data[0:header_size])
+        header_size = struct.calcsize(APPINFO_STRUCT_HEADER)
+        magic, universe = struct.unpack(
+            APPINFO_STRUCT_HEADER, data[0:header_size]
+        )
 
         i += header_size
 
@@ -255,7 +257,7 @@ def get_appinfo_sections(path):
 
         sections = []
 
-        section_size = struct.calcsize(STRUCT_SECTION)
+        section_size = struct.calcsize(APPINFO_STRUCT_SECTION)
         while True:
             # We don't need any of the fields besides 'entry_size',
             # which is used to determine the length of the variable-length VDF
@@ -263,7 +265,7 @@ def get_appinfo_sections(path):
             # Still, here they are for posterity's sake.
             (appid, entry_size, infostate, last_updated, access_token,
              sha_hash, change_number) = struct.unpack(
-                 STRUCT_SECTION, data[i:i+section_size])
+                APPINFO_STRUCT_SECTION, data[i:i+section_size])
             vdf_section_size = entry_size - 40
 
             i += section_size
