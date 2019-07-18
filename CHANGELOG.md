@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.2.3]
 ### Fixed
  - More robust parsing of appinfo.vdf. This fixes some cases where Protontricks was unable to detect Proton installations.
 
@@ -63,7 +63,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.2.2...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.2.3...HEAD
+[1.2.3]: https://github.com/Matoking/protontricks/compare/1.2.2...1.2.3
 [1.2.2]: https://github.com/Matoking/protontricks/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/Matoking/protontricks/compare/1.2...1.2.1
 [1.2]: https://github.com/Matoking/protontricks/compare/1.1.1...1.2
