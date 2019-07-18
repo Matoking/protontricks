@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.3]
+## [1.2.3] - 2019-07-18
 ### Fixed
  - More robust parsing of appinfo.vdf. This fixes some cases where Protontricks was unable to detect Proton installations.
 
-## [1.2.2]
+## [1.2.2] - 2019-06-05
 ### Fixed
  - Set `WINEDLLPATH` and `WINELOADER` environment variables.
  - Add a workaround for a Zenity bug that causes the GUI to crash when certain versions of Zenity are used.
