@@ -269,8 +269,19 @@ def get_appinfo_sections(path):
             vdf_section_size = entry_size - 40
 
             i += section_size
-            vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
-            sections.append(vdf_d)
+            try:
+                vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
+                sections.append(vdf_d)
+            except UnicodeDecodeError:
+                # vdf is unable to decode binary VDF objects containing
+                # invalid UTF-8 strings.
+                # Since we're only interested in the SteamPlay manifests,
+                # we can skip those faulty sections.
+                #
+                # TODO: Remove this once the upstream bug at
+                # https://github.com/ValvePython/vdf/issues/20
+                # is fixed
+                pass
 
             i += vdf_section_size
 

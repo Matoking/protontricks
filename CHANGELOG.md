@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Fixed
+ - Add a workaround for a VDF parser bug that causes a crash when certain appinfo.vdf files are parsed.
+
 ## [1.2.3] - 2019-07-18
 ### Fixed
  - More robust parsing of appinfo.vdf. This fixes some cases where Protontricks was unable to detect Proton installations.
