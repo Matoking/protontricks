@@ -374,7 +374,7 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     except KeyError:
         compat_tool_mapping = {}
 
-    name = None
+    compat_tool_name = None
 
     # The name of potential names in order of priority
     potential_names = [
@@ -399,7 +399,7 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
 
     # Let's try option 1 first
     try:
-        app = next(app for app in steam_apps if app.name == name)
+        app = next(app for app in steam_apps if app.name == compat_tool_name)
         logger.info(
             "Found active custom Proton installation: {}".format(app.name)
         )

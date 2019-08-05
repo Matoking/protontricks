@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Fixed
+ - Fix regression in 1.2.3 that broke detection of custom Proton installations.
+
 ## [1.2.4] - 2019-07-25
 ### Fixed
  - Add a workaround for a VDF parser bug that causes a crash when certain appinfo.vdf files are parsed.
