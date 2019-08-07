@@ -57,6 +57,9 @@ You can install Protontricks using an unofficial package or **pipx**. **pip** ca
 Unofficial packages allow easier installation and updates using distro-specific package managers. Unofficial packages are maintained by community members and might be out-of-date compared to releases on PyPI.
 
 * Arch Linux ([release](https://aur.archlinux.org/packages/protontricks/), [git](https://aur.archlinux.org/packages/protontricks-git/))
+* NixOS ([nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/package-management/protontricks/default.nix))
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/protontricks.svg)](https://repology.org/project/protontricks/versions)
 
 If you maintain an unofficial package for Protontricks, feel free to create a pull request adding an entry to this section!
 
