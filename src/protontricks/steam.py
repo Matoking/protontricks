@@ -11,7 +11,8 @@ import vdf
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
     "find_steam_proton_app", "find_proton_app", "find_steam_runtime_path",
-    "get_steam_lib_paths", "get_steam_apps", "get_custom_proton_installations"
+    "find_appid_proton_prefix", "get_steam_lib_paths", "get_steam_apps",
+    "get_custom_proton_installations"
 )
 
 COMMON_STEAM_DIRS = [
@@ -86,7 +87,7 @@ class SteamApp(object):
         return os.path.exists(os.path.join(self.install_path, "proton"))
 
     @classmethod
-    def from_appmanifest(cls, path):
+    def from_appmanifest(cls, path, steam_lib_paths):
         """
         Parse appmanifest_X.acf file containing Steam app installation metadata
         and return a SteamApp object
@@ -124,8 +125,11 @@ class SteamApp(object):
         app_state = {k.lower(): v for k, v in app_state.items()}
         appid = int(app_state["appid"])
         name = app_state["name"]
-        prefix_path = os.path.join(
-            os.path.split(path)[0], "compatdata", str(appid), "pfx")
+
+        # Proton prefix may exist on a different library
+        prefix_path = find_appid_proton_prefix(
+            appid=appid, steam_lib_paths=steam_lib_paths
+        )
 
         install_path = os.path.join(
             os.path.split(path)[0], "common", app_state["installdir"])
@@ -427,6 +431,25 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
         return None
 
 
+def find_appid_proton_prefix(appid, steam_lib_paths):
+    """
+    Find the Proton prefix for the app by its App ID
+
+    Proton prefix and the game installation itself can exist on different
+    Steam libraries, making a search necessary
+    """
+    for path in steam_lib_paths:
+        # 'steamapps' portion of the path can also be 'SteamApps'
+        for steamapps_part in ("steamapps", "SteamApps"):
+            path = os.path.join(
+                path, steamapps_part, "compatdata", str(appid), "pfx"
+            )
+            if os.path.isdir(path):
+                return path
+
+    return None
+
+
 def find_proton_app(steam_path, steam_apps, appid=None):
     """
     Find the Proton app, using either $PROTON_VERSION or the one
@@ -552,14 +575,14 @@ def get_custom_proton_installations(steam_root):
     return custom_proton_apps
 
 
-def get_steam_apps(steam_root, steam_lib_dirs):
+def get_steam_apps(steam_root, steam_lib_paths):
     """
     Find all the installed Steam apps and return them as a list of SteamApp
     objects
     """
     steam_apps = []
 
-    for path in steam_lib_dirs:
+    for path in steam_lib_paths:
         if os.path.isdir(os.path.join(path, "steamapps")):
             appmanifest_paths = glob.glob(
                 os.path.join(path, "steamapps", "appmanifest_*.acf")
@@ -570,7 +593,9 @@ def get_steam_apps(steam_root, steam_lib_dirs):
             )
 
         for path in appmanifest_paths:
-            steam_app = SteamApp.from_appmanifest(path)
+            steam_app = SteamApp.from_appmanifest(
+                path, steam_lib_paths=steam_lib_paths
+            )
             if steam_app:
                 steam_apps.append(steam_app)
 

@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix regression in 1.2.3 that broke detection of custom Proton installations.
+ - Proton prefix is detected correctly even if it exists in a different Steam library folder than the game installation.
 
 ## [1.2.4] - 2019-07-25
 ### Fixed
