@@ -58,6 +58,7 @@ Unofficial packages allow easier installation and updates using distro-specific 
 
 * Arch Linux ([release](https://aur.archlinux.org/packages/protontricks/), [git](https://aur.archlinux.org/packages/protontricks-git/))
 * NixOS ([nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/package-management/protontricks/default.nix))
+* Void Linux ([void-packages](https://github.com/void-linux/void-packages/blob/master/srcpkgs/protontricks/template))
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/protontricks.svg)](https://repology.org/project/protontricks/versions)
 
