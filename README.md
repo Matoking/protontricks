@@ -75,6 +75,7 @@ You can use pipx to install the latest version on PyPI or the git repository for
 * Arch Linux: `sudo pacman -S python-pip python-setuptools python-virtualenv`
 * Debian-based (Ubuntu, Linux Mint): `sudo apt install python3-pip python3-setuptools python3-venv`
 * Fedora: `sudo dnf install python3-pip python3-setuptools python3-libs`
+* Gentoo: `sudo emerge -av dev-python/pip dev-python/virtualenv dev-python/setuptools`
 
 After installing pip and virtualenv, run the following commands to install pipx for the current user.
 
@@ -110,6 +111,7 @@ You can use pip to install the latest version on PyPI or the git repository. Thi
 * Arch Linux: `sudo pacman -S python-pip python-setuptools`
 * Debian-based (Ubuntu, Linux Mint): `sudo apt install python3-pip python3-setuptools`
 * Fedora: `sudo dnf install python3-pip python3-setuptools`
+* Gentoo: `sudo emerge -av dev-python/pip dev-python/setuptools`
 
 To install the latest release using `pip`:
 ```sh
