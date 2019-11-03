@@ -35,7 +35,7 @@ def enable_logging(info=False):
         format="%(name)s (%(levelname)s): %(message)s")
 
 
-def main():
+def main(args=None):
     """
     'protontricks' script entrypoint
     """
@@ -93,7 +93,7 @@ def main():
         version="%(prog)s ({})".format(__version__)
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     do_command = bool(args.command)
     do_search = bool(args.search)

@@ -6,6 +6,8 @@ import re
 import string
 import struct
 
+from pathlib import Path
+
 import vdf
 
 __all__ = (
@@ -16,8 +18,8 @@ __all__ = (
 )
 
 COMMON_STEAM_DIRS = [
-    os.path.join(os.environ.get("HOME"), ".steam", "steam"),
-    os.path.join(os.environ.get("HOME"), ".local", "share", "Steam")
+    os.path.join(".steam", "steam"),
+    os.path.join(".local", "share", "Steam")
 ]
 
 logger = logging.getLogger("protontricks")
@@ -187,6 +189,8 @@ def find_steam_path():
         return None, None
 
     for steam_path in COMMON_STEAM_DIRS:
+        # The common Steam directories are found inside the home directory
+        steam_path = Path.home() / steam_path
         if has_steamapps_dir(steam_path):
             logger.info(
                 "Found Steam directory at {}. You can also define Steam "
