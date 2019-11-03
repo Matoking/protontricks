@@ -2,6 +2,8 @@ protontricks
 ============
 
 [![image](https://img.shields.io/pypi/v/protontricks.svg)](https://pypi.org/project/protontricks/)
+[![Coverage Status](https://coveralls.io/repos/github/Matoking/protontricks/badge.svg?branch=master)](https://coveralls.io/github/Matoking/protontricks?branch=master)
+[![Build Status](https://travis-ci.com/Matoking/protontricks.png?branch=master)](https://travis-ci.com/Matoking/protontricks)
 
 A simple wrapper that does winetricks things for Proton enabled games, requires Winetricks.
 
