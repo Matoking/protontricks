@@ -1,6 +1,6 @@
 import logging
-import subprocess
 import sys
+from subprocess import run, PIPE, CalledProcessError
 
 __all__ = ("select_steam_app_with_gui",)
 
@@ -20,13 +20,13 @@ def select_steam_app_with_gui(steam_apps):
     ])
 
     try:
-        result = subprocess.run([
+        result = run([
             'zenity', '--forms', '--text=Steam Game Library',
             '--title=Choose Game', '--add-combo', 'Pick a library game',
             '--combo-values', combo_values
-        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], check=True, stdout=PIPE, stderr=PIPE)
         choice = result.stdout
-    except subprocess.CalledProcessError as exc:
+    except CalledProcessError as exc:
         # TODO: Remove this hack once the bug has been fixed upstream
         # Newer versions of zenity have a bug that causes long dropdown choice
         # lists to crash the command with a specific message.

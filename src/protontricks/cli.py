@@ -122,10 +122,8 @@ def main(args=None):
 
     # 2. Find Steam Runtime if enabled
     steam_runtime_path = None
-    runtime_enabled = False
 
     if os.environ.get("STEAM_RUNTIME", "") != "0" and not args.no_runtime:
-        runtime_enabled = True
         steam_runtime_path = find_steam_runtime_path(steam_root=steam_root)
 
         if not steam_runtime_path:
@@ -133,10 +131,6 @@ def main(args=None):
             sys.exit(-1)
     else:
         logger.info("Steam Runtime disabled.")
-
-    if runtime_enabled and not steam_runtime_path:
-        print("Steam Runtime not found!")
-        sys.exit(-1)
 
     # 3. Find Winetricks
     winetricks_path = get_winetricks_path()

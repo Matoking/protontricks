@@ -174,8 +174,16 @@ def find_steam_path():
         steam_path = os.environ.get("STEAM_DIR")
         if has_steamapps_dir(steam_path):
             logger.info(
-                "Found a valid Steam installation at {}.".format(steam_path)
+                "Found a valid Steam installation at %s.", steam_path
             )
+
+            # The Steam root directory might be located alongside the
+            # user-provided directory
+            possible_steam_root = os.path.abspath(
+                os.path.join(steam_path, "..", "root")
+            )
+            if os.path.isdir(possible_steam_root):
+                steam_root = possible_steam_root
 
             if not steam_root:
                 steam_root = steam_path
@@ -587,6 +595,7 @@ def get_steam_apps(steam_root, steam_lib_paths):
     steam_apps = []
 
     for path in steam_lib_paths:
+        appmanifest_paths = []
         if os.path.isdir(os.path.join(path, "steamapps")):
             appmanifest_paths = glob.glob(
                 os.path.join(path, "steamapps", "appmanifest_*.acf")
@@ -596,9 +605,9 @@ def get_steam_apps(steam_root, steam_lib_paths):
                 os.path.join(path, "SteamApps", "appmanifest_*.acf")
             )
 
-        for path in appmanifest_paths:
+        for manifest_path in appmanifest_paths:
             steam_app = SteamApp.from_appmanifest(
-                path, steam_lib_paths=steam_lib_paths
+                manifest_path, steam_lib_paths=steam_lib_paths
             )
             if steam_app:
                 steam_apps.append(steam_app)

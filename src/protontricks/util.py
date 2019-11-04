@@ -1,7 +1,6 @@
-import sys
-import os
 import logging
-import subprocess
+import os
+from subprocess import run, check_output
 
 __all__ = ("run_command",)
 
@@ -24,12 +23,11 @@ def run_command(
         """
         Get LD_LIBRARY_PATH value to run a command using Steam Runtime
         """
-        steam_runtime_paths = subprocess.check_output([
+        steam_runtime_paths = check_output([
             os.path.join(steam_runtime_path, "run.sh"),
             "--print-steam-runtime-library-paths"
         ])
         steam_runtime_paths = str(steam_runtime_paths, "utf-8")
-
         # Add Proton installation directory first into LD_LIBRARY_PATH
         # so that libwine.so.1 is picked up correctly (see issue #3)
         return "".join([
@@ -80,10 +78,10 @@ def run_command(
         os.environ["LD_LIBRARY_PATH"] = get_runtime_library_path(
             steam_runtime_path=steam_runtime_path, proton_app=proton_app)
 
-    logger.info("Attempting to run sp.call::{command}".format(command=command))
+    logger.info("Attempting to run command %s", command)
 
     try:
-        subprocess.call(command, **kwargs)
+        run(command, **kwargs)
     finally:
         # Restore original env vars
         os.environ.clear()
