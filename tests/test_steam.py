@@ -78,7 +78,8 @@ class TestFindSteamProtonApp:
 
 class TestGetSteamApps:
     def test_get_steam_apps_custom_proton(
-            self, default_proton, custom_proton_factory, steam_dir):
+            self, default_proton, custom_proton_factory, steam_dir,
+            steam_root):
         """
         Create a custom Proton installation and ensure
         'get_steam_apps' can find it
@@ -86,7 +87,8 @@ class TestGetSteamApps:
         custom_proton = custom_proton_factory(name="Custom Proton")
 
         steam_apps = get_steam_apps(
-            steam_root=str(steam_dir.parent / "root"),
+            steam_root=str(steam_root),
+            steam_path=str(steam_dir),
             steam_lib_paths=[str(steam_dir)]
         )
 
@@ -101,7 +103,7 @@ class TestGetSteamApps:
 
     def test_get_steam_apps_in_library_folder(
             self, default_proton, steam_library_factory, steam_app_factory,
-            steam_dir):
+            steam_dir, steam_root):
         """
         Create two games, one installed in the Steam installation directory
         and another in a Steam library folder
@@ -112,7 +114,8 @@ class TestGetSteamApps:
             name="Fake game 2", appid=20, library_dir=library_dir)
 
         steam_apps = get_steam_apps(
-            steam_root=str(steam_dir.parent / "root"),
+            steam_root=str(steam_root),
+            steam_path=str(steam_dir),
             steam_lib_paths=[str(steam_dir), str(library_dir)]
         )
 

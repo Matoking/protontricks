@@ -36,6 +36,23 @@ class TestCLIRun:
             str(proton_install_path / "dist" / "lib" / "wine")
         )
 
+    def test_run_winetricks_shortcut(
+            self, cli, shortcut_factory, default_proton, command,
+            steam_dir):
+        """
+        Perform a Protontricks command for a non-Steam shortcut
+        """
+        proton_install_path = Path(default_proton.install_path)
+        shortcut_factory(install_dir="fake/path/", name="fakegame.exe")
+
+        cli(["4149337689", "winecfg"])
+
+        # Default Proton is used
+        assert command.env["WINE"] == str(
+            proton_install_path / "dist" / "bin" / "wine")
+        assert command.env["WINEPREFIX"] == str(
+            steam_dir / "steamapps" / "compatdata" / "4149337689" / "pfx")
+
     def test_run_winetricks_select_proton(
             self, cli, steam_app_factory, default_proton,
             custom_proton_factory, command, home_dir):
@@ -329,3 +346,16 @@ class TestCLISearch:
         assert "Fake game 1" in result
         assert "Fake game 2" in result
         assert "Fake game 3" in result
+
+    def test_search_shortcut(
+            self, cli, shortcut_factory):
+        """
+        Create two non-Steam shortcut and ensure they can be found
+        """
+        shortcut_factory(install_dir="fake/path/", name="fakegame.exe")
+        shortcut_factory(install_dir="fake/path2/", name="fakegame.exe")
+
+        result = cli(["-v", "-s", "steam"])
+
+        assert "Non-Steam shortcut: fakegame.exe (4149337689)" in result
+        assert "Non-Steam shortcut: fakegame.exe (4136117770)" in result

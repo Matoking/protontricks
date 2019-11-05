@@ -145,7 +145,10 @@ def main(args=None):
     steam_lib_paths = get_steam_lib_paths(steam_path)
 
     # 5. Find any Steam apps
-    steam_apps = get_steam_apps(steam_root, steam_lib_paths)
+    steam_apps = get_steam_apps(
+        steam_root=steam_root, steam_path=steam_path,
+        steam_lib_paths=steam_lib_paths
+    )
 
     # It's too early to find Proton here,
     # as it cannot be found if no globally active Proton version is set.

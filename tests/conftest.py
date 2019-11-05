@@ -1,14 +1,17 @@
 import os
+import random
 import shutil
 import struct
+import zlib
+from collections import defaultdict
 from pathlib import Path
 
 import vdf
-
-import pytest
 from protontricks.cli import main
 from protontricks.steam import (APPINFO_STRUCT_HEADER, APPINFO_STRUCT_SECTION,
-                                SteamApp)
+                                SteamApp, get_appid_from_shortcut)
+
+import pytest
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -60,6 +63,15 @@ def steam_dir(home_dir):
     yield steam_path / "steam"
 
 
+@pytest.fixture(scope="function")
+def steam_root(steam_dir):
+    """
+    Fake Steam directory. Compared to "steam_dir", it points to
+    "~/.steam/root" instead of "~/.steam/steam"
+    """
+    yield steam_dir.parent / "root"
+
+
 @pytest.fixture(scope="function", autouse=True)
 def steam_runtime_dir(steam_dir):
     """
@@ -77,6 +89,101 @@ def steam_runtime_dir(steam_dir):
     )
 
     yield steam_dir.parent / "root" / "ubuntu12_32"
+
+
+@pytest.fixture(scope="function")
+def steam_user_factory(steam_dir):
+    """
+    Factory function for creating fake Steam users
+    """
+    steam_users = []
+
+    def func(name, steamid64=None):
+        if not steamid64:
+            steamid64 = random.randint((2**32), (2**64)-1)
+        steam_users.append({
+            "name": name,
+            "steamid64": steamid64
+        })
+
+        loginusers_path = steam_dir / "config" / "loginusers.vdf"
+        data = {"users": {}}
+        for i, user in enumerate(steam_users):
+            data["users"][str(user["steamid64"])] = {
+                "AccountName": user["name"],
+                # This ensures the newest Steam user is assumed to be logged-in
+                "Timestamp": i
+            }
+
+        loginusers_path.write_text(vdf.dumps(data))
+
+        return steamid64
+
+    return func
+
+
+@pytest.fixture(scope="function", autouse=True)
+def steam_user(steam_user_factory):
+    return steam_user_factory(name="TestUser", steamid64=(2**32)+42)
+
+
+@pytest.fixture(scope="function")
+def shortcut_factory(steam_dir, steam_user):
+    """
+    Factory function for creating fake shortcuts
+    """
+    shortcuts_by_user = defaultdict(list)
+
+    def func(install_dir, name, steamid64=None):
+        if not steamid64:
+            steamid64 = steam_user
+
+        # Update shortcuts.vdf first
+        steamid3 = int(steamid64) & 0xffffffff
+        shortcuts_by_user[steamid3].append({
+            "install_dir": install_dir, "name": name
+        })
+
+        shortcut_path = (
+            steam_dir / "userdata" / str(steamid3) / "config"
+            / "shortcuts.vdf"
+        )
+        shortcut_path.parent.mkdir(parents=True, exist_ok=True)
+        data = {"shortcuts": {}}
+        for shortcut_data in shortcuts_by_user[steamid3]:
+            install_dir_ = shortcut_data["install_dir"]
+            name_ = shortcut_data["name"]
+
+            entry = {
+                "AppName": name_,
+                "StartDir": install_dir_,
+                "exe": str(Path(install_dir_) / name_)
+            }
+            # Derive the shortcut ID
+            crc_data = b"".join([
+                entry["exe"].encode("utf-8"),
+                entry["AppName"].encode("utf-8")
+            ])
+            result = zlib.crc32(crc_data) & 0xffffffff
+            result = result | 0x80000000
+            shortcut_id = (result << 32) | 0x02000000
+
+            data["shortcuts"][str(shortcut_id)] = entry
+
+        shortcut_path.write_bytes(vdf.binary_dumps(data))
+
+        appid = get_appid_from_shortcut(
+            target=str(Path(install_dir) / name), name=name
+        )
+
+        # Create the fake prefix
+        (steam_dir / "steamapps" / "compatdata" / str(appid) / "pfx").mkdir(
+            parents=True)
+        (steam_dir / "steamapps" / "compatdata" / str(appid) / "pfx.lock").touch()
+
+        return shortcut_id
+
+    return func
 
 
 @pytest.fixture(scope="function", autouse=True)
