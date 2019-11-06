@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.3] - 2019-11-06
 ### Added
  - Non-Steam applications are now detected.
 
@@ -79,7 +79,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.2.5...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.3...HEAD
+[1.3]: https://github.com/Matoking/protontricks/compare/1.2.5...1.3
 [1.2.5]: https://github.com/Matoking/protontricks/compare/1.2.4...1.2.5
 [1.2.4]: https://github.com/Matoking/protontricks/compare/1.2.3...1.2.4
 [1.2.3]: https://github.com/Matoking/protontricks/compare/1.2.2...1.2.3
