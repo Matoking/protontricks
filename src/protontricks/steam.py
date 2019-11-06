@@ -672,7 +672,7 @@ def get_custom_windows_shortcuts(steam_path):
         prefix_path = os.path.join(
             steam_path, "steamapps", "compatdata", str(appid), "pfx"
         )
-        install_path = shortcut_data["startdir"]
+        install_path = shortcut_data["startdir"].strip('"')
 
         if not os.path.isdir(prefix_path):
             continue
