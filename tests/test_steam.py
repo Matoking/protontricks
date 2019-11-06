@@ -1,8 +1,10 @@
-import pytest
-
-from protontricks.steam import SteamApp, find_steam_proton_app, get_steam_apps
-
+import os
 from pathlib import Path
+
+from protontricks.steam import (SteamApp, find_steam_path,
+                                find_steam_proton_app, get_steam_apps)
+
+import pytest
 
 
 class TestSteamApp:
@@ -74,6 +76,28 @@ class TestFindSteamProtonApp:
         # Proton 4.20 is the global default, but Proton 6.66 is the selected
         # version for this game
         assert proton_app.name == "Proton 6.66"
+
+
+class TestFindSteamPath:
+    def test_find_steam_path_env(
+            self, steam_dir, steam_root, tmp_path, monkeypatch):
+        """
+        Ensure the Steam directory is found when using STEAM_DIR env var
+        and when both runtime and steamapps directories exist inside
+        the path
+        """
+        custom_path = tmp_path / "custom_steam"
+        custom_path.mkdir()
+
+        monkeypatch.setenv("STEAM_DIR", str(custom_path))
+
+        os.rename(steam_dir / "steamapps", custom_path / "steamapps")
+
+        # The path isn't valid yet
+        assert find_steam_path() == (None, None)
+
+        os.rename(steam_root / "ubuntu12_32", custom_path / "ubuntu12_32")
+        assert find_steam_path() == (str(custom_path), str(custom_path))
 
 
 class TestGetSteamApps:

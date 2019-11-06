@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Non-Steam applications are now detected.
 
+### Fixed
+ - `STEAM_DIR` environment variable will no longer fallback to default path in some cases
+
 ## [1.2.5] - 2019-09-17
 ### Fixed
  - Fix regression in 1.2.3 that broke detection of custom Proton installations.

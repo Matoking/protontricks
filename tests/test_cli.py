@@ -77,16 +77,21 @@ class TestCLIRun:
         """
         steam_app_factory(name="Fake game", appid=10)
         os.rename(
-            (home_dir / ".steam"),
+            (home_dir / ".steam" / "steam"),
             (home_dir / ".steam_new")
         )
+        os.rename(
+            (home_dir / ".steam" / "root" / "ubuntu12_32"),
+            (home_dir / ".steam_new" / "ubuntu12_32")
+        )
+
         cli(
             ["10", "winecfg"],
-            env={"STEAM_DIR": str(home_dir / ".steam_new" / "steam")}
+            env={"STEAM_DIR": str(home_dir / ".steam_new")}
         )
 
         assert command.env["WINE"] == str(
-            home_dir / ".steam_new" / "steam" / "steamapps" / "common"
+            home_dir / ".steam_new" / "steamapps" / "common"
             / "Proton 4.20" / "dist" / "bin" / "wine"
         )
 
