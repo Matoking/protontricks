@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 
-from protontricks.steam import (SteamApp, find_steam_path,
-                                find_steam_proton_app, get_steam_apps)
+from protontricks.steam import (SteamApp, find_appid_proton_prefix,
+                                find_steam_path, find_steam_proton_app,
+                                get_steam_apps)
 
 import pytest
 
@@ -76,6 +77,33 @@ class TestFindSteamProtonApp:
         # Proton 4.20 is the global default, but Proton 6.66 is the selected
         # version for this game
         assert proton_app.name == "Proton 6.66"
+
+
+class TestFindAppidProtonPrefix:
+    def test_find_appid_proton_prefix_steamapps_case(
+            self, steam_app_factory, steam_dir, default_proton,
+            steam_library_factory):
+        """
+        Find the proton prefix directory for a game located inside
+        a "SteamApps" directory instead of the default "steamapps".
+
+        Regression test for #33.
+        """
+        library_dir = steam_library_factory("TestLibrary")
+        steam_app_factory(name="Test game", appid=10, library_dir=library_dir)
+
+        os.rename(
+            library_dir / "steamapps",
+            library_dir / "SteamApps"
+        )
+
+        path = find_appid_proton_prefix(
+            appid=10, steam_lib_paths=[str(steam_dir), str(library_dir)]
+        )
+
+        assert path == str(
+            library_dir / "SteamApps" / "compatdata" / "10" / "pfx"
+        )
 
 
 class TestFindSteamPath:
