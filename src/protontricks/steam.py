@@ -449,11 +449,11 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
     for path in steam_lib_paths:
         # 'steamapps' portion of the path can also be 'SteamApps'
         for steamapps_part in ("steamapps", "SteamApps"):
-            path = os.path.join(
+            prefix_path = os.path.join(
                 path, steamapps_part, "compatdata", str(appid), "pfx"
             )
-            if os.path.isdir(path):
-                return path
+            if os.path.isdir(prefix_path):
+                return prefix_path
 
     return None
 
