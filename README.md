@@ -52,7 +52,7 @@ If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` 
 
 You can install Protontricks using an unofficial package or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
 
-**If you're using the Flatpak version of Steam**, see [this page](https://github.com/Matoking/protontricks/wiki/Usage-with-Flatpak-Steam) for installation instructions.
+**If you're using the Flatpak version of Steam**, follow the [Flatpak-specific installation instructions](https://github.com/flathub/com.valvesoftware.Steam.Utility.protontricks) instead.
 
 ## Unofficial packages (recommended)
 
