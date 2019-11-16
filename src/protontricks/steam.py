@@ -446,6 +446,8 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
     Proton prefix and the game installation itself can exist on different
     Steam libraries, making a search necessary
     """
+    candidates = []
+
     for path in steam_lib_paths:
         # 'steamapps' portion of the path can also be 'SteamApps'
         for steamapps_part in ("steamapps", "SteamApps"):
@@ -453,7 +455,19 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
                 path, steamapps_part, "compatdata", str(appid), "pfx"
             )
             if os.path.isdir(prefix_path):
-                return prefix_path
+                candidates.append(prefix_path)
+
+    if len(candidates) > 1:
+        # If we have more than one possible prefix path, use the one
+        # with the most recent modification date
+        logger.info(
+            "Multiple compatdata directories found for app %s", appid
+        )
+        candidates.sort(key=lambda x: os.stat(x).st_mtime)
+        candidates.reverse()
+
+    if candidates:
+        return candidates[0]
 
     return None
 

@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix Proton prefix detection when the prefix directory is located inside a `SteamApps` directory instead of `steamapps`
+ - Use the most recently used Proton prefix when multiple prefix directories are found for a single game
 
 ## [1.3] - 2019-11-06
 ### Added

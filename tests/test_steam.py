@@ -1,4 +1,6 @@
 import os
+import shutil
+import time
 from pathlib import Path
 
 from protontricks.steam import (SteamApp, find_appid_proton_prefix,
@@ -103,6 +105,52 @@ class TestFindAppidProtonPrefix:
 
         assert path == str(
             library_dir / "SteamApps" / "compatdata" / "10" / "pfx"
+        )
+
+    def test_find_appid_proton_prefix_latest_compatdata(
+            self, steam_app_factory, steam_library_factory):
+        """
+        Find the correct Proton prefix directory for a game that has
+        three compatdata directories, two of which are old.
+        """
+        library_dir_a = steam_library_factory("TestLibraryA")
+        library_dir_b = steam_library_factory("TestLibraryB")
+        library_dir_c = steam_library_factory("TestLibraryC")
+        steam_app_factory(
+            name="Test game", appid=10, library_dir=library_dir_a
+        )
+
+        shutil.copytree(
+            library_dir_a / "steamapps" / "compatdata",
+            library_dir_b / "steamapps" / "compatdata",
+        )
+        shutil.copytree(
+            library_dir_a / "steamapps" / "compatdata",
+            library_dir_c / "steamapps" / "compatdata"
+        )
+
+        # Give the copy in library B the most recent modification timestamp
+        os.utime(
+            library_dir_a / "steamapps" / "compatdata" / "10" / "pfx",
+            (time.time() - 100, time.time() - 100)
+        )
+        os.utime(
+            library_dir_b / "steamapps" / "compatdata" / "10" / "pfx",
+            (time.time() - 25, time.time() - 25)
+        )
+        os.utime(
+            library_dir_c / "steamapps" / "compatdata" / "10" / "pfx",
+            (time.time() - 50, time.time() - 50)
+        )
+
+        path = find_appid_proton_prefix(
+            appid=10,
+            steam_lib_paths=[
+                str(library_dir_a), str(library_dir_b), str(library_dir_c)
+            ]
+        )
+        assert path == str(
+            library_dir_b / "steamapps" / "compatdata" / "10" / "pfx"
         )
 
 
