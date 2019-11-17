@@ -446,6 +446,20 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
     Proton prefix and the game installation itself can exist on different
     Steam libraries, making a search necessary
     """
+    def get_prefix_modify_time(prefix_path):
+        """
+        Get the prefix modification time for sorting purposes.
+        The newest modification time corresponds to the most recently
+        used Proton prefix
+        """
+        try:
+            # 'pfx.lock' is modified on game launch
+            return os.stat(
+                os.path.join(prefix_path, "..", "pfx.lock")
+            ).st_mtime
+        except FileNotFoundError:
+            return 0
+
     candidates = []
 
     for path in steam_lib_paths:
@@ -463,7 +477,7 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
         logger.info(
             "Multiple compatdata directories found for app %s", appid
         )
-        candidates.sort(key=lambda x: os.stat(x).st_mtime)
+        candidates.sort(key=get_prefix_modify_time)
         candidates.reverse()
 
     if candidates:

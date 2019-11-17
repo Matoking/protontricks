@@ -131,15 +131,15 @@ class TestFindAppidProtonPrefix:
 
         # Give the copy in library B the most recent modification timestamp
         os.utime(
-            library_dir_a / "steamapps" / "compatdata" / "10" / "pfx",
+            library_dir_a / "steamapps" / "compatdata" / "10" / "pfx.lock",
             (time.time() - 100, time.time() - 100)
         )
         os.utime(
-            library_dir_b / "steamapps" / "compatdata" / "10" / "pfx",
+            library_dir_b / "steamapps" / "compatdata" / "10" / "pfx.lock",
             (time.time() - 25, time.time() - 25)
         )
         os.utime(
-            library_dir_c / "steamapps" / "compatdata" / "10" / "pfx",
+            library_dir_c / "steamapps" / "compatdata" / "10" / "pfx.lock",
             (time.time() - 50, time.time() - 50)
         )
 
