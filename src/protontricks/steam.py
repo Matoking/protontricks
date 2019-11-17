@@ -194,7 +194,7 @@ def find_steam_path():
 
     for steam_path in COMMON_STEAM_DIRS:
         # The common Steam directories are found inside the home directory
-        steam_path = Path.home() / steam_path
+        steam_path = str(Path.home() / steam_path)
         if has_steamapps_dir(steam_path):
             logger.info(
                 "Found Steam directory at {}. You can also define Steam "

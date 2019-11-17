@@ -365,7 +365,7 @@ def proton_factory(steam_app_factory, appinfo_factory, steam_config_path):
         steam_app = steam_app_factory(
             name=name, appid=appid, library_dir=library_dir
         )
-        shutil.rmtree(Path(steam_app.prefix_path).parent)
+        shutil.rmtree(str(Path(steam_app.prefix_path).parent))
         steam_app.prefix_path = None
 
         (Path(steam_app.install_path) / "proton").touch()

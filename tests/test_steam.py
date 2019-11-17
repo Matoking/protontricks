@@ -95,8 +95,8 @@ class TestFindAppidProtonPrefix:
         steam_app_factory(name="Test game", appid=10, library_dir=library_dir)
 
         os.rename(
-            library_dir / "steamapps",
-            library_dir / "SteamApps"
+            str(library_dir / "steamapps"),
+            str(library_dir / "SteamApps")
         )
 
         path = find_appid_proton_prefix(
@@ -121,25 +121,25 @@ class TestFindAppidProtonPrefix:
         )
 
         shutil.copytree(
-            library_dir_a / "steamapps" / "compatdata",
-            library_dir_b / "steamapps" / "compatdata",
+            str(library_dir_a / "steamapps" / "compatdata"),
+            str(library_dir_b / "steamapps" / "compatdata"),
         )
         shutil.copytree(
-            library_dir_a / "steamapps" / "compatdata",
-            library_dir_c / "steamapps" / "compatdata"
+            str(library_dir_a / "steamapps" / "compatdata"),
+            str(library_dir_c / "steamapps" / "compatdata")
         )
 
         # Give the copy in library B the most recent modification timestamp
         os.utime(
-            library_dir_a / "steamapps" / "compatdata" / "10" / "pfx.lock",
+            str(library_dir_a / "steamapps" / "compatdata" / "10" / "pfx.lock"),
             (time.time() - 100, time.time() - 100)
         )
         os.utime(
-            library_dir_b / "steamapps" / "compatdata" / "10" / "pfx.lock",
+            str(library_dir_b / "steamapps" / "compatdata" / "10" / "pfx.lock"),
             (time.time() - 25, time.time() - 25)
         )
         os.utime(
-            library_dir_c / "steamapps" / "compatdata" / "10" / "pfx.lock",
+            str(library_dir_c / "steamapps" / "compatdata" / "10" / "pfx.lock"),
             (time.time() - 50, time.time() - 50)
         )
 
@@ -167,12 +167,18 @@ class TestFindSteamPath:
 
         monkeypatch.setenv("STEAM_DIR", str(custom_path))
 
-        os.rename(steam_dir / "steamapps", custom_path / "steamapps")
+        os.rename(
+            str(steam_dir / "steamapps"),
+            str(custom_path / "steamapps")
+        )
 
         # The path isn't valid yet
         assert find_steam_path() == (None, None)
 
-        os.rename(steam_root / "ubuntu12_32", custom_path / "ubuntu12_32")
+        os.rename(
+            str(steam_root / "ubuntu12_32"),
+            str(custom_path / "ubuntu12_32")
+        )
         assert find_steam_path() == (str(custom_path), str(custom_path))
 
 

@@ -77,12 +77,12 @@ class TestCLIRun:
         """
         steam_app_factory(name="Fake game", appid=10)
         os.rename(
-            (home_dir / ".steam" / "steam"),
-            (home_dir / ".steam_new")
+            str(home_dir / ".steam" / "steam"),
+            str(home_dir / ".steam_new")
         )
         os.rename(
-            (home_dir / ".steam" / "root" / "ubuntu12_32"),
-            (home_dir / ".steam_new" / "ubuntu12_32")
+            str(home_dir / ".steam" / "root" / "ubuntu12_32"),
+            str(home_dir / ".steam_new" / "ubuntu12_32")
         )
 
         cli(
@@ -146,7 +146,7 @@ class TestCLIRun:
         """
         Try performing a command with a missing Steam directory
         """
-        shutil.rmtree(steam_dir)
+        shutil.rmtree(str(steam_dir))
 
         result = cli(["10", "winecfg"], expect_exit=True)
 
