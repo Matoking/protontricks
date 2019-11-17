@@ -6,6 +6,7 @@ matrix:
       dist: xenial
       sudo: true
     - python: "3.6"
+    - python: "3.5"
 install:
   - pip install .
   - pip install -r requirements_dev.txt
