@@ -42,8 +42,10 @@ def select_steam_app_with_gui(steam_apps):
         # 'exc.returncode == 1' avoids zenity error when
         # no game is selected
         is_zenity_bug = (
-            (exc.returncode == -6 and
-            exc.stderr == b'free(): double free detected in tcache 2\n') or
+            (
+                exc.returncode == -6 and
+                exc.stderr == b'free(): double free detected in tcache 2\n'
+            ) or
             exc.returncode == 1
         )
 
