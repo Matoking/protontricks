@@ -14,10 +14,12 @@ def select_steam_app_with_gui(steam_apps):
 
     Return the selected SteamApp
     """
+    # '.encode' fixes zenity crash on systems with non-en_US locales
+    # 'ignore' argument removes unicode characters
     combo_values = "|".join([
         '{}: {}'.format(app.name, app.appid) for app in steam_apps
         if app.prefix_path_exists and app.appid
-    ])
+    ]).encode('ascii', 'ignore')
 
     try:
         result = run([
@@ -36,9 +38,13 @@ def select_steam_app_with_gui(steam_apps):
         # Related issues:
         # https://github.com/Matoking/protontricks/issues/20
         # https://gitlab.gnome.org/GNOME/zenity/issues/7
+        #
+        # 'exc.returncode == 1' avoids zenity error when
+        # no game is selected
         is_zenity_bug = (
-            exc.returncode == -6 and
-            exc.stderr == b'free(): double free detected in tcache 2\n'
+            (exc.returncode == -6 and
+            exc.stderr == b'free(): double free detected in tcache 2\n') or
+            exc.returncode == 1
         )
 
         if is_zenity_bug:
