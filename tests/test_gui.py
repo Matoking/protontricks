@@ -1,7 +1,9 @@
-import pytest
 from subprocess import CalledProcessError
+
 from protontricks.gui import select_steam_app_with_gui
-from protontricks.steam import SteamApp
+
+import pytest
+from conftest import MockResult
 
 
 @pytest.fixture(scope="function")
@@ -20,6 +22,35 @@ def broken_zenity(zenity, monkeypatch):
             output=zenity.mock_stdout,
             stderr=b"free(): double free detected in tcache 2\n"
         )
+
+    monkeypatch.setattr(
+        "protontricks.gui.run",
+        mock_subprocess_run
+    )
+
+    yield zenity
+
+
+@pytest.fixture(scope="function")
+def locale_error_zenity(zenity, monkeypatch):
+    """
+    Mock a Zenity executable returning a 255 error due to a locale issue
+    on first run and working normally on second run
+    """
+    def mock_subprocess_run(args, **kwargs):
+        if not zenity.args:
+            zenity.args = args
+            raise CalledProcessError(
+                returncode=255,
+                cmd=args,
+                output="",
+                stderr=(
+                    b"This option is not available. "
+                    b"Please see --help for all possible usages."
+                )
+            )
+
+        return MockResult(stdout=zenity.mock_stdout.encode("utf-8"))
 
     monkeypatch.setattr(
         "protontricks.gui.run",
@@ -75,3 +106,24 @@ class TestSelectApp:
 
         assert steam_app == steam_apps[1]
 
+    def test_select_game_locale_error(
+            self, locale_error_zenity, steam_app_factory, caplog):
+        """
+        Try choosing a game with an environment that can't handle non-ASCII
+        characters
+        """
+        steam_apps = [
+            steam_app_factory(name="Fäke game 1", appid=10),
+            steam_app_factory(name="Fäke game 2", appid=20)
+        ]
+
+        # Fake user selecting 'Fäke game 2'. The non-ASCII character 'ä'
+        # is stripped since Zenity wouldn't be able to display the character.
+        locale_error_zenity.mock_stdout = "Fke game 2: 20"
+        steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
+
+        assert steam_app == steam_apps[1]
+        assert (
+            "Your system locale is incapable of displaying all characters"
+            in caplog.records[0].message
+        )
