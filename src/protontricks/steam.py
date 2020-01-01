@@ -561,20 +561,31 @@ def get_steam_lib_paths(steam_path):
     return [steam_path] + library_folders
 
 
-def get_custom_proton_installations(steam_root):
+def get_compat_tool_dirs(steam_root):
+    paths = [
+        "/usr/share/steam/compatibilitytools.d",
+        "/usr/local/share/steam/compatibilitytools.d",
+    ]
+    extra_ct_paths_env = os.getenv("STEAM_EXTRA_COMPAT_TOOLS_PATHS")
+    if extra_ct_paths_env:
+        paths += extra_ct_paths_env.split(os.pathsep)
+    paths += [os.path.join(steam_root, "compatibilitytools.d")]
+    return paths
+
+
+def get_proton_installations(compat_tool_dir):
     """
     Return a list of custom Proton installations as a list of SteamApp objects
     """
-    comp_root = os.path.join(steam_root, "compatibilitytools.d")
 
-    if not os.path.isdir(comp_root):
+    if not os.path.isdir(compat_tool_dir):
         return []
 
     comptool_files = glob.glob(
-        os.path.join(comp_root, "*", "compatibilitytool.vdf")
+        os.path.join(compat_tool_dir, "*", "compatibilitytool.vdf")
     )
     comptool_files += glob.glob(
-        os.path.join(comp_root, "compatibilitytool.vdf")
+        os.path.join(compat_tool_dir, "compatibilitytool.vdf")
     )
 
     custom_proton_apps = []
@@ -602,12 +613,19 @@ def get_custom_proton_installations(steam_root):
         if install_path == ".":
             install_path = os.path.dirname(vdf_path)
         else:
-            install_path = os.path.join(comp_root, install_path)
+            install_path = os.path.join(compat_tool_dir, install_path)
 
         custom_proton_apps.append(
             SteamApp(name=internal_name, install_path=install_path)
         )
 
+    return custom_proton_apps
+
+
+def get_custom_proton_installations(steam_root):
+    custom_proton_apps = []
+    for d in get_compat_tool_dirs(steam_root=steam_root):
+        custom_proton_apps += get_proton_installations(d)
     return custom_proton_apps
 
 
