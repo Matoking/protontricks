@@ -7,6 +7,10 @@ __all__ = ("select_steam_app_with_gui",)
 logger = logging.getLogger("protontricks")
 
 
+class LocaleError(Exception):
+    pass
+
+
 def select_steam_app_with_gui(steam_apps):
     """
     Prompt the user to select a Proton-enabled Steam app from
@@ -14,17 +18,53 @@ def select_steam_app_with_gui(steam_apps):
 
     Return the selected SteamApp
     """
+    def run_zenity(args, strip_nonascii=False):
+        """
+        Run Zenity with the given args.
+
+        If 'strip_nonascii' is True, strip non-ASCII characters to workaround
+        environments that can't handle all characters
+        """
+        if strip_nonascii:
+            # Convert to bytes and back to strings while stripping
+            # non-ASCII characters
+            args = [
+                arg.encode("ascii", "ignore").decode("ascii") for arg in args
+            ]
+
+        try:
+            return run(args, check=True, stdout=PIPE, stderr=PIPE)
+        except CalledProcessError as exc:
+            if exc.returncode == 255:
+                # User locale incapable of handling all characters in the
+                # command
+                raise LocaleError()
+
+            raise
+
     combo_values = "|".join([
         '{}: {}'.format(app.name, app.appid) for app in steam_apps
         if app.prefix_path_exists and app.appid
     ])
+    args = [
+        "zenity", "--forms", "--text=Steam Game Library",
+        "--title=Choose Game", "--add-combo", "Pick a library game",
+        "--combo-values", combo_values
+    ]
 
     try:
-        result = run([
-            'zenity', '--forms', '--text=Steam Game Library',
-            '--title=Choose Game', '--add-combo', 'Pick a library game',
-            '--combo-values', combo_values
-        ], check=True, stdout=PIPE, stderr=PIPE)
+        try:
+            result = run_zenity(args)
+        except LocaleError:
+            # User has weird locale settings. Log a warning and
+            # run the command while stripping non-ASCII characters.
+            logger.warning(
+                "Your system locale is incapable of displaying all "
+                "characters. Some app names may not show up correctly. "
+                "Please use an UTF-8 locale to avoid this warning."
+            )
+            result = run_zenity(args, strip_nonascii=True)
+
         choice = result.stdout
     except CalledProcessError as exc:
         # TODO: Remove this hack once the bug has been fixed upstream
@@ -36,9 +76,15 @@ def select_steam_app_with_gui(steam_apps):
         # Related issues:
         # https://github.com/Matoking/protontricks/issues/20
         # https://gitlab.gnome.org/GNOME/zenity/issues/7
+        #
+        # 'exc.returncode == 1' avoids zenity error when
+        # no game is selected
         is_zenity_bug = (
-            exc.returncode == -6 and
-            exc.stderr == b'free(): double free detected in tcache 2\n'
+            (
+                exc.returncode == -6 and
+                exc.stderr == b'free(): double free detected in tcache 2\n'
+            ) or
+            exc.returncode == 1
         )
 
         if is_zenity_bug:
