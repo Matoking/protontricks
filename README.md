@@ -17,7 +17,7 @@ This is a simple wrapper script that allows you to easily run Winetricks command
 
 * Python 3.5 or newer
 * Winetricks
-* Steam Client Beta (comes with Proton)
+* Steam
 
 # Usage
 
