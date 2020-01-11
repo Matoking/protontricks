@@ -5,6 +5,7 @@ from pathlib import Path
 
 from protontricks.steam import (SteamApp, find_appid_proton_prefix,
                                 find_steam_path, find_steam_proton_app,
+                                get_custom_proton_installations,
                                 get_steam_apps)
 
 import pytest
@@ -234,3 +235,41 @@ class TestGetSteamApps:
             str(steam_dir / "steamapps" / "common" / "Fake game 1")
         assert steam_app_b.install_path == \
             str(library_dir / "steamapps" / "common" / "Fake game 2")
+
+    def test_get_steam_apps_proton_precedence(
+            self, custom_proton_factory, home_dir, steam_root, steam_dir,
+            monkeypatch):
+        """
+        Create two Proton apps with the same name but located in
+        different paths. Only one will be returned due to precedence
+        in the directory paths
+        """
+        custom_compat_dir = home_dir / "CompatTools"
+
+        monkeypatch.setenv(
+            "STEAM_EXTRA_COMPAT_TOOLS_PATHS", str(custom_compat_dir)
+        )
+
+        proton_app_a = custom_proton_factory(
+            name="Fake Proton", compat_tool_dir=custom_compat_dir
+        )
+
+        steam_apps = get_steam_apps(
+            steam_root=str(steam_root),
+            steam_path=str(steam_dir),
+            steam_lib_paths=[str(steam_dir)]
+        )
+        assert len(steam_apps) == 1
+        assert steam_apps[0].install_path == proton_app_a.install_path
+
+        # Create a Proton app with the same name in the default directory;
+        # this will override the former Proton app we created
+        proton_app_b = custom_proton_factory(name="Fake Proton")
+
+        steam_apps = get_steam_apps(
+            steam_root=str(steam_root),
+            steam_path=str(steam_dir),
+            steam_lib_paths=[str(steam_dir)]
+        )
+        assert len(steam_apps) == 1
+        assert steam_apps[0].install_path == proton_app_b.install_path

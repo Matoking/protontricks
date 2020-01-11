@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+### Added
+ - System-wide compatibility tool directories are now searched for Proton installations
+
 ### Changed
  - Drop Python 3.4 compatibility. Python 3.4 compatibility has been broken since 1.2.2.
 

@@ -6,7 +6,6 @@ import re
 import string
 import struct
 import zlib
-
 from pathlib import Path
 
 import vdf
@@ -562,6 +561,8 @@ def get_steam_lib_paths(steam_path):
 
 
 def get_compat_tool_dirs(steam_root):
+    # The path list is ordered by priority, starting from Proton apps
+    # with the lowest precedence ('/usr/share/steam/compatibilitytools.d')
     paths = [
         "/usr/share/steam/compatibilitytools.d",
         "/usr/local/share/steam/compatibilitytools.d",
@@ -570,6 +571,7 @@ def get_compat_tool_dirs(steam_root):
     if extra_ct_paths_env:
         paths += extra_ct_paths_env.split(os.pathsep)
     paths += [os.path.join(steam_root, "compatibilitytools.d")]
+
     return paths
 
 
@@ -623,9 +625,17 @@ def get_proton_installations(compat_tool_dir):
 
 
 def get_custom_proton_installations(steam_root):
-    custom_proton_apps = []
+    custom_proton_apps = {}
     for d in get_compat_tool_dirs(steam_root=steam_root):
-        custom_proton_apps += get_proton_installations(d)
+        for proton_app in get_proton_installations(d):
+            # If another Proton app exists with the same name, it will
+            # be replaced with an installation that has higher precedence
+            # here
+            custom_proton_apps[proton_app.name] = proton_app
+
+    # Return the list of Proton apps as a list
+    custom_proton_apps = list(custom_proton_apps.values())
+
     return custom_proton_apps
 
 
