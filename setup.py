@@ -1,7 +1,5 @@
 from setuptools import setup
 
-import versioneer
-
 
 DESCRIPTION = (
     "A simple wrapper for running Winetricks commands for Proton-enabled "
@@ -18,7 +16,9 @@ URL = "https://github.com/Matoking/protontricks"
 
 setup(
     name="protontricks",
-    version=versioneer.get_version(),
+    use_scm_version={
+        "write_to": "src/protontricks/_version.py"
+    },
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     author=AUTHOR,
@@ -28,9 +28,8 @@ setup(
     packages=["protontricks"],
     package_data={"": ["LICENSE"]},
     package_dir={"protontricks": "src/protontricks"},
-    install_requires=[
-        "vdf>=2.4"
-    ],
+    setup_requires=["setuptools_scm"],
+    install_requires=["vdf>=2.4"],
     entry_points={
         "console_scripts": [
             "protontricks = protontricks.cli:main"
@@ -47,6 +46,4 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
-    cmdclass=versioneer.get_cmdclass()
 )
-

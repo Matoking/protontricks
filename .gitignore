@@ -1,5 +1,8 @@
 # Created by https://www.gitignore.io/api/python,virtualenv
 
+# Don't track setuptools-scm generated _version.py
+src/protontricks/_version.py
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
