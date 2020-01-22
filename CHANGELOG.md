@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Zenity no longer crashes the script if locale is incapable of processing the arguments.
  - Selecting "Cancel" in the GUI window now prints a proper message instead of an error.
+ - Add workaround for Zenity crashes not handled by the previous fix
 
 ## [1.3.1] - 2019-11-21
 ### Fixed

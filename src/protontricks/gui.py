@@ -73,23 +73,20 @@ def select_steam_app_with_gui(steam_apps):
         # Since stdout still prints the correct value, we can safely ignore
         # this error.
         #
+        # The error is usually the message
+        # 'free(): double free detected in tcache 2', but it can vary
+        # depending on the environment. Instead, check if the returncode
+        # is -6
+        #
         # Related issues:
         # https://github.com/Matoking/protontricks/issues/20
         # https://gitlab.gnome.org/GNOME/zenity/issues/7
-        #
-        # 'exc.returncode == 1' avoids zenity error when
-        # no game is selected
-        is_zenity_bug = (
-            (
-                exc.returncode == -6 and
-                exc.stderr == b'free(): double free detected in tcache 2\n'
-            ) or
-            exc.returncode == 1
-        )
-
-        if is_zenity_bug:
+        if exc.returncode == -6:
             logger.info("Ignoring zenity crash bug")
             choice = exc.stdout
+        elif exc.returncode == 1:
+            # No game was selected
+            choice = b""
         else:
             raise RuntimeError("Zenity returned an error")
     except OSError:
