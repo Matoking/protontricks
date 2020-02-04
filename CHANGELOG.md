@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Fixed
+ - Fixed crash caused by Steam library paths containing special characters
+
 ## [1.4] - 2020-01-26
 ### Added
  - System-wide compatibility tool directories are now searched for Proton installations

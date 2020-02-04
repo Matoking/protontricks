@@ -584,10 +584,12 @@ def get_proton_installations(compat_tool_dir):
         return []
 
     comptool_files = glob.glob(
-        os.path.join(compat_tool_dir, "*", "compatibilitytool.vdf")
+        os.path.join(
+            glob.escape(compat_tool_dir), "*", "compatibilitytool.vdf"
+        )
     )
     comptool_files += glob.glob(
-        os.path.join(compat_tool_dir, "compatibilitytool.vdf")
+        os.path.join(glob.escape(compat_tool_dir), "compatibilitytool.vdf")
     )
 
     custom_proton_apps = []
@@ -759,11 +761,15 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
         appmanifest_paths = []
         if os.path.isdir(os.path.join(path, "steamapps")):
             appmanifest_paths = glob.glob(
-                os.path.join(path, "steamapps", "appmanifest_*.acf")
+                os.path.join(
+                    glob.escape(path), "steamapps", "appmanifest_*.acf"
+                )
             )
         elif os.path.isdir(os.path.join(path, "SteamApps")):
             appmanifest_paths = glob.glob(
-                os.path.join(path, "SteamApps", "appmanifest_*.acf")
+                os.path.join(
+                    glob.escape(path), "SteamApps", "appmanifest_*.acf"
+                )
             )
 
         for manifest_path in appmanifest_paths:

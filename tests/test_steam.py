@@ -273,3 +273,25 @@ class TestGetSteamApps:
         )
         assert len(steam_apps) == 1
         assert steam_apps[0].install_path == proton_app_b.install_path
+
+    def test_get_steam_apps_escape_chars(
+            self, steam_app_factory, steam_library_factory,
+            steam_root, steam_dir):
+        """
+        Create a Steam library directory with a name containing the
+        character '[' and ensure it is found correctly.
+
+        Regression test for https://github.com/Matoking/protontricks/issues/47
+        """
+        library_dir = steam_library_factory(name="[HDD-1] SteamLibrary")
+        steam_app_factory(name="Test game", appid=10, library_dir=library_dir)
+
+        steam_apps = get_steam_apps(
+            steam_root=str(steam_root),
+            steam_path=str(steam_dir),
+            steam_lib_paths=[str(steam_dir), str(library_dir)]
+        )
+
+        assert len(steam_apps) == 1
+        assert steam_apps[0].name == "Test game"
+        assert steam_apps[0].install_path.startswith(str(library_dir))
