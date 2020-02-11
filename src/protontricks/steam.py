@@ -561,6 +561,10 @@ def get_steam_lib_paths(steam_path):
 
 
 def get_compat_tool_dirs(steam_root):
+    """
+    Return a list of compatibility tool directories in order from
+    directories with lowest precedence
+    """
     # The path list is ordered by priority, starting from Proton apps
     # with the lowest precedence ('/usr/share/steam/compatibilitytools.d')
     paths = [
@@ -642,6 +646,9 @@ def get_custom_proton_installations(steam_root):
 
 
 def find_current_steamid3(steam_path):
+    """
+    Find the SteamID3 of the currently logged in Steam user
+    """
     def to_steamid3(steamid64):
         """Convert a SteamID64 into the SteamID3 format"""
         return int(steamid64) & 0xffffffff
