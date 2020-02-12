@@ -368,7 +368,12 @@ def proton_factory(steam_app_factory, appinfo_factory, steam_config_path):
         shutil.rmtree(str(Path(steam_app.prefix_path).parent))
         steam_app.prefix_path = None
 
-        (Path(steam_app.install_path) / "proton").touch()
+        install_path = Path(steam_app.install_path)
+
+        (install_path / "proton").touch()
+        (install_path / "dist" / "bin").mkdir(parents=True)
+        (install_path / "dist" / "bin" / "wine").touch()
+        (install_path / "dist" / "bin" / "wineserver").touch()
 
         # Update config
         if is_default_proton:
@@ -406,6 +411,9 @@ def custom_proton_factory(steam_dir):
         compat_tool_dir.mkdir(parents=True, exist_ok=True)
         (compat_tool_dir / "proton").touch()
         (compat_tool_dir / "proton").chmod(0o744)
+        (compat_tool_dir / "dist" / "bin").mkdir(parents=True)
+        (compat_tool_dir / "dist" / "bin" / "wine").touch()
+        (compat_tool_dir / "dist" / "bin" / "wineserver").touch()
         (compat_tool_dir / "compatibilitytool.vdf").write_text(
             vdf.dumps({
                 "compatibilitytools": {

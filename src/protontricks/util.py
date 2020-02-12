@@ -2,7 +2,7 @@ import logging
 import os
 import shlex
 import shutil
-import tempfile
+import stat
 from pathlib import Path
 from subprocess import check_output, run
 
@@ -40,31 +40,41 @@ def create_wine_bin_dir(steam_runtime_path, proton_app):
         "#!/bin/bash\n"
         "# Helper script created by Protontricks to run Wine binaries using Steam Runtime\n"
         "export LD_LIBRARY_PATH={ld_library_path}\n"
-        "exec {path} $@"
+        "exec \"$PROTON_PATH\"/dist/bin/{name} \"$@\""
     )
 
     binaries = list((
         Path(proton_app.install_path) / "dist" / "bin"
     ).iterdir())
 
-    # Create a temporary directory to hold the new executables
-    # TODO: Maybe use a little more permanent location for these such
-    # as the XDG runtime directory?
-    bin_path = Path(tempfile.mkdtemp(prefix="protontricks_wine_"))
+    # Create the base directory containing files for every Proton installation
+    xdg_cache_dir = os.environ.get(
+        "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
+    )
+    base_path = Path(xdg_cache_dir) / "protontricks" / "proton"
+    os.makedirs(str(base_path), exist_ok=True)
+
+    # Create a directory to hold the new executables for the specific
+    # Proton installation
+    bin_path = base_path / proton_app.name / "bin"
+    os.makedirs(str(bin_path), exist_ok=True)
+
     logger.info(
-        "Created temporary Wine binary directory at %s", str(bin_path)
+        "Created Steam Runtime Wine binary directory at %s", str(bin_path)
     )
 
     for binary in binaries:
         content = TEMPLATE.format(
             ld_library_path=shlex.quote(ld_library_path),
-            path=shlex.quote(str(binary))
+            name=shlex.quote(binary.name)
         ).encode("utf-8")
 
-        with open(bin_path / binary.name, "wb") as file_:
+        with open(str(bin_path / binary.name), "wb") as file_:
             file_.write(content)
 
-        (bin_path / binary.name).chmod(0o700)
+        script_stat = os.stat(str(bin_path / binary.name))
+        # Make the helper script executable
+        (bin_path / binary.name).chmod(script_stat.st_mode | stat.S_IEXEC)
 
     return bin_path
 
@@ -114,6 +124,10 @@ def run_command(
         proton_app.install_path, "dist", "bin"
     ) + os.pathsep + os.environ["PATH"]
 
+    # Expose the path to Proton installation. This is mainly used for
+    # Wine helper scripts, but other scripts could use it as well.
+    os.environ["PROTON_PATH"] = proton_app.install_path
+
     # Unset WINEARCH, which might be set for another Wine installation
     os.environ.pop("WINEARCH", "")
 
@@ -126,7 +140,8 @@ def run_command(
             steam_runtime_path=steam_runtime_path,
             proton_app=proton_app
         )
-        os.environ["PATH"] = str(wine_bin_dir) + os.pathsep + os.environ["PATH"]
+        os.environ["PATH"] = \
+            str(wine_bin_dir) + os.pathsep + os.environ["PATH"]
 
     logger.info("Attempting to run command %s", command)
 
@@ -136,6 +151,3 @@ def run_command(
         # Restore original env vars
         os.environ.clear()
         os.environ.update(environ_copy)
-
-        if wine_bin_dir:
-            shutil.rmtree(str(wine_bin_dir))

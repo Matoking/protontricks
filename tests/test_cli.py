@@ -101,20 +101,29 @@ class TestCLIRun:
         """
         Perform a Protontricks command using Steam Runtime
         """
-        proton_install_path = Path(default_proton.install_path)
         steam_app_factory(name="Fake game 1", appid=10)
 
         cli(["10", "winecfg"], env={"STEAM_RUNTIME": "1"})
 
+        wine_bin_dir = (
+            home_dir / ".cache" / "protontricks" / "proton" / "Proton 4.20"
+            / "bin"
+        )
+
         # winecfg was actually run
         assert command.args[0].endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
+        assert command.env["PATH"].startswith(str(wine_bin_dir))
 
-        assert command.env["LD_LIBRARY_PATH"].strip() == "".join([
-            str(proton_install_path / "dist" / "lib"), os.pathsep,
-            str(proton_install_path / "dist" / "lib64"), os.pathsep,
-            "fake_steam_runtime/lib:fake_steam_runtime/lib64"
-        ]).strip()
+        for name in ("wine", "wineserver"):
+            # The helper scripts are created that point towards the real
+            # Wine binaries
+            path = wine_bin_dir / name
+            assert path.is_file()
+
+            content = path.read_text()
+
+            assert "\"$PROTON_PATH\"/dist/bin/{}".format(name) in content
 
     def test_run_winetricks_game_not_found(
             self, cli, steam_app_factory, default_proton, command):
@@ -259,7 +268,6 @@ class TestCLICommand:
             os.pathsep,
             str(proton_install_path / "dist" / "lib" / "wine")
         )
-
 
 
 class TestCLISearch:
