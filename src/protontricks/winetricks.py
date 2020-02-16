@@ -1,10 +1,6 @@
 import logging
 import os
 import shutil
-import subprocess
-import sys
-
-from .util import run_command
 
 __all__ = ("get_winetricks_path",)
 

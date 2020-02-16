@@ -114,6 +114,9 @@ class TestCLIRun:
         assert command.args[0].endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
         assert command.env["PATH"].startswith(str(wine_bin_dir))
+        assert (
+            "fake_steam_runtime/lib64" in command.env["PROTON_LD_LIBRARY_PATH"]
+        )
 
         for name in ("wine", "wineserver"):
             # The helper scripts are created that point towards the real

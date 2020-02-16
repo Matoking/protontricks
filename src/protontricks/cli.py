@@ -179,7 +179,6 @@ def main(args=None):
             sys.exit(-1)
 
         run_command(
-            steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
@@ -247,7 +246,6 @@ def main(args=None):
 
     if args.winetricks_command:
         run_command(
-            steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
@@ -255,7 +253,6 @@ def main(args=None):
             command=[winetricks_path] + args.winetricks_command)
     elif args.command:
         run_command(
-            steam_path=steam_path,
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
