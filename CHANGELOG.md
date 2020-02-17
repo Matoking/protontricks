@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.4.1] - 2020-02-17
 ### Fixed
  - Fixed crash caused by Steam library paths containing special characters
  - Fixed crash with Proton 5.0 caused by Steam Runtime being used unnecessarily with all binaries
@@ -102,7 +102,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.4...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.4.1...HEAD
+[1.4.1]: https://github.com/Matoking/protontricks/compare/1.4...1.4.1
 [1.4]: https://github.com/Matoking/protontricks/compare/1.3.1...1.4
 [1.3.1]: https://github.com/Matoking/protontricks/compare/1.3...1.3.1
 [1.3]: https://github.com/Matoking/protontricks/compare/1.2.5...1.3
