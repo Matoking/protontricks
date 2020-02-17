@@ -23,13 +23,11 @@ class TestCLIRun:
         assert command.args[1] == "winecfg"
 
         # Correct environment vars were set
-        assert command.env["WINE"] == str(
-            proton_install_path / "dist" / "bin" / "wine")
+        assert command.env["PROTON_PATH"] == str(proton_install_path)
         assert command.env["WINETRICKS"] == str(
             home_dir / ".local" / "bin" / "winetricks")
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
-        assert command.env["WINELOADER"] == str(
-            proton_install_path / "dist" / "bin" / "wine")
+        assert command.env["WINELOADER"] == command.env["WINE"]
         assert command.env["WINEDLLPATH"] == "{}{}{}".format(
             str(proton_install_path / "dist" / "lib64" / "wine"),
             os.pathsep,
@@ -48,8 +46,7 @@ class TestCLIRun:
         cli(["4149337689", "winecfg"])
 
         # Default Proton is used
-        assert command.env["WINE"] == str(
-            proton_install_path / "dist" / "bin" / "wine")
+        assert command.env["PROTON_PATH"] == str(proton_install_path)
         assert command.env["WINEPREFIX"] == str(
             steam_dir / "steamapps" / "compatdata" / "4149337689" / "pfx")
 
@@ -64,9 +61,7 @@ class TestCLIRun:
         custom_proton = custom_proton_factory(name="Custom Proton")
         cli(["10", "winecfg"], env={"PROTON_VERSION": "Custom Proton"})
 
-        assert command.env["WINE"] == str(
-            Path(custom_proton.install_path) / "dist" / "bin" / "wine"
-        )
+        assert command.env["PROTON_PATH"] == custom_proton.install_path
 
     def test_run_winetricks_select_steam(
             self, cli, steam_app_factory, default_proton, command,
@@ -91,8 +86,12 @@ class TestCLIRun:
         )
 
         assert command.env["WINE"] == str(
+            home_dir / ".cache" / "protontricks" / "proton"
+            / "Proton 4.20" / "bin" / "wine"
+        )
+        assert command.env["PROTON_PATH"] == str(
             home_dir / ".steam_new" / "steamapps" / "common"
-            / "Proton 4.20" / "dist" / "bin" / "wine"
+            / "Proton 4.20"
         )
 
     def test_run_winetricks_steam_runtime(
@@ -117,6 +116,9 @@ class TestCLIRun:
         assert (
             "fake_steam_runtime/lib64" in command.env["PROTON_LD_LIBRARY_PATH"]
         )
+        assert command.env["WINE"] == str(wine_bin_dir / "wine")
+        assert command.env["WINELOADER"] == str(wine_bin_dir / "wine")
+        assert command.env["WINESERVER"] == str(wine_bin_dir / "wineserver")
 
         for name in ("wine", "wineserver"):
             # The helper scripts are created that point towards the real
@@ -219,12 +221,14 @@ class TestCLIGUI:
 
         # Correct environment vars were set
         assert command.env["WINE"] == str(
-            proton_install_path / "dist" / "bin" / "wine")
+            home_dir / ".cache" / "protontricks" / "proton" / "Proton 4.20"
+            / "bin" / "wine"
+        )
+        assert command.env["PROTON_PATH"] == str(proton_install_path)
         assert command.env["WINETRICKS"] == str(
             home_dir / ".local" / "bin" / "winetricks")
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
-        assert command.env["WINELOADER"] == str(
-            proton_install_path / "dist" / "bin" / "wine")
+        assert command.env["WINELOADER"] == command.env["WINE"]
         assert command.env["WINEDLLPATH"] == "{}{}{}".format(
             str(proton_install_path / "dist" / "lib64" / "wine"),
             os.pathsep,
@@ -260,12 +264,14 @@ class TestCLICommand:
 
         # Correct environment vars were set
         assert command.env["WINE"] == str(
-            proton_install_path / "dist" / "bin" / "wine")
+            home_dir / ".cache" / "protontricks" / "proton" / "Proton 4.20"
+            / "bin" / "wine"
+        )
+        assert command.env["PROTON_PATH"] == str(proton_install_path)
         assert command.env["WINETRICKS"] == str(
             home_dir / ".local" / "bin" / "winetricks")
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
-        assert command.env["WINELOADER"] == str(
-            proton_install_path / "dist" / "bin" / "wine")
+        assert command.env["WINELOADER"] == command.env["WINE"]
         assert command.env["WINEDLLPATH"] == "{}{}{}".format(
             str(proton_install_path / "dist" / "lib64" / "wine"),
             os.pathsep,

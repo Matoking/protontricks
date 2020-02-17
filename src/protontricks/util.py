@@ -156,6 +156,9 @@ def run_command(
             get_runtime_library_path(steam_runtime_path, proton_app)
         os.environ["PATH"] = \
             str(wine_bin_dir) + os.pathsep + os.environ["PATH"]
+        os.environ["WINE"] = str(wine_bin_dir / "wine")
+        os.environ["WINELOADER"] = os.environ["WINE"]
+        os.environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
 
     logger.info("Attempting to run command %s", command)
 
