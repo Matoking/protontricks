@@ -44,7 +44,9 @@ Since this is a wrapper, all commands that work for Winetricks will likely work 
 
 If you have a different Steam directory, you can export ``$STEAM_DIR`` to the directory where Steam is.
 
-If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` to the location of your local winetricks installation. You can also set ``$PROTON_VERSION`` to a specific Proton version manually.
+If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` to the location of your local winetricks installation.
+
+You can also set ``$PROTON_VERSION`` to a specific Proton version manually. This is usually the name of the Proton installation without the revision version number. For example, if Steam displays the name as `Proton 5.0-3`, use `Proton 5.0` as the value for `$PROTON_VERSION`.
 
 [Wanna see Protontricks in action?](https://asciinema.org/a/229323)
 
