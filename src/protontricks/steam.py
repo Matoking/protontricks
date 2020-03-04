@@ -766,17 +766,31 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
 
     for path in steam_lib_paths:
         appmanifest_paths = []
-        if os.path.isdir(os.path.join(path, "steamapps")):
+        is_lowercase = os.path.isdir(os.path.join(path, "steamapps"))
+        is_mixedcase = os.path.isdir(os.path.join(path, "SteamApps"))
+
+        if is_lowercase:
             appmanifest_paths = glob.glob(
                 os.path.join(
                     glob.escape(path), "steamapps", "appmanifest_*.acf"
                 )
             )
-        elif os.path.isdir(os.path.join(path, "SteamApps")):
+        elif is_mixedcase:
             appmanifest_paths = glob.glob(
                 os.path.join(
                     glob.escape(path), "SteamApps", "appmanifest_*.acf"
                 )
+            )
+
+        if is_lowercase and is_mixedcase:
+            # Log a warning if both 'steamapps' and 'SteamApps' directories
+            # exist, as both Protontricks and Steam client have problems
+            # dealing with it (see issue #51)
+            logger.warning(
+                "Both 'steamapps' and 'SteamApps' directories were found at "
+                "%s. 'SteamApps' directory should be removed to prevent "
+                "issues with app and Proton discovery.",
+                path
             )
 
         for manifest_path in appmanifest_paths:

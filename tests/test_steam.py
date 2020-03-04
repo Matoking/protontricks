@@ -295,3 +295,40 @@ class TestGetSteamApps:
         assert len(steam_apps) == 1
         assert steam_apps[0].name == "Test game"
         assert steam_apps[0].install_path.startswith(str(library_dir))
+
+    def test_get_steam_apps_steamapps_case_warning(
+            self, steam_app_factory, steam_library_factory,
+            steam_root, steam_dir, caplog):
+        """
+        Ensure a warning is logged if both 'steamapps' and 'SteamApps'
+        directories exist at one of the Steam library directories
+        """
+        get_steam_apps(
+            steam_root=str(steam_root),
+            steam_path=str(steam_dir),
+            steam_lib_paths=[str(steam_dir)]
+        )
+
+        # No log was created yet
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]) == 0
+
+        (steam_dir / "SteamApps").mkdir()
+
+        get_steam_apps(
+            steam_root=str(steam_root),
+            steam_path=str(steam_dir),
+            steam_lib_paths=[str(steam_dir)]
+        )
+
+        # Warning was logged due to two Steam app directories
+        log = next(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        )
+        assert (
+            "directories were found at {}".format(str(steam_dir))
+            in log.getMessage()
+        )
