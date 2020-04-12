@@ -101,7 +101,7 @@ pipx upgrade protontricks
 
 To install the latest development version (requires `git`):
 ```sh
-pipx install --spec git+https://github.com/Matoking/protontricks.git protontricks
+pipx install git+https://github.com/Matoking/protontricks.git
 ```
 
 ## pip (not recommended)
