@@ -381,3 +381,16 @@ class TestCLISearch:
 
         assert "Non-Steam shortcut: fakegame.exe (4149337689)" in result
         assert "Non-Steam shortcut: fakegame.exe (4136117770)" in result
+
+
+def test_cli_error_help(cli):
+    """
+    Ensure that the full help message is printed when an incorrect argument
+    is provided
+    """
+    _, stderr = cli(["--nothing"], expect_exit=True, include_stderr=True)
+
+    # Usage message
+    assert "[-h] [--verbose]" in stderr
+    # Help message
+    assert "positional arguments:" in stderr

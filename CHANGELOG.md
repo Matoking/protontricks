@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Print a warning if both `steamapps` and `SteamApps` directories are found inside the same library directory
 
+### Changed
+ - Print full help message when incorrect parameters are provided.
+
 ## [1.4.1] - 2020-02-17
 ### Fixed
  - Fixed crash caused by Steam library paths containing special characters

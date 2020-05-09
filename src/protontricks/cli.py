@@ -35,24 +35,36 @@ def enable_logging(info=False):
         format="%(name)s (%(levelname)s): %(message)s")
 
 
+class CustomArgumentParser(argparse.ArgumentParser):
+    """
+    Custom argument parser that prints the full help message
+    when incorrect parameters are provided
+    """
+    def error(self, message):
+        self.print_help(sys.stderr)
+        args = {'prog': self.prog, 'message': message}
+        self.exit(2, '%(prog)s: error: %(message)s\n' % args)
+
+
 def main(args=None):
     """
     'protontricks' script entrypoint
     """
-    parser = argparse.ArgumentParser(
+    parser = CustomArgumentParser(
         description=(
             "Wrapper for running Winetricks commands for "
             "Steam Play/Proton games.\n"
             "\n"
             "Usage:\n"
             "\n"
-            "Run winetricks for game with APPID\n"
+            "Run winetricks for game with APPID. "
+            "COMMAND is passed directly to winetricks as-is.\n"
             "$ protontricks APPID COMMAND\n"
             "\n"
             "Search installed games to find the APPID\n"
             "$ protontricks -s GAME_NAME\n"
             "\n"
-            "Launch the Protontricks GUI\n"
+            "Use Protontricks GUI to select the game\n"
             "$ protontricks --gui\n"
             "\n"
             "Environment variables:\n"
