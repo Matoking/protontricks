@@ -1,8 +1,6 @@
-import binascii
 import glob
 import logging
 import os
-import re
 import string
 import struct
 import zlib
@@ -104,21 +102,21 @@ class SteamApp(object):
                 # eg. due to running a Linux filesystem under Windows
                 # In that case just skip it
                 logger.warning(
-                    "Skipping malformed appmanifest {}".format(path)
+                    "Skipping malformed appmanifest %s", path
                 )
                 return None
 
         try:
             vdf_data = vdf.loads(content)
         except SyntaxError:
-            logger.warning("Skipping malformed appmanifest {}".format(path))
+            logger.warning("Skipping malformed appmanifest %s", path)
             return None
 
         try:
             app_state = vdf_data["AppState"]
         except KeyError:
             # Some appmanifest files may be empty. Ignore those.
-            logger.info("Skipping empty appmanifest {}".format(path))
+            logger.info("Skipping empty appmanifest %s", path)
             return None
 
         # The app ID field can be named 'appID' or 'appid'.
@@ -196,8 +194,9 @@ def find_steam_path():
         steam_path = str(Path.home() / steam_path)
         if has_steamapps_dir(steam_path):
             logger.info(
-                "Found Steam directory at {}. You can also define Steam "
-                "directory manually using $STEAM_DIR".format(steam_path)
+                "Found Steam directory at %s. You can also define Steam "
+                "directory manually using $STEAM_DIR",
+                steam_path
             )
             if not steam_root:
                 steam_root = steam_path
@@ -412,7 +411,7 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     try:
         app = next(app for app in steam_apps if app.name == compat_tool_name)
         logger.info(
-            "Found active custom Proton installation: {}".format(app.name)
+            "Found active custom Proton installation: %s", app.name
         )
         return app
     except StopIteration:
@@ -431,7 +430,7 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     try:
         app = next(app for app in steam_apps if app.appid == proton_appid)
         logger.info(
-            "Found active Proton installation: {}".format(app.name)
+            "Found active Proton installation: %s", app.name
         )
         return app
     except StopIteration:
@@ -499,7 +498,7 @@ def find_proton_app(steam_path, steam_apps, appid=None):
             proton_app = next(
                 app for app in steam_apps if app.name == proton_version)
             logger.info(
-                 "Found requested Proton version: {}".format(proton_app.name)
+                "Found requested Proton version: %s", proton_app.name
             )
             return proton_app
         except StopIteration:
@@ -537,7 +536,7 @@ def get_steam_lib_paths(steam_path):
         ]
 
         logger.info(
-            "Found {} Steam library folders".format(len(library_folders))
+            "Found %d Steam library folders", len(library_folders)
         )
         return library_folders
 

@@ -6,7 +6,7 @@ import stat
 from pathlib import Path
 from subprocess import check_output, run
 
-__all__ = ("run_command",)
+__all__ = ("get_runtime_library_path", "create_wine_bin_dir", "run_command")
 
 logger = logging.getLogger("protontricks")
 
