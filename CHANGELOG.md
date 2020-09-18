@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Fixed
+ - Fix crash with newer Steam client beta caused by differently cased keys in `loginusers.vdf`
+
 ### Added
  - Print a warning if both `steamapps` and `SteamApps` directories are found inside the same library directory
 

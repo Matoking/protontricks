@@ -11,6 +11,16 @@ __all__ = ("get_runtime_library_path", "create_wine_bin_dir", "run_command")
 logger = logging.getLogger("protontricks")
 
 
+def lower_dict(d):
+    """
+    Return a copy of the dictionary with all keys converted to lowercase.
+
+    This is mainly used when dealing with Steam VDF files, as those tend to
+    have either CamelCase or lowercase keys depending on the version.
+    """
+    return {k.lower(): v for k, v in d.items()}
+
+
 def get_runtime_library_path(steam_runtime_path, proton_app):
     """
     Get LD_LIBRARY_PATH value to run a command using Steam Runtime

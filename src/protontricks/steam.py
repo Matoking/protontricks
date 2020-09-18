@@ -8,6 +8,8 @@ from pathlib import Path
 
 import vdf
 
+from .util import lower_dict
+
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
     "find_steam_proton_app", "find_proton_app", "find_steam_runtime_path",
@@ -124,7 +126,7 @@ class SteamApp(object):
         # files (created by old Steam clients?) also use 'appID'.
         #
         # Use case-insensitive field names to deal with these.
-        app_state = {k.lower(): v for k, v in app_state.items()}
+        app_state = lower_dict(app_state)
         appid = int(app_state["appid"])
         name = app_state["name"]
 
@@ -660,13 +662,17 @@ def find_current_steamid3(steam_path):
     except IOError:
         return None
 
+    user_datas = [
+        (user_id, lower_dict(user_data))
+        for user_id, user_data in vdf_data["users"].items()
+    ]
     users = [
         {
             "steamid3": to_steamid3(user_id),
-            "account_name": user_data["AccountName"],
-            "timestamp": user_data.get("Timestamp", 0)
+            "account_name": user_data["accountname"],
+            "timestamp": user_data.get("timestamp", 0)
         }
-        for user_id, user_data in vdf_data["users"].items()
+        for user_id, user_data in user_datas
     ]
 
     # Return the user with the highest timestamp, as that's likely to be the
@@ -726,7 +732,7 @@ def get_custom_windows_shortcuts(steam_path):
     for shortcut_id, shortcut_data in vdf_data["shortcuts"].items():
         # The "exe" field can also be "Exe". Account for this by making
         # all field names lowercase
-        shortcut_data = {k.lower(): v for k, v in shortcut_data.items()}
+        shortcut_data = lower_dict(shortcut_data)
         shortcut_id = int(shortcut_id)
 
         appid = get_appid_from_shortcut(
