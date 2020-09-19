@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.4.2] - 2020-09-19
 ### Fixed
  - Fix crash with newer Steam client beta caused by differently cased keys in `loginusers.vdf`
 
@@ -112,7 +112,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.4.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.4.2...HEAD
+[1.4.2]: https://github.com/Matoking/protontricks/compare/1.4.1...1.4.2
 [1.4.1]: https://github.com/Matoking/protontricks/compare/1.4...1.4.1
 [1.4]: https://github.com/Matoking/protontricks/compare/1.3.1...1.4
 [1.3.1]: https://github.com/Matoking/protontricks/compare/1.3...1.3.1
