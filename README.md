@@ -76,17 +76,16 @@ You can use pipx to install the latest version on PyPI or the git repository for
 
 **You will need to install pip, setuptools and virtualenv first.** Install the correct packages depending on your distribution:
 
-* Arch Linux: `sudo pacman -S python-pip python-setuptools python-virtualenv`
-* Debian-based (Ubuntu, Linux Mint): `sudo apt install python3-pip python3-setuptools python3-venv`
-* Fedora: `sudo dnf install python3-pip python3-setuptools python3-libs`
-* Gentoo: `sudo emerge -av dev-python/pip dev-python/virtualenv dev-python/setuptools`
+* Arch Linux: `sudo pacman -S python-pip python-pipx python-setuptools python-virtualenv`
+* Debian-based (Ubuntu, Linux Mint): `sudo apt install python3-pip python3-setuptools python3-venv pipx`
+* Fedora: `sudo dnf install python3-pip python3-setuptools python3-libs pipx`
+* Gentoo:
 
-After installing pip and virtualenv, run the following commands to install pipx for the current user.
-
-```sh
-python3 -m pip install --user pipx
-~/.local/bin/pipx ensurepath
-```
+  ```sh
+  sudo emerge -av dev-python/pip dev-python/virtualenv dev-python/setuptools
+  python3 -m pip install --user pipx
+  ~/.local/bin/pipx ensurepath
+  ```
 
 Close and reopen your terminal. After that, you can install protontricks.
 
@@ -102,6 +101,8 @@ pipx upgrade protontricks
 To install the latest development version (requires `git`):
 ```sh
 pipx install git+https://github.com/Matoking/protontricks.git
+# '--spec' is required for older versions of pipx
+pipx install --spec git+https://github.com/Matoking/protontricks.git protontricks
 ```
 
 ## pip (not recommended)
