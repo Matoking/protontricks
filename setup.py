@@ -29,7 +29,7 @@ setup(
     package_data={"": ["LICENSE"]},
     package_dir={"protontricks": "src/protontricks"},
     setup_requires=["setuptools_scm"],
-    install_requires=["vdf>=2.4"],
+    install_requires=["vdf>=3.2"],
     entry_points={
         "console_scripts": [
             "protontricks = protontricks.cli:main"
