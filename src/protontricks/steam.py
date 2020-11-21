@@ -31,20 +31,35 @@ class SteamApp(object):
     one (eg. a custom Proton installation or a Windows shortcut with its own
     Proton prefix)
     """
-    __slots__ = ("appid", "name", "prefix_path", "install_path")
+    __slots__ = (
+        "appid", "name", "prefix_path", "install_path", "required_tool_appid",
+        "required_tool_app"
+    )
 
-    def __init__(self, name, install_path, prefix_path=None, appid=None):
+    def __init__(
+            self, name, install_path, prefix_path=None, appid=None,
+            required_tool_appid=None):
         """
         :appid: App's appid
         :name: The app's human-readable name
         :prefix_path: Absolute path to where the app's Wine prefix *might*
                       exist.
         :app_path: Absolute path to app's installation directory
+        :required_tool_appid: App ID required to run this application.
+                              Usually corresponds to a Steam Runtime for
+                              Proton installations.
         """
         self.appid = int(appid) if appid else None
+        self.required_tool_appid = \
+            int(required_tool_appid) if required_tool_appid else None
+
         self.name = name
         self.prefix_path = prefix_path
         self.install_path = install_path
+
+        # Reference to another SteamApp will be added later if necessary,
+        # once we have the full list of Steam apps
+        self.required_tool_app = None
 
     @property
     def prefix_path_exists(self):
@@ -89,6 +104,17 @@ class SteamApp(object):
         # If the installation directory contains a file named "proton",
         # it's a Proton installation
         return os.path.exists(os.path.join(self.install_path, "proton"))
+
+    @property
+    def is_tool(self):
+        """
+        Return True if this app is a tool rather an app.
+
+        This is true for Proton and Steam Runtime installations.
+        """
+        return os.path.exists(
+            os.path.join(self.install_path, "toolmanifest.vdf")
+        )
 
     @classmethod
     def from_appmanifest(cls, path, steam_lib_paths):
@@ -138,9 +164,24 @@ class SteamApp(object):
         install_path = os.path.join(
             os.path.split(path)[0], "common", app_state["installdir"])
 
+        required_tool_appid = None
+
+        # Check if the app requires another app. This is the case with
+        # newer versions of Proton, which use Steam Runtimes installed as
+        # normal Steam apps
+        tool_manifest_path = Path(install_path) / "toolmanifest.vdf"
+        try:
+            tool_manifest_content = tool_manifest_path.read_text()
+            tool_manifest = vdf.loads(tool_manifest_content)
+            required_tool_appid = \
+                tool_manifest["manifest"].get("require_tool_appid", None)
+        except FileNotFoundError:
+            pass
+
         return cls(
             appid=appid, name=name, prefix_path=prefix_path,
-            install_path=install_path)
+            install_path=install_path, required_tool_appid=required_tool_appid
+        )
 
 
 def find_steam_path():
@@ -754,6 +795,19 @@ def get_custom_windows_shortcuts(steam_path):
     return steam_apps
 
 
+def _link_tool_apps(steam_apps):
+    """
+    Check which Steam apps require other Steam apps and add the corresponding
+    references
+    """
+    appid2steam_app = {steam_app.appid: steam_app for steam_app in steam_apps}
+
+    for steam_app in steam_apps:
+        if steam_app.required_tool_appid:
+            steam_app.required_tool_app = \
+                appid2steam_app[steam_app.required_tool_appid]
+
+
 def get_steam_apps(steam_root, steam_path, steam_lib_paths):
     """
     Find all the installed Steam apps and return them as a list of SteamApp
@@ -803,8 +857,13 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
 
     # Exclude games that haven't been launched yet
     steam_apps = [
-        app for app in steam_apps if app.prefix_path_exists or app.is_proton
+        app for app in steam_apps
+        if app.prefix_path_exists or app.is_proton or app.is_tool
     ]
+
+    # Populate the `SteamApp.required_tool_app` parameter for Steam apps
+    # which rely on other Steam apps
+    _link_tool_apps(steam_apps)
 
     # Sort the apps by their names
     steam_apps.sort(key=lambda app: app.name)
