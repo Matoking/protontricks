@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from protontricks.util import create_wine_bin_dir
+from protontricks.util import create_wine_bin_dir, run_command
 
 
 def get_files_in_dir(d):
@@ -39,3 +39,40 @@ class TestCreateWineBinDir:
         )
         # Scripts are regenerated
         assert set(["wine", "winedine"]) == files
+
+
+class TestRunCommand:
+    def test_unknown_steam_runtime_detected(
+            self, home_dir, proton_factory, runtime_app_factory,
+            steam_app_factory, caplog):
+        """
+        Test that Protontricks will log a warning if it encounters a Steam
+        Runtime it does not recognize
+        """
+        steam_runtime_medic = runtime_app_factory(
+            name="Steam Linux Runtime - Medic",
+            appid=14242420,
+            runtime_dir_name="medic"
+        )
+        proton_app = proton_factory(
+            name="Proton 5.20", appid=100, compat_tool_name="proton_520",
+            is_default_proton=True, required_tool_app=steam_runtime_medic
+        )
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        run_command(
+            winetricks_path="/usr/bin/winetricks",
+            proton_app=proton_app,
+            steam_app=steam_app,
+            command=["echo", "nothing"],
+            steam_runtime_path=steam_runtime_medic.install_path
+        )
+
+        # Warning will be logged since Protontricks does not recognize
+        # Steam Runtime Medic and can't ensure it's being configured correctly
+        warning = next(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        )
+        assert warning.getMessage() == \
+            "Current Steam Runtime not recognized by Protontricks."

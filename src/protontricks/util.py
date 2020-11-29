@@ -36,9 +36,9 @@ def get_host_library_paths():
     # do it ourselves here.
     result = run(
         ["/sbin/ldconfig", "-XNv"],
-        encoding="utf-8", check=True, stdout=PIPE, stderr=PIPE
+        check=True, stdout=PIPE, stderr=PIPE
     )
-    lines = result.stdout.split("\n")
+    lines = result.stdout.decode("utf-8").split("\n")
     paths = [
         line.split(":")[0] for line in lines
         if line.startswith("/") and ":" in line
@@ -66,7 +66,7 @@ def get_runtime_library_path(steam_runtime_path, proton_app):
             os.path.join(proton_app.install_path, "dist", "lib64"), os.pathsep,
             get_host_library_paths(), os.pathsep,
             str(runtime_root / "i686-pc-linux-gnu" / "lib"), os.pathsep,
-            str(runtime_root / "x86_64-pc-linux-gnu" / "lib"), os.pathsep,
+            str(runtime_root / "x86_64-pc-linux-gnu" / "lib")
         ])
 
     # Traditional LD_LIBRARY_PATH based Steam Runtime is used otherwise

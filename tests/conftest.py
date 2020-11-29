@@ -5,6 +5,7 @@ import struct
 import zlib
 from collections import defaultdict
 from pathlib import Path
+from subprocess import run
 
 import vdf
 from protontricks.cli import main
@@ -305,13 +306,23 @@ def steam_app_factory(steam_dir, steam_config_path):
     """
     def func(
             name, appid, compat_tool_name=None, library_dir=None,
-            add_prefix=True):
+            add_prefix=True, required_tool_app=None):
         if not library_dir:
             steamapps_dir = steam_dir / "steamapps"
         else:
             steamapps_dir = library_dir / "steamapps"
 
-        (steamapps_dir / "common" / name).mkdir(parents=True)
+        install_path = steamapps_dir / "common" / name
+        install_path.mkdir(parents=True)
+
+        if required_tool_app:
+            (install_path / "toolmanifest.vdf").write_text(
+                vdf.dumps({
+                    "manifest": {
+                        "require_tool_appid": required_tool_app.appid
+                    }
+                })
+            )
 
         (steamapps_dir / "appmanifest_{}.acf".format(appid)).write_text(
             vdf.dumps({
@@ -341,7 +352,7 @@ def steam_app_factory(steam_dir, steam_config_path):
                 }
             steam_config_path.write_text(vdf.dumps(steam_config))
 
-        return SteamApp(
+        steam_app = SteamApp(
             name=name,
             appid=appid,
             install_path=str(steamapps_dir / "common" / name),
@@ -350,6 +361,13 @@ def steam_app_factory(steam_dir, steam_config_path):
                 / "pfx"
             )
         )
+        if required_tool_app:
+            # In actual code, `required_tool_app` attribute is populated later
+            # when we have retrieved all Steam apps and can find the
+            # corresponding app using its app ID
+            steam_app.required_tool_app = required_tool_app
+
+        return steam_app
 
     return func
 
@@ -361,9 +379,10 @@ def proton_factory(steam_app_factory, appinfo_factory, steam_config_path):
     """
     def func(
             name, appid, compat_tool_name, is_default_proton=True,
-            library_dir=None):
+            library_dir=None, required_tool_app=None):
         steam_app = steam_app_factory(
-            name=name, appid=appid, library_dir=library_dir
+            name=name, appid=appid, library_dir=library_dir,
+            required_tool_app=required_tool_app
         )
         shutil.rmtree(str(Path(steam_app.prefix_path).parent))
         steam_app.prefix_path = None
@@ -395,6 +414,48 @@ def proton_factory(steam_app_factory, appinfo_factory, steam_config_path):
         return steam_app
 
     return func
+
+
+@pytest.fixture(scope="function")
+def runtime_app_factory(steam_app_factory, appinfo_factory, steam_config_path):
+    """
+    Factory function to add fake Steam Runtimes that are installed as Steam
+    apps
+    """
+    def func(name, appid, runtime_dir_name, library_dir=None):
+        runtime_app = steam_app_factory(
+            name=name, appid=appid, library_dir=library_dir, add_prefix=False
+        )
+
+        install_path = Path(runtime_app.install_path)
+
+        runtime_root_path = install_path / runtime_dir_name / "files"
+        (runtime_root_path / "i686-pc-linux-gnu" / "lib").mkdir(parents=True)
+        (runtime_root_path / "x86_64-pc-linux-gnu" / "lib").mkdir(parents=True)
+
+        (install_path / "run.sh").touch()
+
+        (install_path / "toolmanifest.vdf").write_text(
+            vdf.dumps({
+                "manifest": {"commandline": "/run.sh --"}
+            })
+        )
+
+        return runtime_app
+
+    return func
+
+
+@pytest.fixture(scope="function")
+def steam_runtime_soldier(runtime_app_factory):
+    """
+    Fake Steam Runtime Soldier installation
+    """
+    return runtime_app_factory(
+        name="Steam Linux Runtime - Soldier",
+        appid=1391110,
+        runtime_dir_name="soldier"
+    )
 
 
 @pytest.fixture(scope="function")
@@ -525,6 +586,10 @@ def command(monkeypatch):
     mock_command = MockSubprocess()
 
     def mock_subprocess_run(args, **kwargs):
+        # Don't mock "/sbin/ldconfig"
+        if args[0] == "/sbin/ldconfig":
+            return run(args, **kwargs)
+
         mock_command.args = args
         mock_command.kwargs = kwargs
         mock_command.env = os.environ.copy()
