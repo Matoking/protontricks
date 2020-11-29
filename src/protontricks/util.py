@@ -4,11 +4,15 @@ import shlex
 import shutil
 import stat
 from pathlib import Path
-from subprocess import check_output, run
+from subprocess import check_output, run, PIPE
 
 __all__ = ("get_runtime_library_path", "create_wine_bin_dir", "run_command")
 
 logger = logging.getLogger("protontricks")
+
+SUPPORTED_STEAM_RUNTIMES = [
+    "Steam Linux Runtime - Soldier"
+]
 
 
 def lower_dict(d):
@@ -21,10 +25,51 @@ def lower_dict(d):
     return {k.lower(): v for k, v in d.items()}
 
 
+def get_host_library_paths():
+    """
+    Get host library paths to use when creating the LD_LIBRARY_PATH environment
+    variable for use with newer Steam Runtime installations
+    """
+    # The traditional Steam Runtime does the following when running the
+    # `run.sh --print-steam-runtime-library-paths` command.
+    # Since that command is unavailable with newer Steam Runtime releases,
+    # do it ourselves here.
+    result = run(
+        ["/sbin/ldconfig", "-XNv"],
+        encoding="utf-8", check=True, stdout=PIPE, stderr=PIPE
+    )
+    lines = result.stdout.split("\n")
+    paths = [
+        line.split(":")[0] for line in lines
+        if line.startswith("/") and ":" in line
+    ]
+
+    return ":".join(paths)
+
+
 def get_runtime_library_path(steam_runtime_path, proton_app):
     """
     Get LD_LIBRARY_PATH value to run a command using Steam Runtime
     """
+    if proton_app.required_tool_app:
+        # bwrap based Steam Runtime is used for Proton installations that
+        # use separate Steam runtimes
+        # TODO: Try to run the Wine binaries inside an user namespace somehow.
+        # Newer Steam Runtime environments may rely on a newer glibc than what
+        # is available on the host system, which may cause potential problems
+        # otherwise.
+        runtime_root = next(
+            Path(proton_app.required_tool_app.install_path).glob("*/files/")
+        )
+        return "".join([
+            os.path.join(proton_app.install_path, "dist", "lib"), os.pathsep,
+            os.path.join(proton_app.install_path, "dist", "lib64"), os.pathsep,
+            get_host_library_paths(), os.pathsep,
+            str(runtime_root / "i686-pc-linux-gnu" / "lib"), os.pathsep,
+            str(runtime_root / "x86_64-pc-linux-gnu" / "lib"), os.pathsep,
+        ])
+
+    # Traditional LD_LIBRARY_PATH based Steam Runtime is used otherwise
     steam_runtime_paths = check_output([
         os.path.join(steam_runtime_path, "run.sh"),
         "--print-steam-runtime-library-paths"
@@ -158,6 +203,18 @@ def run_command(
 
     wine_bin_dir = None
     if steam_runtime_path:
+        if proton_app.required_tool_app:
+            runtime_name = proton_app.required_tool_app.name
+            logger.info(
+                "Using separately installed Steam Runtime: %s",
+                runtime_name
+            )
+
+            if runtime_name not in SUPPORTED_STEAM_RUNTIMES:
+                logger.warning(
+                    "Current Steam Runtime not recognized by Protontricks."
+                )
+
         # When Steam Runtime is enabled, create a set of helper scripts
         # that load the underlying Proton Wine executables with Steam Runtime
         # and Proton libraries instead of system libraries

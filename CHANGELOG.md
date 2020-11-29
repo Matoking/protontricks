@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Fixed
+ - Add support for newer Steam Runtime versions
+
 ## [1.4.2] - 2020-09-19
 ### Fixed
  - Fix crash with newer Steam client beta caused by differently cased keys in `loginusers.vdf`
