@@ -29,22 +29,22 @@ def home_dir(monkeypatch, tmp_path):
     """
     Fake home directory
     """
-    home_dir = tmp_path / "home" / "fakeuser"
-    home_dir.mkdir(parents=True)
+    home_dir_ = Path(str(tmp_path)) / "home" / "fakeuser"
+    home_dir_.mkdir(parents=True)
 
     # Create fake Winetricks executable
-    (home_dir / ".local" / "bin").mkdir(parents=True)
-    (home_dir / ".local" / "bin" / "winetricks").touch()
-    (home_dir / ".local" / "bin" / "winetricks").chmod(0o744)
+    (home_dir_ / ".local" / "bin").mkdir(parents=True)
+    (home_dir_ / ".local" / "bin" / "winetricks").touch()
+    (home_dir_ / ".local" / "bin" / "winetricks").chmod(0o744)
 
-    monkeypatch.setenv("HOME", str(home_dir))
+    monkeypatch.setenv("HOME", str(home_dir_))
 
     # Set PATH to point only towards the fake home directory
     # This helps prevent the system-wide binaries from messing with tests
     # where we test for absence of executables such as 'winetricks'
-    monkeypatch.setenv("PATH", str(home_dir / ".local" / "bin"))
+    monkeypatch.setenv("PATH", str(home_dir_ / ".local" / "bin"))
 
-    yield home_dir
+    yield home_dir_
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -515,7 +515,7 @@ def steam_library_factory(steam_dir, steam_libraryfolders_path, tmp_path):
     Factory function to add fake Steam library folders
     """
     def func(name):
-        library_dir = tmp_path / "mnt" / name
+        library_dir = Path(str(tmp_path)) / "mnt" / name
         library_dir.mkdir(parents=True)
 
         # Update libraryfolders.vdf with the new library folder

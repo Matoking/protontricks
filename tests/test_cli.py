@@ -19,7 +19,7 @@ class TestCLIRun:
         cli(["10", "winecfg"], env={"STEAM_RUNTIME": "0"})
 
         # winecfg was actually run
-        assert command.args[0].endswith(".local/bin/winetricks")
+        assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
 
         # Correct environment vars were set
@@ -61,7 +61,7 @@ class TestCLIRun:
         custom_proton = custom_proton_factory(name="Custom Proton")
         cli(["10", "winecfg"], env={"PROTON_VERSION": "Custom Proton"})
 
-        assert command.env["PROTON_PATH"] == custom_proton.install_path
+        assert command.env["PROTON_PATH"] == str(custom_proton.install_path)
 
     def test_run_winetricks_select_steam(
             self, cli, steam_app_factory, default_proton, command,
@@ -111,7 +111,7 @@ class TestCLIRun:
         )
 
         # winecfg was actually run
-        assert command.args[0].endswith(".local/bin/winetricks")
+        assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
         assert command.env["PATH"].startswith(str(wine_bin_dir))
         assert (
@@ -152,7 +152,7 @@ class TestCLIRun:
         )
 
         # winecfg was run
-        assert command.args[0].endswith(".local/bin/winetricks")
+        assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
         assert command.env["PATH"].startswith(str(wine_bin_dir))
 
@@ -264,8 +264,8 @@ class TestCLIGUI:
         cli(["--gui"])
 
         # 'winetricks --gui' was run for the game selected by user
-        assert command.args[0] == str(
-            home_dir / ".local" / "bin" / "winetricks")
+        assert str(command.args[0]) == \
+            str(home_dir / ".local" / "bin" / "winetricks")
         assert command.args[1] == "--gui"
 
         # Correct environment vars were set
@@ -301,14 +301,14 @@ class TestCLICommand:
         Run a shell command for a given game
         """
         steam_app = steam_app_factory(name="Fake game", appid=10)
-        proton_install_path = Path(default_proton.install_path)
+        proton_install_path = default_proton.install_path
 
         cli(["-c", "bash", "10"])
 
         # The command is just 'bash'
         assert command.args == "bash"
 
-        assert command.kwargs["cwd"] == str(steam_app.install_path)
+        assert command.kwargs["cwd"] == steam_app.install_path
         assert command.kwargs["shell"] is True
 
         # Correct environment vars were set

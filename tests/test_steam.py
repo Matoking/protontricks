@@ -22,8 +22,8 @@ class TestSteamApp:
             Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
 
         steam_app = SteamApp.from_appmanifest(
-            path=str(appmanifest_path),
-            steam_lib_paths=[str(steam_dir / "steam" / "steamapps")]
+            path=appmanifest_path,
+            steam_lib_paths=[steam_dir / "steam" / "steamapps"]
         )
 
         assert steam_app.name == "Fake game"
@@ -38,7 +38,7 @@ class TestSteamApp:
 
         # Invalid appmanifest file is ignored
         assert not SteamApp.from_appmanifest(
-            path=str(appmanifest_path),
+            path=appmanifest_path,
             steam_lib_paths=[]
         )
 
@@ -51,7 +51,7 @@ class TestSteamApp:
 
         # Empty appmanifest file is ignored
         assert not SteamApp.from_appmanifest(
-            path=str(appmanifest_path),
+            path=appmanifest_path,
             steam_lib_paths=[]
         )
 
@@ -72,7 +72,7 @@ class TestFindSteamProtonApp:
             compat_tool_name="proton_6_66")
 
         proton_app = find_steam_proton_app(
-            steam_path=str(steam_dir),
+            steam_path=steam_dir,
             steam_apps=[default_proton, custom_proton],
             appid=10
         )
@@ -101,12 +101,11 @@ class TestFindAppidProtonPrefix:
         )
 
         path = find_appid_proton_prefix(
-            appid=10, steam_lib_paths=[str(steam_dir), str(library_dir)]
+            appid=10, steam_lib_paths=[steam_dir, library_dir]
         )
 
-        assert path == str(
+        assert path == \
             library_dir / "SteamApps" / "compatdata" / "10" / "pfx"
-        )
 
     def test_find_appid_proton_prefix_latest_compatdata(
             self, steam_app_factory, steam_library_factory):
@@ -146,13 +145,10 @@ class TestFindAppidProtonPrefix:
 
         path = find_appid_proton_prefix(
             appid=10,
-            steam_lib_paths=[
-                str(library_dir_a), str(library_dir_b), str(library_dir_c)
-            ]
+            steam_lib_paths=[library_dir_a, library_dir_b, library_dir_c]
         )
-        assert path == str(
-            library_dir_b / "steamapps" / "compatdata" / "10" / "pfx"
-        )
+        assert \
+            path == library_dir_b / "steamapps" / "compatdata" / "10" / "pfx"
 
 
 class TestFindSteamPath:
@@ -180,7 +176,9 @@ class TestFindSteamPath:
             str(steam_root / "ubuntu12_32"),
             str(custom_path / "ubuntu12_32")
         )
-        assert find_steam_path() == (str(custom_path), str(custom_path))
+        steam_paths = find_steam_path()
+        assert str(steam_paths[0]) == str(custom_path)
+        assert str(steam_paths[1]) == str(custom_path)
 
 
 class TestGetSteamApps:
@@ -194,9 +192,9 @@ class TestGetSteamApps:
         custom_proton = custom_proton_factory(name="Custom Proton")
 
         steam_apps = get_steam_apps(
-            steam_root=str(steam_root),
-            steam_path=str(steam_dir),
-            steam_lib_paths=[str(steam_dir)]
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
         )
 
         assert len(steam_apps) == 2
@@ -205,7 +203,7 @@ class TestGetSteamApps:
             app for app in steam_apps
             if app.name == "Custom Proton"
         )
-        assert found_custom_proton.install_path == \
+        assert str(found_custom_proton.install_path) == \
             str(custom_proton.install_path)
 
     def test_get_steam_apps_in_library_folder(
@@ -221,9 +219,9 @@ class TestGetSteamApps:
             name="Fake game 2", appid=20, library_dir=library_dir)
 
         steam_apps = get_steam_apps(
-            steam_root=str(steam_root),
-            steam_path=str(steam_dir),
-            steam_lib_paths=[str(steam_dir), str(library_dir)]
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir, library_dir]
         )
 
         # Two games and the default Proton installation should be found
@@ -231,9 +229,9 @@ class TestGetSteamApps:
         steam_app_a = next(app for app in steam_apps if app.appid == 10)
         steam_app_b = next(app for app in steam_apps if app.appid == 20)
 
-        assert steam_app_a.install_path == \
+        assert str(steam_app_a.install_path) == \
             str(steam_dir / "steamapps" / "common" / "Fake game 1")
-        assert steam_app_b.install_path == \
+        assert str(steam_app_b.install_path) == \
             str(library_dir / "steamapps" / "common" / "Fake game 2")
 
     def test_get_steam_apps_proton_precedence(
@@ -255,24 +253,26 @@ class TestGetSteamApps:
         )
 
         steam_apps = get_steam_apps(
-            steam_root=str(steam_root),
-            steam_path=str(steam_dir),
-            steam_lib_paths=[str(steam_dir)]
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
         )
         assert len(steam_apps) == 1
-        assert steam_apps[0].install_path == proton_app_a.install_path
+        assert str(steam_apps[0].install_path) == \
+            str(proton_app_a.install_path)
 
         # Create a Proton app with the same name in the default directory;
         # this will override the former Proton app we created
         proton_app_b = custom_proton_factory(name="Fake Proton")
 
         steam_apps = get_steam_apps(
-            steam_root=str(steam_root),
-            steam_path=str(steam_dir),
-            steam_lib_paths=[str(steam_dir)]
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
         )
         assert len(steam_apps) == 1
-        assert steam_apps[0].install_path == proton_app_b.install_path
+        assert str(steam_apps[0].install_path) == \
+            str(proton_app_b.install_path)
 
     def test_get_steam_apps_escape_chars(
             self, steam_app_factory, steam_library_factory,
@@ -287,14 +287,14 @@ class TestGetSteamApps:
         steam_app_factory(name="Test game", appid=10, library_dir=library_dir)
 
         steam_apps = get_steam_apps(
-            steam_root=str(steam_root),
-            steam_path=str(steam_dir),
-            steam_lib_paths=[str(steam_dir), str(library_dir)]
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir, library_dir]
         )
 
         assert len(steam_apps) == 1
         assert steam_apps[0].name == "Test game"
-        assert steam_apps[0].install_path.startswith(str(library_dir))
+        assert str(steam_apps[0].install_path).startswith(str(library_dir))
 
     def test_get_steam_apps_steamapps_case_warning(
             self, steam_app_factory, steam_library_factory,
@@ -304,9 +304,9 @@ class TestGetSteamApps:
         directories exist at one of the Steam library directories
         """
         get_steam_apps(
-            steam_root=str(steam_root),
-            steam_path=str(steam_dir),
-            steam_lib_paths=[str(steam_dir)]
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
         )
 
         # No log was created yet
@@ -318,9 +318,9 @@ class TestGetSteamApps:
         (steam_dir / "SteamApps").mkdir()
 
         get_steam_apps(
-            steam_root=str(steam_root),
-            steam_path=str(steam_dir),
-            steam_lib_paths=[str(steam_dir)]
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
         )
 
         # Warning was logged due to two Steam app directories

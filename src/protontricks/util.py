@@ -6,7 +6,7 @@ import stat
 from pathlib import Path
 from subprocess import check_output, run, PIPE
 
-__all__ = ("get_runtime_library_path", "create_wine_bin_dir", "run_command")
+__all__ = ("get_runtime_library_paths", "create_wine_bin_dir", "run_command")
 
 logger = logging.getLogger("protontricks")
 
@@ -47,7 +47,7 @@ def get_host_library_paths():
     return ":".join(paths)
 
 
-def get_runtime_library_path(steam_runtime_path, proton_app):
+def get_runtime_library_paths(steam_runtime_path, proton_app):
     """
     Get LD_LIBRARY_PATH value to run a command using Steam Runtime
     """
@@ -59,11 +59,11 @@ def get_runtime_library_path(steam_runtime_path, proton_app):
         # is available on the host system, which may cause potential problems
         # otherwise.
         runtime_root = next(
-            Path(proton_app.required_tool_app.install_path).glob("*/files/")
+            proton_app.required_tool_app.install_path.glob("*/files/")
         )
         return "".join([
-            os.path.join(proton_app.install_path, "dist", "lib"), os.pathsep,
-            os.path.join(proton_app.install_path, "dist", "lib64"), os.pathsep,
+            str(proton_app.install_path / "dist" / "lib"), os.pathsep,
+            str(proton_app.install_path / "dist" / "lib64"), os.pathsep,
             get_host_library_paths(), os.pathsep,
             str(runtime_root / "i686-pc-linux-gnu" / "lib"), os.pathsep,
             str(runtime_root / "x86_64-pc-linux-gnu" / "lib")
@@ -71,15 +71,15 @@ def get_runtime_library_path(steam_runtime_path, proton_app):
 
     # Traditional LD_LIBRARY_PATH based Steam Runtime is used otherwise
     steam_runtime_paths = check_output([
-        os.path.join(steam_runtime_path, "run.sh"),
+        str(steam_runtime_path / "run.sh"),
         "--print-steam-runtime-library-paths"
     ])
     steam_runtime_paths = str(steam_runtime_paths, "utf-8")
     # Add Proton installation directory first into LD_LIBRARY_PATH
     # so that libwine.so.1 is picked up correctly (see issue #3)
     return "".join([
-        os.path.join(proton_app.install_path, "dist", "lib"), os.pathsep,
-        os.path.join(proton_app.install_path, "dist", "lib64"), os.pathsep,
+        str(proton_app.install_path / "dist" / "lib"), os.pathsep,
+        str(proton_app.install_path / "dist" / "lib64"), os.pathsep,
         steam_runtime_paths
     ])
 
@@ -98,9 +98,7 @@ def create_wine_bin_dir(proton_app):
     using Steam Runtime and Proton's own libraries instead of the system
     libraries
     """
-    binaries = list((
-        Path(proton_app.install_path) / "dist" / "bin"
-    ).iterdir())
+    binaries = list((proton_app.install_path / "dist" / "bin").iterdir())
 
     # Create the base directory containing files for every Proton installation
     xdg_cache_dir = os.environ.get(
@@ -112,7 +110,7 @@ def create_wine_bin_dir(proton_app):
     # Create a directory to hold the new executables for the specific
     # Proton installation
     bin_path = base_path / proton_app.name / "bin"
-    os.makedirs(str(bin_path), exist_ok=True)
+    bin_path.mkdir(parents=True, exist_ok=True)
 
     logger.info(
         "Created Steam Runtime Wine binary directory at %s", str(bin_path)
@@ -132,19 +130,19 @@ def create_wine_bin_dir(proton_app):
     # longer exist in the Proton installation, so we'll also get rid of
     # scripts that point to non-existing files
     shutil.rmtree(str(bin_path))
-    os.makedirs(str(bin_path))
+    bin_path.mkdir(parents=True)
 
     for binary in binaries:
         content = WINE_SCRIPT_TEMPLATE.format(
             name=shlex.quote(binary.name)
         ).encode("utf-8")
 
-        with open(str(bin_path / binary.name), "wb") as file_:
-            file_.write(content)
+        proxy_script_path = bin_path / binary.name
+        proxy_script_path.write_bytes(content)
 
-        script_stat = os.stat(str(bin_path / binary.name))
+        script_stat = proxy_script_path.stat()
         # Make the helper script executable
-        (bin_path / binary.name).chmod(script_stat.st_mode | stat.S_IEXEC)
+        proxy_script_path.chmod(script_stat.st_mode | stat.S_IEXEC)
 
     return bin_path
 
@@ -169,34 +167,34 @@ def run_command(
             "WINE environment variable is not available. "
             "Setting WINE environment variable to Proton bundled version"
         )
-        os.environ["WINE"] = os.path.join(
-            proton_app.install_path, "dist", "bin", "wine")
+        os.environ["WINE"] = \
+            str(proton_app.install_path / "dist" / "bin" / "wine")
 
     if not os.environ.get("WINESERVER"):
         logger.info(
             "WINESERVER environment variable is not available. "
             "Setting WINESERVER environment variable to Proton bundled version"
         )
-        os.environ["WINESERVER"] = os.path.join(
-            proton_app.install_path, "dist", "bin", "wineserver"
-        )
+        os.environ["WINESERVER"] = \
+            str(proton_app.install_path / "dist" / "bin" / "wineserver")
 
-    os.environ["WINETRICKS"] = winetricks_path
-    os.environ["WINEPREFIX"] = steam_app.prefix_path
+    os.environ["WINETRICKS"] = str(winetricks_path)
+    os.environ["WINEPREFIX"] = str(steam_app.prefix_path)
     os.environ["WINELOADER"] = os.environ["WINE"]
     os.environ["WINEDLLPATH"] = "".join([
-        os.path.join(proton_app.install_path, "dist", "lib64", "wine"),
+        str(proton_app.install_path / "dist" / "lib64" / "wine"),
         os.pathsep,
-        os.path.join(proton_app.install_path, "dist", "lib", "wine")
+        str(proton_app.install_path / "dist" / "lib" / "wine")
     ])
 
-    os.environ["PATH"] = os.path.join(
-        proton_app.install_path, "dist", "bin"
-    ) + os.pathsep + os.environ["PATH"]
+    os.environ["PATH"] = "".join([
+        str(proton_app.install_path / "dist" / "bin"), os.pathsep,
+        os.environ["PATH"]
+    ])
 
     # Expose the path to Proton installation. This is mainly used for
     # Wine helper scripts, but other scripts could use it as well.
-    os.environ["PROTON_PATH"] = proton_app.install_path
+    os.environ["PROTON_PATH"] = str(proton_app.install_path)
 
     # Unset WINEARCH, which might be set for another Wine installation
     os.environ.pop("WINEARCH", "")
@@ -220,9 +218,10 @@ def run_command(
         # and Proton libraries instead of system libraries
         wine_bin_dir = create_wine_bin_dir(proton_app=proton_app)
         os.environ["PROTON_LD_LIBRARY_PATH"] = \
-            get_runtime_library_path(steam_runtime_path, proton_app)
-        os.environ["PATH"] = \
-            str(wine_bin_dir) + os.pathsep + os.environ["PATH"]
+            get_runtime_library_paths(steam_runtime_path, proton_app)
+        os.environ["PATH"] = "".join([
+            str(wine_bin_dir), os.pathsep, os.environ["PATH"]
+        ])
         os.environ["WINE"] = str(wine_bin_dir / "wine")
         os.environ["WINELOADER"] = os.environ["WINE"]
         os.environ["WINESERVER"] = str(wine_bin_dir / "wineserver")

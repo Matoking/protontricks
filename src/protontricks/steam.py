@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import string
@@ -18,8 +17,8 @@ __all__ = (
 )
 
 COMMON_STEAM_DIRS = [
-    os.path.join(".steam", "steam"),
-    os.path.join(".local", "share", "Steam")
+    ".steam/steam",
+    ".local/share/Steam"
 ]
 
 logger = logging.getLogger("protontricks")
@@ -54,8 +53,13 @@ class SteamApp(object):
             int(required_tool_appid) if required_tool_appid else None
 
         self.name = name
-        self.prefix_path = prefix_path
-        self.install_path = install_path
+
+        if prefix_path:
+            self.prefix_path = Path(prefix_path)
+        else:
+            self.prefix_path = None
+
+        self.install_path = Path(install_path)
 
         # Reference to another SteamApp will be added later if necessary,
         # once we have the full list of Steam apps
@@ -73,8 +77,8 @@ class SteamApp(object):
         # 'pfx' directory is incomplete until the game has been launched
         # once, so check for 'pfx.lock' as well
         return (
-            os.path.exists(self.prefix_path)
-            and os.path.exists(os.path.join(self.prefix_path, "..", "pfx.lock"))
+            self.prefix_path.is_dir()
+            and (self.prefix_path.parent / "pfx.lock").is_file()
         )
 
     def name_contains(self, s):
@@ -103,7 +107,7 @@ class SteamApp(object):
         """
         # If the installation directory contains a file named "proton",
         # it's a Proton installation
-        return os.path.exists(os.path.join(self.install_path, "proton"))
+        return (self.install_path / "proton").is_file()
 
     @property
     def is_tool(self):
@@ -112,9 +116,7 @@ class SteamApp(object):
 
         This is true for Proton and Steam Runtime installations.
         """
-        return os.path.exists(
-            os.path.join(self.install_path, "toolmanifest.vdf")
-        )
+        return (self.install_path / "toolmanifest.vdf").is_file()
 
     @classmethod
     def from_appmanifest(cls, path, steam_lib_paths):
@@ -122,17 +124,16 @@ class SteamApp(object):
         Parse appmanifest_X.acf file containing Steam app installation metadata
         and return a SteamApp object
         """
-        with open(path, "r") as f:
-            try:
-                content = f.read()
-            except UnicodeDecodeError:
-                # This might occur if the appmanifest becomes corrupted
-                # eg. due to running a Linux filesystem under Windows
-                # In that case just skip it
-                logger.warning(
-                    "Skipping malformed appmanifest %s", path
-                )
-                return None
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            # This might occur if the appmanifest becomes corrupted
+            # eg. due to running a Linux filesystem under Windows
+            # In that case just skip it
+            logger.warning(
+                "Skipping malformed appmanifest %s", path
+            )
+            return None
 
         try:
             vdf_data = vdf.loads(content)
@@ -161,15 +162,14 @@ class SteamApp(object):
             appid=appid, steam_lib_paths=steam_lib_paths
         )
 
-        install_path = os.path.join(
-            os.path.split(path)[0], "common", app_state["installdir"])
+        install_path = Path(path).parent / "common" / app_state["installdir"]
 
         required_tool_appid = None
 
         # Check if the app requires another app. This is the case with
         # newer versions of Proton, which use Steam Runtimes installed as
         # normal Steam apps
-        tool_manifest_path = Path(install_path) / "toolmanifest.vdf"
+        tool_manifest_path = install_path / "toolmanifest.vdf"
         try:
             tool_manifest_content = tool_manifest_path.read_text()
             tool_manifest = vdf.loads(tool_manifest_content)
@@ -198,26 +198,23 @@ def find_steam_path():
         Return True if the path either has a 'steamapps' or a 'SteamApps'
         subdirectory, False otherwise
         """
-        return (
-            # 'steamapps' is the usual name under Linux Steam installations
-            os.path.isdir(os.path.join(path, "steamapps"))
-            # 'SteamApps' name appears in installations imported from Windows
-            or os.path.isdir(os.path.join(path, "SteamApps"))
-        )
+        # 'steamapps' is the usual name under Linux Steam installations
+        # 'SteamApps' name appears in installations imported from Windows
+        return (path / "steamapps").is_dir() or (path / "SteamApps").is_dir()
 
     def has_runtime_dir(path):
-        return os.path.isdir(os.path.join(path, "ubuntu12_32"))
+        return (path / "ubuntu12_32").is_dir()
 
     # as far as @admalledd can tell,
     # this should always be correct for the tools root:
-    steam_root = os.path.join(os.path.expanduser("~"), ".steam", "root")
+    steam_root = Path.home() / ".steam" / "root"
 
-    if not os.path.isdir(os.path.join(steam_root, "ubuntu12_32")):
+    if not (steam_root / "ubuntu12_32").is_dir():
         # Check that runtime dir exists, if not make root=path and hope
         steam_root = None
 
     if os.environ.get("STEAM_DIR"):
-        steam_path = os.environ.get("STEAM_DIR")
+        steam_path = Path(os.environ.get("STEAM_DIR"))
         if has_steamapps_dir(steam_path) and has_runtime_dir(steam_path):
             logger.info(
                 "Found a valid Steam installation at %s.", steam_path
@@ -234,7 +231,7 @@ def find_steam_path():
 
     for steam_path in COMMON_STEAM_DIRS:
         # The common Steam directories are found inside the home directory
-        steam_path = str(Path.home() / steam_path)
+        steam_path = Path.home() / steam_path
         if has_steamapps_dir(steam_path):
             logger.info(
                 "Found Steam directory at %s. You can also define Steam "
@@ -259,19 +256,18 @@ def find_steam_runtime_path(steam_root):
         # User has disabled Steam Runtime
         logger.info("STEAM_RUNTIME is 0. Disabling Steam Runtime.")
         return None
-    elif os.path.isdir(env_steam_runtime):
+    elif env_steam_runtime and Path(env_steam_runtime).is_dir():
         # User has a custom Steam Runtime
         logger.info(
             "Using custom Steam Runtime at %s", env_steam_runtime)
-        return env_steam_runtime
+        return Path(env_steam_runtime)
     elif env_steam_runtime in ["1", ""]:
         # User has enabled Steam Runtime or doesn't have STEAM_RUNTIME set;
         # default to enabled Steam Runtime in either case
-        steam_runtime_path = os.path.join(
-            steam_root, "ubuntu12_32", "steam-runtime")
+        steam_runtime_path = steam_root / "ubuntu12_32" / "steam-runtime"
 
         logger.info(
-            "Using default Steam Runtime at %s", steam_runtime_path)
+            "Using default Steam Runtime at %s", str(steam_runtime_path))
         return steam_runtime_path
 
     logger.error(
@@ -293,42 +289,41 @@ def get_appinfo_sections(path):
     # containing multiple binary VDF sections.
     # File structure based on comment from vdf developer:
     # https://github.com/ValvePython/vdf/issues/13#issuecomment-321700244
-    with open(path, "rb") as f:
-        data = f.read()
-        i = 0
+    data = path.read_bytes()
+    i = 0
 
-        # Parse the header
-        header_size = struct.calcsize(APPINFO_STRUCT_HEADER)
-        magic, universe = struct.unpack(
-            APPINFO_STRUCT_HEADER, data[0:header_size]
-        )
+    # Parse the header
+    header_size = struct.calcsize(APPINFO_STRUCT_HEADER)
+    magic, universe = struct.unpack(
+        APPINFO_STRUCT_HEADER, data[0:header_size]
+    )
 
-        i += header_size
+    i += header_size
 
-        if magic != b"'DV\x07":
-            raise SyntaxError("Invalid file magic number")
+    if magic != b"'DV\x07":
+        raise SyntaxError("Invalid file magic number")
 
-        sections = []
+    sections = []
 
-        section_size = struct.calcsize(APPINFO_STRUCT_SECTION)
-        while True:
-            # We don't need any of the fields besides 'entry_size',
-            # which is used to determine the length of the variable-length VDF
-            # field.
-            # Still, here they are for posterity's sake.
-            (appid, entry_size, infostate, last_updated, access_token,
-             sha_hash, change_number) = struct.unpack(
-                APPINFO_STRUCT_SECTION, data[i:i+section_size])
-            vdf_section_size = entry_size - 40
+    section_size = struct.calcsize(APPINFO_STRUCT_SECTION)
+    while True:
+        # We don't need any of the fields besides 'entry_size',
+        # which is used to determine the length of the variable-length VDF
+        # field.
+        # Still, here they are for posterity's sake.
+        (appid, entry_size, infostate, last_updated, access_token,
+         sha_hash, change_number) = struct.unpack(
+            APPINFO_STRUCT_SECTION, data[i:i+section_size])
+        vdf_section_size = entry_size - 40
 
-            i += section_size
-            vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
-            sections.append(vdf_d)
+        i += section_size
+        vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
+        sections.append(vdf_d)
 
-            i += vdf_section_size
+        i += vdf_section_size
 
-            if i == len(data) - 4:
-                return sections
+        if i == len(data) - 4:
+            return sections
 
 
 def get_proton_appid(compat_tool_name, appinfo_path):
@@ -391,10 +386,8 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     # 3. ...or if the name can't be found that way, parse
     #    the file in STEAM_DIR/appcache/appinfo.vdf to find the Proton
     #    installation's App ID
-    config_vdf_path = os.path.join(steam_path, "config", "config.vdf")
-
-    with open(config_vdf_path, "r") as f:
-        content = f.read()
+    config_vdf_path = steam_path / "config" / "config.vdf"
+    content = config_vdf_path.read_text()
 
     vdf_data = vdf.loads(content)
     # ToolMapping seems to be used in older Steam beta releases
@@ -454,7 +447,7 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
 
     # Try option 2:
     # Find the corresponding App ID from <steam_path>/appcache/appinfo.vdf
-    appinfo_path = os.path.join(steam_path, "appcache", "appinfo.vdf")
+    appinfo_path = steam_path / "appcache" / "appinfo.vdf"
     proton_appid = get_proton_appid(compat_tool_name, appinfo_path)
 
     if not proton_appid:
@@ -487,9 +480,7 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
         """
         try:
             # 'pfx.lock' is modified on game launch
-            return os.stat(
-                os.path.join(prefix_path, "..", "pfx.lock")
-            ).st_mtime
+            return (prefix_path.parent / "pfx.lock").stat().st_mtime
         except FileNotFoundError:
             return 0
 
@@ -498,10 +489,9 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
     for path in steam_lib_paths:
         # 'steamapps' portion of the path can also be 'SteamApps'
         for steamapps_part in ("steamapps", "SteamApps"):
-            prefix_path = os.path.join(
-                path, steamapps_part, "compatdata", str(appid), "pfx"
-            )
-            if os.path.isdir(prefix_path):
+            prefix_path = \
+                path / steamapps_part / "compatdata" / str(appid) / "pfx"
+            if prefix_path.is_dir():
                 candidates.append(prefix_path)
 
     if len(candidates) > 1:
@@ -566,7 +556,7 @@ def get_steam_lib_paths(steam_path):
         vdf_data = vdf.loads(data)
         # Library folders have integer field names in ascending order
         library_folders = [
-            value for key, value in vdf_data["LibraryFolders"].items()
+            Path(value) for key, value in vdf_data["LibraryFolders"].items()
             if key.isdigit()
         ]
 
@@ -576,16 +566,13 @@ def get_steam_lib_paths(steam_path):
         return library_folders
 
     # Try finding Steam library folders using libraryfolders.vdf in Steam root
-    if os.path.isdir(os.path.join(steam_path, "steamapps")):
-        folders_vdf_path = os.path.join(
-            steam_path, "steamapps", "libraryfolders.vdf")
-    elif os.path.isdir(os.path.join(steam_path, "SteamApps")):
-        folders_vdf_path = os.path.join(
-            steam_path, "SteamApps", "libraryfolders.vdf")
+    if (steam_path / "steamapps").is_dir():
+        folders_vdf_path = steam_path / "steamapps" / "libraryfolders.vdf"
+    elif (steam_path / "SteamApps").is_dir():
+        folders_vdf_path = steam_path / "SteamApps" / "libraryfolders.vdf"
 
     try:
-        with open(folders_vdf_path, "r") as f:
-            library_folders = parse_library_folders(f.read())
+        library_folders = parse_library_folders(folders_vdf_path.read_text())
     except OSError:
         # libraryfolders.vdf doesn't exist; maybe no Steam library folders
         # are set?
@@ -602,13 +589,13 @@ def get_compat_tool_dirs(steam_root):
     # The path list is ordered by priority, starting from Proton apps
     # with the lowest precedence ('/usr/share/steam/compatibilitytools.d')
     paths = [
-        "/usr/share/steam/compatibilitytools.d",
-        "/usr/local/share/steam/compatibilitytools.d",
+        Path("/usr/share/steam/compatibilitytools.d"),
+        Path("/usr/local/share/steam/compatibilitytools.d"),
     ]
     extra_ct_paths_env = os.getenv("STEAM_EXTRA_COMPAT_TOOLS_PATHS")
     if extra_ct_paths_env:
-        paths += extra_ct_paths_env.split(os.pathsep)
-    paths += [os.path.join(steam_root, "compatibilitytools.d")]
+        paths += [Path(path) for path in extra_ct_paths_env.split(os.pathsep)]
+    paths += [steam_root / "compatibilitytools.d"]
 
     return paths
 
@@ -618,23 +605,16 @@ def get_proton_installations(compat_tool_dir):
     Return a list of custom Proton installations as a list of SteamApp objects
     """
 
-    if not os.path.isdir(compat_tool_dir):
+    if not compat_tool_dir.is_dir():
         return []
 
-    comptool_files = glob.glob(
-        os.path.join(
-            glob.escape(compat_tool_dir), "*", "compatibilitytool.vdf"
-        )
-    )
-    comptool_files += glob.glob(
-        os.path.join(glob.escape(compat_tool_dir), "compatibilitytool.vdf")
-    )
+    comptool_files = list(compat_tool_dir.glob("*/compatibilitytool.vdf"))
+    comptool_files += list(compat_tool_dir.glob("compatibilitytool.vdf"))
 
     custom_proton_apps = []
 
     for vdf_path in comptool_files:
-        with open(vdf_path, "r") as f:
-            content = f.read()
+        content = vdf_path.read_text()
 
         vdf_data = vdf.loads(content)
         internal_name = list(
@@ -642,7 +622,7 @@ def get_proton_installations(compat_tool_dir):
         tool_info = vdf_data["compatibilitytools"]["compat_tools"][
             internal_name]
 
-        install_path = tool_info["install_path"]
+        install_path_name = tool_info["install_path"]
         from_oslist = tool_info["from_oslist"]
         to_oslist = tool_info["to_oslist"]
 
@@ -652,10 +632,10 @@ def get_proton_installations(compat_tool_dir):
         # Installation path can be relative if the VDF was in
         # 'compatibilitytools.d/'
         # or '.' if the VDF was in 'compatibilitytools.d/TOOL_NAME'
-        if install_path == ".":
-            install_path = os.path.dirname(vdf_path)
+        if install_path_name == ".":
+            install_path = vdf_path.parent
         else:
-            install_path = os.path.join(compat_tool_dir, install_path)
+            install_path = compat_tool_dir / install_path_name
 
         custom_proton_apps.append(
             SteamApp(name=internal_name, install_path=install_path)
@@ -666,8 +646,8 @@ def get_proton_installations(compat_tool_dir):
 
 def get_custom_proton_installations(steam_root):
     custom_proton_apps = {}
-    for d in get_compat_tool_dirs(steam_root=steam_root):
-        for proton_app in get_proton_installations(d):
+    for dir_ in get_compat_tool_dirs(steam_root=steam_root):
+        for proton_app in get_proton_installations(dir_):
             # If another Proton app exists with the same name, it will
             # be replaced with an installation that has higher precedence
             # here
@@ -687,11 +667,10 @@ def find_current_steamid3(steam_path):
         """Convert a SteamID64 into the SteamID3 format"""
         return int(steamid64) & 0xffffffff
 
-    loginusers_path = os.path.join(steam_path, "config", "loginusers.vdf")
+    loginusers_path = steam_path / "config" / "loginusers.vdf"
     try:
-        with open(loginusers_path, "r") as f:
-            content = f.read()
-            vdf_data = vdf.loads(content)
+        content = loginusers_path.read_text()
+        vdf_data = vdf.loads(content)
     except IOError:
         return None
 
@@ -746,14 +725,12 @@ def get_custom_windows_shortcuts(steam_path):
     # Get the Steam ID3 for the currently logged-in user
     steamid3 = find_current_steamid3(steam_path)
 
-    shortcuts_path = os.path.join(
-        steam_path, "userdata", str(steamid3), "config", "shortcuts.vdf"
-    )
+    shortcuts_path = \
+        steam_path / "userdata" / str(steamid3) / "config" / "shortcuts.vdf"
 
     try:
-        with open(shortcuts_path, "rb") as f:
-            content = f.read()
-            vdf_data = vdf.binary_loads(content)
+        content = shortcuts_path.read_bytes()
+        vdf_data = vdf.binary_loads(content)
     except IOError:
         logger.info(
             "Couldn't find custom shortcuts. Maybe none have been created yet?"
@@ -772,12 +749,11 @@ def get_custom_windows_shortcuts(steam_path):
             target=shortcut_data["exe"], name=shortcut_data["appname"]
         )
 
-        prefix_path = os.path.join(
-            steam_path, "steamapps", "compatdata", str(appid), "pfx"
-        )
-        install_path = shortcut_data["startdir"].strip('"')
+        prefix_path = \
+            steam_path / "steamapps" / "compatdata" / str(appid) / "pfx"
+        install_path = Path(shortcut_data["startdir"].strip('"'))
 
-        if not os.path.isdir(prefix_path):
+        if not prefix_path.is_dir():
             continue
 
         steam_apps.append(
@@ -817,21 +793,13 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
 
     for path in steam_lib_paths:
         appmanifest_paths = []
-        is_lowercase = os.path.isdir(os.path.join(path, "steamapps"))
-        is_mixedcase = os.path.isdir(os.path.join(path, "SteamApps"))
+        is_lowercase = (path / "steamapps").is_dir()
+        is_mixedcase = (path / "SteamApps").is_dir()
 
         if is_lowercase:
-            appmanifest_paths = glob.glob(
-                os.path.join(
-                    glob.escape(path), "steamapps", "appmanifest_*.acf"
-                )
-            )
+            appmanifest_paths = path.glob("steamapps/appmanifest_*.acf")
         elif is_mixedcase:
-            appmanifest_paths = glob.glob(
-                os.path.join(
-                    glob.escape(path), "SteamApps", "appmanifest_*.acf"
-                )
-            )
+            appmanifest_paths = path.glob("SteamApps/appmanifest_*.acf")
 
         if is_lowercase and is_mixedcase:
             # Log a warning if both 'steamapps' and 'SteamApps' directories
@@ -841,7 +809,7 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
                 "Both 'steamapps' and 'SteamApps' directories were found at "
                 "%s. 'SteamApps' directory should be removed to prevent "
                 "issues with app and Proton discovery.",
-                path
+                str(path)
             )
 
         for manifest_path in appmanifest_paths:

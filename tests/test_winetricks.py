@@ -12,7 +12,7 @@ class TestGetWinetricksPath:
             "WINETRICKS",
             str(tmp_path / "winetricks")
         )
-        assert get_winetricks_path() == str(tmp_path / "winetricks")
+        assert str(get_winetricks_path()) == str(tmp_path / "winetricks")
 
     def test_get_winetricks_env_not_found(self, monkeypatch):
         """

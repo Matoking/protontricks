@@ -61,7 +61,7 @@ class TestRunCommand:
         steam_app = steam_app_factory(name="Fake game", appid=10)
 
         run_command(
-            winetricks_path="/usr/bin/winetricks",
+            winetricks_path=Path("/usr/bin/winetricks"),
             proton_app=proton_app,
             steam_app=steam_app,
             command=["echo", "nothing"],
