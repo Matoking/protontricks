@@ -388,7 +388,10 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     try:
         compat_tool_name = next(name for name in potential_names if name)
     except StopIteration:
-        logger.error("No Proton installation found in config.vdf")
+        logger.error(
+            "No Proton installation found in config.vdf. "
+            "Have you enabled Steam Play for all titles under Steam settings?"
+        )
         return None
 
     # We've got the name from config.vdf,
