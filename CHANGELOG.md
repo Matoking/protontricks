@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.4.3] - 2020-12-09
 ### Fixed
  - Add support for newer Steam Runtime versions
 
@@ -116,7 +116,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.4.2...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.4.3...HEAD
+[1.4.3]: https://github.com/Matoking/protontricks/compare/1.4.2...1.4.3
 [1.4.2]: https://github.com/Matoking/protontricks/compare/1.4.1...1.4.2
 [1.4.1]: https://github.com/Matoking/protontricks/compare/1.4...1.4.1
 [1.4]: https://github.com/Matoking/protontricks/compare/1.3.1...1.4
