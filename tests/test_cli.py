@@ -247,6 +247,32 @@ class TestCLIRun:
 
         assert "Proton installation could not be found" in result
 
+    def test_run_command_runtime_incomplete(
+            self, cli, steam_app_factory, steam_runtime_soldier,
+            command, proton_factory, steam_dir):
+        """
+        Try performing a Protontricks command using a Proton installation that
+        is still missing a Steam Runtime installation.
+
+        Regression test for https://github.com/Matoking/protontricks/issues/75
+        """
+        proton_factory(
+            name="Proton 5.13", appid=10, compat_tool_name="proton_513",
+            is_default_proton=True, required_tool_app=steam_runtime_soldier
+        )
+        steam_app_factory(name="Fake game 1", appid=20)
+
+        # Delete the Steam Runtime installation to simulate an incomplete
+        # Proton installation that's missing the required Steam Runtime
+        shutil.rmtree(str(steam_runtime_soldier.install_path))
+        (steam_dir / "steamapps" / "appmanifest_1391110.acf").unlink()
+
+        with pytest.raises(RuntimeError) as exc:
+            cli(["20", "winecfg"])
+
+        assert "Proton 5.13 is missing the required Steam Runtime" \
+            in str(exc.value)
+
 
 class TestCLIGUI:
     def test_run_gui(

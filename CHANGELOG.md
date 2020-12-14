@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unfinished]
+### Fixed
+ - Display a proper error message when Proton installation is incomplete due to missing Steam Runtime
+
 ## [1.4.3] - 2020-12-09
 ### Fixed
  - Add support for newer Steam Runtime versions

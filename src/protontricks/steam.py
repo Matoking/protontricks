@@ -781,7 +781,7 @@ def _link_tool_apps(steam_apps):
     for steam_app in steam_apps:
         if steam_app.required_tool_appid:
             steam_app.required_tool_app = \
-                appid2steam_app[steam_app.required_tool_appid]
+                appid2steam_app.get(steam_app.required_tool_appid)
 
 
 def get_steam_apps(steam_root, steam_path, steam_lib_paths):

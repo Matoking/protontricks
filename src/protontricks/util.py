@@ -51,7 +51,7 @@ def get_runtime_library_paths(steam_runtime_path, proton_app):
     """
     Get LD_LIBRARY_PATH value to run a command using Steam Runtime
     """
-    if proton_app.required_tool_app:
+    if proton_app.required_tool_appid:
         # bwrap based Steam Runtime is used for Proton installations that
         # use separate Steam runtimes
         # TODO: Try to run the Wine binaries inside an user namespace somehow.
@@ -159,6 +159,17 @@ def run_command(
 
     If 'steam_runtime_path' is provided, run the command using Steam Runtime
     """
+    # Check for incomplete Steam Runtime installation
+    runtime_install_incomplete = \
+        proton_app.required_tool_appid and not proton_app.required_tool_app
+
+    if steam_runtime_path and runtime_install_incomplete:
+        raise RuntimeError(
+            "{} is missing the required Steam Runtime. You may need to launch "
+            "a Steam app using this Proton version to finish the "
+            "installation.".format(proton_app.name)
+        )
+
     # Make a copy of the environment variables to restore later
     environ_copy = os.environ.copy()
 

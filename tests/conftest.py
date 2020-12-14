@@ -366,6 +366,7 @@ def steam_app_factory(steam_dir, steam_config_path):
             # when we have retrieved all Steam apps and can find the
             # corresponding app using its app ID
             steam_app.required_tool_app = required_tool_app
+            steam_app.required_tool_appid = required_tool_app.appid
 
         return steam_app
 
