@@ -745,9 +745,12 @@ def get_custom_windows_shortcuts(steam_path):
         shortcut_data = lower_dict(shortcut_data)
         shortcut_id = int(shortcut_id)
 
-        appid = get_appid_from_shortcut(
-            target=shortcut_data["exe"], name=shortcut_data["appname"]
-        )
+        if "appid" in shortcut_data:
+            appid = shortcut_data["appid"] & 0xffffffff
+        else:
+            appid = get_appid_from_shortcut(
+                target=shortcut_data["exe"], name=shortcut_data["appname"]
+            )
 
         prefix_path = \
             steam_path / "steamapps" / "compatdata" / str(appid) / "pfx"
