@@ -50,6 +50,7 @@ class TestCLIRun:
         assert command.env["WINEPREFIX"] == str(
             steam_dir / "steamapps" / "compatdata" / "4149337689" / "pfx")
 
+
     def test_run_winetricks_select_proton(
             self, cli, steam_app_factory, default_proton,
             custom_proton_factory, command, home_dir):

@@ -135,7 +135,7 @@ def shortcut_factory(steam_dir, steam_user):
     """
     shortcuts_by_user = defaultdict(list)
 
-    def func(install_dir, name, steamid64=None):
+    def func(install_dir, name, steamid64=None, appid_in_vdf=False):
         if not steamid64:
             steamid64 = steam_user
 
@@ -168,6 +168,11 @@ def shortcut_factory(steam_dir, steam_user):
             result = zlib.crc32(crc_data) & 0xffffffff
             result = result | 0x80000000
             shortcut_id = (result << 32) | 0x02000000
+
+            if appid_in_vdf:
+                # Store the app ID in `shortcuts.vdf`. This is similar
+                # in behavior to newer Steam releases.
+                entry["appid"] = ~(result ^ 0xffffffff)
 
             data["shortcuts"][str(shortcut_id)] = entry
 

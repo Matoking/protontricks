@@ -3,12 +3,12 @@ import shutil
 import time
 from pathlib import Path
 
+import pytest
+
 from protontricks.steam import (SteamApp, find_appid_proton_prefix,
                                 find_steam_path, find_steam_proton_app,
                                 get_custom_proton_installations,
-                                get_steam_apps)
-
-import pytest
+                                get_custom_windows_shortcuts, get_steam_apps)
 
 
 class TestSteamApp:
@@ -332,3 +332,38 @@ class TestGetSteamApps:
             "directories were found at {}".format(str(steam_dir))
             in log.getMessage()
         )
+
+
+class TestGetWindowsShortcuts:
+    def test_get_custom_windows_shortcuts_derive_appid(
+            self, steam_dir, shortcut_factory):
+        """
+        Retrieve custom Windows shortcut. The app ID is derived from the
+        executable name since it's not found in shortcuts.vdf.
+        """
+        shortcut_factory(install_dir="fake/path/", name="fakegame.exe")
+
+        shortcut_apps = get_custom_windows_shortcuts(steam_dir)
+
+        assert len(shortcut_apps) == 1
+        assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
+        assert shortcut_apps[0].appid == 4149337689
+
+    def test_get_custom_windows_shortcuts_read_vdf(
+            self, steam_dir, shortcut_factory):
+        """
+        Retrieve custom Windows shortcut. The app ID is read and derived
+        directly from the shortcuts.vdf, which is used on newer Steam versions.
+        """
+        shortcut_factory(
+            install_dir="fake/path/", name="fakegame.exe",
+            appid_in_vdf=True
+        )
+
+        shortcut_apps = get_custom_windows_shortcuts(steam_dir)
+
+        assert len(shortcut_apps) == 1
+        assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
+        assert shortcut_apps[0].appid == 4149337689
+
+
