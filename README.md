@@ -50,11 +50,17 @@ You can also set ``$PROTON_VERSION`` to a specific Proton version manually. This
 
 [Wanna see Protontricks in action?](https://asciinema.org/a/229323)
 
+# Troubleshooting
+
+For common issues and solutions, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
 # Installation
 
 You can install Protontricks using an unofficial package or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
 
 **If you're using the Flatpak version of Steam**, follow the [Flatpak-specific installation instructions](https://github.com/flathub/com.valvesoftware.Steam.Utility.protontricks) instead.
+
+Unless you're using unofficial packages, **you may need to install Winetricks separately**. See the [installation instructions](https://github.com/Winetricks/winetricks#installing) for further details.
 
 ## Unofficial packages (recommended)
 
