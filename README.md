@@ -67,6 +67,7 @@ Unless you're using unofficial packages, **you may need to install Winetricks se
 Unofficial packages allow easier installation and updates using distro-specific package managers. Unofficial packages are maintained by community members and might be out-of-date compared to releases on PyPI.
 
 * Arch Linux ([release](https://aur.archlinux.org/packages/protontricks/), [git](https://aur.archlinux.org/packages/protontricks-git/))
+* Fedora ([release](https://src.fedoraproject.org/rpms/protontricks))
 * NixOS ([nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/package-management/protontricks/default.nix))
 * Void Linux ([void-packages](https://github.com/void-linux/void-packages/blob/master/srcpkgs/protontricks/template))
 
