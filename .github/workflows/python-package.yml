@@ -28,7 +28,7 @@ jobs:
         pytest -vv --cov=protontricks --cov-report term --cov-report xml tests
     - name: Upload coverage
       run: |
-        coveralls
+        coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
