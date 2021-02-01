@@ -172,6 +172,15 @@ class SteamApp(object):
         tool_manifest_path = install_path / "toolmanifest.vdf"
         try:
             tool_manifest_content = tool_manifest_path.read_text()
+
+            if tool_manifest_content == "":
+                logger.warning(
+                    "Tool manifest for %s is empty. You may need to reinstall "
+                    "the application.",
+                    name
+                )
+                return None
+
             tool_manifest = vdf.loads(tool_manifest_content)
             required_tool_appid = \
                 tool_manifest["manifest"].get("require_tool_appid", None)

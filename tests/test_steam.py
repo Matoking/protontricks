@@ -55,6 +55,29 @@ class TestSteamApp:
             steam_lib_paths=[]
         )
 
+    def test_steam_app_from_appmanifest_empty_toolmanifest(
+            self, steam_runtime_soldier, proton_factory, caplog):
+        """
+        Test trying to a SteamApp manifest from an incomplete
+        Proton installation with an empty toolmanifest.vdf file
+        """
+        proton_app = proton_factory(
+            name="Proton 5.13", appid=10, compat_tool_name="proton_513",
+            required_tool_app=steam_runtime_soldier
+        )
+        # Empty the "toolmanifest.vdf" file
+        (proton_app.install_path / "toolmanifest.vdf").write_text("")
+
+        assert not SteamApp.from_appmanifest(
+            path=proton_app.install_path.parent.parent / "appmanifest_10.acf",
+            steam_lib_paths=[]
+        )
+
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+
+        assert "Tool manifest for Proton 5.13 is empty" in record.message
+
 
 class TestFindSteamProtonApp:
     def test_find_steam_specific_app_proton(
