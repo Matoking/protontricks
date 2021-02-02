@@ -37,6 +37,10 @@ def home_dir(monkeypatch, tmp_path):
     (home_dir_ / ".local" / "bin" / "winetricks").touch()
     (home_dir_ / ".local" / "bin" / "winetricks").chmod(0o744)
 
+    # Create fake Zenity executable
+    (home_dir_ / ".local" / "bin" / "zenity").touch()
+    (home_dir_ / ".local" / "bin" / "zenity").chmod(0o744)
+
     monkeypatch.setenv("HOME", str(home_dir_))
 
     # Set PATH to point only towards the fake home directory
@@ -561,7 +565,7 @@ class MockResult:
         self.stdout = stdout
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="function")
 def zenity(monkeypatch):
     """
     Monkeypatch the subprocess.run to store the args passed to the zenity

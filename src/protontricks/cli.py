@@ -180,7 +180,14 @@ def main(args=None):
                   "before protontricks can find it.")
             sys.exit(-1)
 
-        steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
+        try:
+            steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
+        except FileNotFoundError:
+            print(
+                "Zenity is not installed. Zenity is required for the "
+                "Protontricks GUI."
+            )
+            sys.exit(-1)
 
         # 6. Find Proton version of selected app
         proton_app = find_proton_app(
@@ -197,6 +204,7 @@ def main(args=None):
             steam_runtime_path=steam_runtime_path,
             command=[winetricks_path, "--gui"]
         )
+
         return
     # Perform a search
     elif args.search:

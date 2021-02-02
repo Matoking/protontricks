@@ -228,6 +228,17 @@ class TestCLIRun:
 
         assert "Winetricks isn't installed" in result
 
+    def test_run_gui_zenity_not_found(self, cli, home_dir, steam_app_factory):
+        """
+        Try performing a command with missing Zenity executable
+        """
+        steam_app_factory(name="Fake game 1", appid=10)
+        (home_dir / ".local" / "bin" / "zenity").unlink()
+
+        result = cli(["--gui"], expect_exit=True)
+
+        assert "Zenity is not installed" in result
+
     def test_run_steam_runtime_not_found(
             self, cli, steam_dir, steam_app_factory):
         """
