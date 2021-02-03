@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Display a proper error message when Proton installation is incomplete due to missing Steam Runtime
  - Display a proper warning when a tool manifest is empty
+ - Fix crash caused by changed directory structure in Steam Runtime update
 
 ## [1.4.3] - 2020-12-09
 ### Fixed

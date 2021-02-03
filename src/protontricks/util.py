@@ -47,10 +47,35 @@ def get_host_library_paths():
     return ":".join(paths)
 
 
+RUNTIME_ROOT_GLOB_PATTERNS = (
+    "var/*/files/",
+    "*/files/"
+)
+
+
 def get_runtime_library_paths(steam_runtime_path, proton_app):
     """
     Get LD_LIBRARY_PATH value to run a command using Steam Runtime
     """
+    def find_runtime_app_root(runtime_app):
+        """
+        Find the runtime root (the directory containing the root fileystem
+        used for the container) for separately installed Steam Runtime app
+        """
+        for pattern in RUNTIME_ROOT_GLOB_PATTERNS:
+            try:
+                return next(
+                    runtime_app.install_path.glob(pattern)
+                )
+            except StopIteration:
+                pass
+
+        raise RuntimeError(
+            "Could not find Steam Runtime runtime root for {}".format(
+                runtime_app.name
+            )
+        )
+
     if proton_app.required_tool_appid:
         # bwrap based Steam Runtime is used for Proton installations that
         # use separate Steam runtimes
@@ -58,15 +83,13 @@ def get_runtime_library_paths(steam_runtime_path, proton_app):
         # Newer Steam Runtime environments may rely on a newer glibc than what
         # is available on the host system, which may cause potential problems
         # otherwise.
-        runtime_root = next(
-            proton_app.required_tool_app.install_path.glob("*/files/")
-        )
+        runtime_root = find_runtime_app_root(proton_app.required_tool_app)
         return "".join([
             str(proton_app.install_path / "dist" / "lib"), os.pathsep,
             str(proton_app.install_path / "dist" / "lib64"), os.pathsep,
             get_host_library_paths(), os.pathsep,
-            str(runtime_root / "i686-pc-linux-gnu" / "lib"), os.pathsep,
-            str(runtime_root / "x86_64-pc-linux-gnu" / "lib")
+            str(runtime_root / "lib" / "i386-linux-gnu"), os.pathsep,
+            str(runtime_root / "lib" / "x86_64-linux-gnu")
         ])
 
     # Traditional LD_LIBRARY_PATH based Steam Runtime is used otherwise

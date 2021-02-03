@@ -440,8 +440,8 @@ def runtime_app_factory(steam_app_factory, appinfo_factory, steam_config_path):
         install_path = Path(runtime_app.install_path)
 
         runtime_root_path = install_path / runtime_dir_name / "files"
-        (runtime_root_path / "i686-pc-linux-gnu" / "lib").mkdir(parents=True)
-        (runtime_root_path / "x86_64-pc-linux-gnu" / "lib").mkdir(parents=True)
+        (runtime_root_path / "lib" / "i386-linux-gnu").mkdir(parents=True)
+        (runtime_root_path / "lib" / "x86_64-linux-gnu").mkdir(parents=True)
 
         (install_path / "run.sh").touch()
 

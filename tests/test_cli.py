@@ -169,8 +169,8 @@ class TestCLIRun:
             Path(steam_runtime_soldier.install_path) / "soldier" / "files"
 
         assert command.env["PROTON_LD_LIBRARY_PATH"].endswith("".join([
-            str(runtime_root / "i686-pc-linux-gnu" / "lib"), os.pathsep,
-            str(runtime_root / "x86_64-pc-linux-gnu" / "lib")
+            str(runtime_root / "lib" / "i386-linux-gnu"), os.pathsep,
+            str(runtime_root / "lib" / "x86_64-linux-gnu")
         ]))
 
         # No warning will be created since Steam Runtime Soldier is recognized
