@@ -11,9 +11,9 @@ from .util import lower_dict
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
-    "find_steam_proton_app", "find_proton_app", "find_steam_runtime_path",
-    "find_appid_proton_prefix", "get_steam_lib_paths", "get_steam_apps",
-    "get_custom_proton_installations"
+    "find_steam_proton_app", "find_proton_app",
+    "find_legacy_steam_runtime_path", "find_appid_proton_prefix",
+    "get_steam_lib_paths", "get_steam_apps", "get_custom_proton_installations"
 )
 
 COMMON_STEAM_DIRS = [
@@ -254,9 +254,9 @@ def find_steam_path():
     return None, None
 
 
-def find_steam_runtime_path(steam_root):
+def find_legacy_steam_runtime_path(steam_root):
     """
-    Find the Steam Runtime either using the STEAM_RUNTIME env or
+    Find the legacy Steam Runtime either using the STEAM_RUNTIME env or
     steam_root
     """
     env_steam_runtime = os.environ.get("STEAM_RUNTIME", "")

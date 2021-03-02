@@ -8,17 +8,17 @@
 #
 # Script licensed under the GPLv3!
 
-import sys
 import argparse
-import os
 import logging
+import os
+import sys
 
 from . import __version__
-from .steam import (find_proton_app, find_steam_path, find_steam_runtime_path,
-                    get_steam_apps, get_steam_lib_paths)
-from .winetricks import get_winetricks_path
 from .gui import select_steam_app_with_gui
+from .steam import (find_legacy_steam_runtime_path, find_proton_app,
+                    find_steam_path, get_steam_apps, get_steam_lib_paths)
 from .util import run_command
+from .winetricks import get_winetricks_path
 
 logger = logging.getLogger("protontricks")
 
@@ -132,16 +132,20 @@ def main(args=None):
         )
         sys.exit(-1)
 
-    # 2. Find Steam Runtime if enabled
-    steam_runtime_path = None
+    # 2. Find the pre-installed legacy Steam Runtime if enabled
+    legacy_steam_runtime_path = None
+    use_steam_runtime = True
 
     if os.environ.get("STEAM_RUNTIME", "") != "0" and not args.no_runtime:
-        steam_runtime_path = find_steam_runtime_path(steam_root=steam_root)
+        legacy_steam_runtime_path = find_legacy_steam_runtime_path(
+            steam_root=steam_root
+        )
 
-        if not steam_runtime_path:
+        if not legacy_steam_runtime_path:
             print("Steam Runtime was enabled but couldn't be found!")
             sys.exit(-1)
     else:
+        use_steam_runtime = False
         logger.info("Steam Runtime disabled.")
 
     # 3. Find Winetricks
@@ -201,7 +205,8 @@ def main(args=None):
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            steam_runtime_path=steam_runtime_path,
+            use_steam_runtime=use_steam_runtime,
+            legacy_steam_runtime_path=legacy_steam_runtime_path,
             command=[winetricks_path, "--gui"]
         )
 
@@ -269,7 +274,8 @@ def main(args=None):
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
-            steam_runtime_path=steam_runtime_path,
+            use_steam_runtime=use_steam_runtime,
+            legacy_steam_runtime_path=legacy_steam_runtime_path,
             command=[winetricks_path] + args.winetricks_command)
     elif args.command:
         run_command(
@@ -277,7 +283,8 @@ def main(args=None):
             proton_app=proton_app,
             steam_app=steam_app,
             command=args.command,
-            steam_runtime_path=steam_runtime_path,
+            use_steam_runtime=use_steam_runtime,
+            legacy_steam_runtime_path=legacy_steam_runtime_path,
             # Pass the command directly into the shell *without*
             # escaping it
             cwd=steam_app.install_path,
