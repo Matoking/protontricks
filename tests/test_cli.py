@@ -182,6 +182,7 @@ class TestCLIRun:
         assert len([
             record for record in caplog.records
             if record.levelname == "WARNING"
+            and "Steam Runtime not recognized" in record.message
         ]) == 0
 
         for name in ("wine", "wineserver"):
@@ -195,6 +196,72 @@ class TestCLIRun:
             # The script template for bwrap-based Steam Runtime is used
             assert "\"$PROTON_PATH\"/dist/bin/{}".format(name) in content
             assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" in content
+
+    def test_run_winetricks_steam_runtime_v2_no_bwrap(
+            self, cli, home_dir, steam_app_factory, steam_runtime_dir,
+            steam_runtime_soldier, command, proton_factory, caplog):
+        """
+        Perform a Protontricks command using a newer Steam Runtime
+        *without* bwrap that is installed as its own application
+        """
+        proton_app = proton_factory(
+            name="Proton 5.13", appid=10, compat_tool_name="proton_513",
+            is_default_proton=True, required_tool_app=steam_runtime_soldier
+        )
+        steam_app_factory(name="Fake game 1", appid=20)
+
+        cli(["--no-bwrap", "20", "winecfg"], env={"STEAM_RUNTIME": "1"})
+
+        wine_bin_dir = (
+            home_dir / ".cache" / "protontricks" / "proton" / "Proton 5.13"
+            / "bin"
+        )
+
+        # winecfg was run
+        assert str(command.args[0]).endswith(".local/bin/winetricks")
+        assert command.args[1] == "winecfg"
+        assert command.env["PATH"].startswith(str(wine_bin_dir))
+
+        # Compared to the traditional Steam Runtime, PROTON_LD_LIBRARY_PATH
+        # will be different
+        proton_install_path = Path(proton_app.install_path)
+        assert command.env["PROTON_LD_LIBRARY_PATH"].startswith("".join([
+            str(proton_install_path / "dist" / "lib"), os.pathsep,
+            str(proton_install_path / "dist" / "lib64"), os.pathsep
+        ]))
+
+        runtime_root = \
+            steam_runtime_soldier.install_path / "soldier" / "files"
+        assert command.env["PROTON_LD_LIBRARY_PATH"].endswith("".join([
+            str(runtime_root / "lib" / "i386-linux-gnu"), os.pathsep,
+            str(runtime_root / "lib" / "x86_64-linux-gnu")
+        ]))
+
+        # Environment variables for both legacy and new Steam Runtime exist
+        assert command.env["LEGACY_STEAM_RUNTIME_PATH"] == \
+            str(steam_runtime_dir / "steam-runtime")
+        assert command.env["STEAM_RUNTIME_PATH"] == \
+            str(steam_runtime_soldier.install_path)
+
+        # No warning will be created since Steam Runtime Soldier is recognized
+        # by Protontricks
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+            and "Steam Runtime not recognized" in record.getMessage()
+        ]) == 0
+
+        for name in ("wine", "wineserver"):
+            # The helper scripts are created that point towards the real
+            # Wine binaries
+            path = wine_bin_dir / name
+            assert path.is_file()
+
+            content = path.read_text()
+
+            # The script template for normal Steam Runtime is used
+            assert "\"$PROTON_PATH\"/dist/bin/{}".format(name) in content
+            assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" not in content
 
     def test_run_winetricks_game_not_found(
             self, cli, steam_app_factory, default_proton, command):

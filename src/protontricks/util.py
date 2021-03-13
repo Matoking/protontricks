@@ -43,13 +43,71 @@ def get_legacy_runtime_library_paths(legacy_steam_runtime_path, proton_app):
     ])
 
 
-def get_runtime_library_paths(proton_app):
+def get_host_library_paths():
+    """
+    Get host library paths to use when creating the LD_LIBRARY_PATH environment
+    variable for use with newer Steam Runtime installations when *not*
+    using bwrap
+    """
+    # The traditional Steam Runtime does the following when running the
+    # `run.sh --print-steam-runtime-library-paths` command.
+    # Since that command is unavailable with newer Steam Runtime releases,
+    # do it ourselves here.
+    result = run(
+        ["/sbin/ldconfig", "-XNv"],
+        check=True, stdout=PIPE, stderr=PIPE
+    )
+    lines = result.stdout.decode("utf-8").split("\n")
+    paths = [
+        line.split(":")[0] for line in lines
+        if line.startswith("/") and ":" in line
+    ]
+
+    return ":".join(paths)
+
+
+RUNTIME_ROOT_GLOB_PATTERNS = (
+    "var/*/files/",
+    "*/files/"
+)
+
+
+def get_runtime_library_paths(proton_app, use_bwrap=True):
     """
     Get LD_LIBRARY_PATH value to use when running a command using Steam Runtime
     """
+    def find_runtime_app_root(runtime_app):
+        """
+        Find the runtime root (the directory containing the root fileystem
+        used for the container) for separately installed Steam Runtime app
+        """
+        for pattern in RUNTIME_ROOT_GLOB_PATTERNS:
+            try:
+                return next(
+                    runtime_app.install_path.glob(pattern)
+                )
+            except StopIteration:
+                pass
+
+        raise RuntimeError(
+            "Could not find Steam Runtime runtime root for {}".format(
+                runtime_app.name
+            )
+        )
+
+    if use_bwrap:
+        return "".join([
+            str(proton_app.install_path / "dist" / "lib"), os.pathsep,
+            str(proton_app.install_path / "dist" / "lib64"), os.pathsep
+        ])
+
+    runtime_root = find_runtime_app_root(proton_app.required_tool_app)
     return "".join([
         str(proton_app.install_path / "dist" / "lib"), os.pathsep,
-        str(proton_app.install_path / "dist" / "lib64"), os.pathsep
+        str(proton_app.install_path / "dist" / "lib64"), os.pathsep,
+        get_host_library_paths(), os.pathsep,
+        str(runtime_root / "lib" / "i386-linux-gnu"), os.pathsep,
+        str(runtime_root / "lib" / "x86_64-linux-gnu")
     ])
 
 
@@ -78,7 +136,7 @@ fi
 """
 
 
-def create_wine_bin_dir(proton_app):
+def create_wine_bin_dir(proton_app, use_bwrap=True):
     """
     Create a directory with "proxy" executables that load shared libraries
     using Steam Runtime and Proton's own libraries instead of the system
@@ -87,7 +145,8 @@ def create_wine_bin_dir(proton_app):
     # If the Proton installation uses a newer version of Steam Runtime,
     # use a different template for the scripts
     bin_template = (
-        WINE_SCRIPT_RUNTIME_V2_TEMPLATE if proton_app.required_tool_app
+        WINE_SCRIPT_RUNTIME_V2_TEMPLATE
+        if proton_app.required_tool_app and use_bwrap
         else WINE_SCRIPT_RUNTIME_V1_TEMPLATE
     )
 
@@ -134,7 +193,9 @@ def create_wine_bin_dir(proton_app):
 
 def run_command(
         winetricks_path, proton_app, steam_app, command,
-        use_steam_runtime=False, legacy_steam_runtime_path=None,
+        use_steam_runtime=False,
+        legacy_steam_runtime_path=None,
+        use_bwrap=True,
         **kwargs):
     """Run an arbitrary command with the correct environment variables
     for the given Proton app
@@ -144,7 +205,10 @@ def run_command(
 
     If 'use_steam_runtime' is True, run the command using Steam Runtime
     using either 'legacy_steam_runtime_path' or the Proton app's specific
-    Steam Runtime installation, depending on which one is required
+    Steam Runtime installation, depending on which one is required.
+
+    If 'use_bwrap' is True, run newer Steam Runtime installations using
+    bwrap based containerization.
     """
     # Check for incomplete Steam Runtime installation
     runtime_install_incomplete = \
@@ -203,13 +267,23 @@ def run_command(
             os.environ["STEAM_RUNTIME_PATH"] = \
                 str(proton_app.required_tool_app.install_path)
             os.environ["PROTON_LD_LIBRARY_PATH"] = \
-                get_runtime_library_paths(proton_app)
+                get_runtime_library_paths(proton_app, use_bwrap=use_bwrap)
 
             runtime_name = proton_app.required_tool_app.name
             logger.info(
                 "Using separately installed Steam Runtime: %s",
                 runtime_name
             )
+
+            if use_bwrap:
+                logger.warning(
+                    "Running Steam Runtime using bwrap containerization. "
+                    "This is an experimental feature and it may still be "
+                    "incompatible in some situations.\n"
+                    "If any problems arise, please try running the command "
+                    "again using the `--no-bwrap` flag and make an issue "
+                    "report if the problem only occurs when bwrap is in use."
+                )
 
             if runtime_name not in SUPPORTED_STEAM_RUNTIMES:
                 logger.warning(
@@ -225,7 +299,9 @@ def run_command(
         # When Steam Runtime is enabled, create a set of helper scripts
         # that load the underlying Proton Wine executables with Steam Runtime
         # and Proton libraries instead of system libraries
-        wine_bin_dir = create_wine_bin_dir(proton_app=proton_app)
+        wine_bin_dir = create_wine_bin_dir(
+            proton_app=proton_app, use_bwrap=use_bwrap
+        )
         os.environ["LEGACY_STEAM_RUNTIME_PATH"] = \
             str(legacy_steam_runtime_path)
         os.environ["PATH"] = "".join([

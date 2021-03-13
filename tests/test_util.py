@@ -74,6 +74,7 @@ class TestRunCommand:
         warning = next(
             record for record in caplog.records
             if record.levelname == "WARNING"
+            and "not recognized" in record.getMessage()
         )
         assert warning.getMessage() == \
             "Current Steam Runtime not recognized by Protontricks."

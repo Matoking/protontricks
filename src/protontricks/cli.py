@@ -98,6 +98,10 @@ def main(args=None):
     parser.add_argument(
         "--no-runtime", action="store_true", default=False,
         help="Disable Steam Runtime")
+    parser.add_argument(
+        "--no-bwrap", action="store_true", default=False,
+        help="Disable bwrap containerization when using Steam Runtime"
+    )
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
@@ -111,6 +115,8 @@ def main(args=None):
     do_search = bool(args.search)
     do_gui = bool(args.gui)
     do_winetricks = bool(args.appid and args.winetricks_command)
+
+    use_bwrap = not bool(args.no_bwrap)
 
     if not do_command and not do_search and not do_gui and not do_winetricks:
         parser.print_help()
@@ -207,7 +213,8 @@ def main(args=None):
             steam_app=steam_app,
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
-            command=[winetricks_path, "--gui"]
+            command=[winetricks_path, "--gui"],
+            use_bwrap=use_bwrap
         )
 
         return
@@ -276,6 +283,7 @@ def main(args=None):
             steam_app=steam_app,
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
+            use_bwrap=use_bwrap,
             command=[winetricks_path] + args.winetricks_command)
     elif args.command:
         run_command(
@@ -285,6 +293,7 @@ def main(args=None):
             command=args.command,
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
+            use_bwrap=use_bwrap,
             # Pass the command directly into the shell *without*
             # escaping it
             cwd=steam_app.install_path,
