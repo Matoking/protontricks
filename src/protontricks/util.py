@@ -224,7 +224,10 @@ def run_command(
     # Make a copy of the environment variables to restore later
     environ_copy = os.environ.copy()
 
-    if not os.environ.get("WINE"):
+    user_provided_wine = os.environ.get("WINE", False)
+    user_provided_wineserver = os.environ.get("WINESERVER", False)
+
+    if not user_provided_wine:
         logger.info(
             "WINE environment variable is not available. "
             "Setting WINE environment variable to Proton bundled version"
@@ -232,7 +235,7 @@ def run_command(
         os.environ["WINE"] = \
             str(proton_app.install_path / "dist" / "bin" / "wine")
 
-    if not os.environ.get("WINESERVER"):
+    if not user_provided_wineserver:
         logger.info(
             "WINESERVER environment variable is not available. "
             "Setting WINESERVER environment variable to Proton bundled version"
@@ -304,12 +307,17 @@ def run_command(
         )
         os.environ["LEGACY_STEAM_RUNTIME_PATH"] = \
             str(legacy_steam_runtime_path)
+
         os.environ["PATH"] = "".join([
             str(wine_bin_dir), os.pathsep, os.environ["PATH"]
         ])
-        os.environ["WINE"] = str(wine_bin_dir / "wine")
-        os.environ["WINELOADER"] = os.environ["WINE"]
-        os.environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
+
+        if not user_provided_wine:
+            os.environ["WINE"] = str(wine_bin_dir / "wine")
+            os.environ["WINELOADER"] = os.environ["WINE"]
+
+        if not user_provided_wineserver:
+            os.environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
 
     logger.info("Attempting to run command %s", command)
 

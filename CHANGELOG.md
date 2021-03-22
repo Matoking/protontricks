@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Use bwrap containerization with newer Steam Runtime installations. The old behavior can be enabled with `--no-bwrap` in case of problems.
 
+### Fixed
+ - User-provided `WINE` and `WINESERVER` environment variables are used when Steam Runtime is enabled
+
 ## [1.4.4] - 2021-02-03
 ### Fixed
  - Display a proper error message when Proton installation is incomplete due to missing Steam Runtime

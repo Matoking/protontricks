@@ -42,6 +42,51 @@ class TestCreateWineBinDir:
 
 
 class TestRunCommand:
+    def test_user_environment_variables_used(
+            self, default_proton, steam_runtime_dir, steam_app_factory,
+            home_dir, command, monkeypatch):
+        """
+        Test that user-provided environment variables are used even when
+        Steam Runtime is enabled
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        run_command(
+            winetricks_path=Path("/usr/bin/winetricks"),
+            proton_app=default_proton,
+            steam_app=steam_app,
+            command=["echo", "nothing"],
+            use_steam_runtime=True,
+            legacy_steam_runtime_path=steam_runtime_dir / "steam-runtime"
+        )
+
+        # Proxy scripts are used if no environment variables are set by the
+        # user
+        wine_bin_dir = (
+            home_dir / ".cache" / "protontricks" / "proton" / "Proton 4.20"
+            / "bin"
+        )
+        assert command.env["WINE"] == str(wine_bin_dir / "wine")
+        assert command.env["WINELOADER"] == str(wine_bin_dir / "wine")
+        assert command.env["WINESERVER"] == str(wine_bin_dir / "wineserver")
+
+        monkeypatch.setenv("WINE", "/fake/wine")
+        monkeypatch.setenv("WINESERVER", "/fake/wineserver")
+
+        run_command(
+            winetricks_path=Path("/usr/bin/winetricks"),
+            proton_app=default_proton,
+            steam_app=steam_app,
+            command=["echo", "nothing"],
+            use_steam_runtime=True,
+            legacy_steam_runtime_path=steam_runtime_dir / "steam-runtime"
+        )
+
+        # User provided Wine paths are used even when Steam Runtime is enabled
+        assert command.env["WINE"] == "/fake/wine"
+        assert command.env["WINELOADER"] == "/fake/wine"
+        assert command.env["WINESERVER"] == "/fake/wineserver"
+
     def test_unknown_steam_runtime_detected(
             self, home_dir, proton_factory, runtime_app_factory,
             steam_app_factory, caplog):
