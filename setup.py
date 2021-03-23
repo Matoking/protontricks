@@ -28,7 +28,11 @@ setup(
     packages=["protontricks"],
     package_data={"": ["LICENSE"]},
     package_dir={"protontricks": "src/protontricks"},
-    setup_requires=["setuptools_scm"],
+    setup_requires=[
+        # setuptools-scm v6 requires Python 3.6+
+        "setuptools_scm<6 ; python_version <= '3.5'",
+        "setuptools_scm ; python_version > '3.5'"
+    ],
     install_requires=["vdf>=3.2"],
     entry_points={
         "console_scripts": [
