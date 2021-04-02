@@ -78,6 +78,30 @@ class TestSteamApp:
 
         assert "Tool manifest for Proton 5.13 is empty" in record.message
 
+    def test_steam_app_proton_dist_path(self, default_proton):
+        """
+        Check that correct path to Proton binarires and libraries is found
+        using the `SteamApp.proton_dist_path` property
+        """
+        # 'dist' exists and is found correctly
+        assert str(default_proton.proton_dist_path).endswith(
+            "Proton 4.20/dist"
+        )
+
+        # Create a copy named 'files'. This will be favored over 'dist'.
+        shutil.copytree(
+            str(default_proton.install_path / "dist"),
+            str(default_proton.install_path / "files")
+        )
+        assert str(default_proton.proton_dist_path).endswith(
+            "Proton 4.20/files"
+        )
+
+        # If neither exists, None is returned
+        shutil.rmtree(str(default_proton.install_path / "dist"))
+        shutil.rmtree(str(default_proton.install_path / "files"))
+        assert default_proton.proton_dist_path is None
+
 
 class TestFindSteamProtonApp:
     def test_find_steam_specific_app_proton(

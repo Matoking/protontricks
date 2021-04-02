@@ -24,6 +24,8 @@ class TestCLIRun:
 
         # Correct environment vars were set
         assert command.env["PROTON_PATH"] == str(proton_install_path)
+        assert command.env["PROTON_DIST_PATH"] == \
+            str(proton_install_path / "dist")
         assert command.env["WINETRICKS"] == str(
             home_dir / ".local" / "bin" / "winetricks")
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
@@ -135,7 +137,7 @@ class TestCLIRun:
             content = path.read_text()
 
             # The script template for legacy Steam Runtime is used
-            assert "\"$PROTON_PATH\"/dist/bin/{}".format(name) in content
+            assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
             assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" not in content
 
     def test_run_winetricks_steam_runtime_v2(
@@ -194,7 +196,7 @@ class TestCLIRun:
             content = path.read_text()
 
             # The script template for bwrap-based Steam Runtime is used
-            assert "\"$PROTON_PATH\"/dist/bin/{}".format(name) in content
+            assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
             assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" in content
 
     def test_run_winetricks_steam_runtime_v2_no_bwrap(
@@ -260,7 +262,7 @@ class TestCLIRun:
             content = path.read_text()
 
             # The script template for normal Steam Runtime is used
-            assert "\"$PROTON_PATH\"/dist/bin/{}".format(name) in content
+            assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
             assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" not in content
 
     def test_run_winetricks_game_not_found(

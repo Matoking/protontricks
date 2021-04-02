@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
  - User-provided `WINE` and `WINESERVER` environment variables are used when Steam Runtime is enabled
+ - Fixed crash caused by changed directory name in Proton Experimental update
 
 ## [1.4.4] - 2021-02-03
 ### Fixed

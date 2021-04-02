@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import string
@@ -117,6 +118,34 @@ class SteamApp(object):
         This is true for Proton and Steam Runtime installations.
         """
         return (self.install_path / "toolmanifest.vdf").is_file()
+
+    @property
+    def proton_dist_path(self):
+        """
+        Return path to the directory containing Proton binaries and libraries.
+        None is returned if this app isn't a Proton installation or either
+        directory doesn't exist.
+
+        The directory is named either 'dist' or 'files'.
+
+        'dist' is used by older Proton releases, and it is extracted from a
+        separate 'proton_dist.tar' archive during first launch.
+        'files' is used by newer Proton releases, and it already exists
+        after the Steam app has been installed, requiring no first launch.
+        """
+        if not self.is_proton:
+            return None
+
+        try:
+            # Prioritize 'files' directory if it exists.
+            # If both directories exist, 'dist' is likely a leftover that
+            # wasn't removed by Steam.
+            return next(
+                (self.install_path / name) for name in ("files", "dist")
+                if (self.install_path / name).is_dir()
+            )
+        except StopIteration:
+            return None
 
     @classmethod
     def from_appmanifest(cls, path, steam_lib_paths):
