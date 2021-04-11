@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Fixed
+ - bwrap containerization now tries to mount more root directories except those that have been blacklisted due to potential issues
+
 ## [1.5.0] - 2021-04-10
 ### Added
  - Use bwrap containerization with newer Steam Runtime installations. The old behavior can be enabled with `--no-bwrap` in case of problems.
