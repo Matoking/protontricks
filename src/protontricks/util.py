@@ -129,7 +129,8 @@ if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME" ]]; then
 else
   exec "$STEAM_RUNTIME_PATH"/run --share-pid --batch --filesystem=/mnt \
   --filesystem=/tmp --filesystem=/run/media --filesystem=/etc \
-  --filesystem=/opt --filesystem=/home --filesystem=/usr -- \
+  --filesystem=/opt --filesystem=/home --filesystem=/usr \
+  "--filesystem=$PROTON_PATH" "--filesystem=$WINEPREFIX" -- \
   env PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
   "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
 fi
