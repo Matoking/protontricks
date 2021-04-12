@@ -17,3 +17,9 @@ Proton uses 64-bit Wine prefixes, which means you will see this warning with eve
 > When I'm trying to run a Protontricks command such as `protontricks <appid> foobar`, I get the error `Unknown arg foobar`.
 
 Your Winetricks installation might be outdated, which means your Winetricks installation doesn't support the verb you are trying to use (`foobar` in this example). Some distros such as Debian might ship very outdated versions of Winetricks. To ensure you have the latest version of Winetricks, [see the installation instructions](https://github.com/Winetricks/winetricks#installing) on the Winetricks repository.
+
+## "Unknown option --foobar"
+
+> When I'm trying to run a Protontricks command such as `protontricks <appid> --no-bwrap foobar`, I get the error `Unknown option --no-bwrap`.
+
+You need to provide Protontricks specific options *before* the app ID. This is because all parameters after the app ID are passed directly to Winetricks; otherwise, Protontricks cannot tell which options are related to Winetricks and which are not. In this case, the correct command to run would be `protontricks --no-bwrap <appid> foobar`.
