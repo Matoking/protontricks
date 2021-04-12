@@ -15,6 +15,13 @@ SUPPORTED_STEAM_RUNTIMES = [
 ]
 
 
+def is_flatpak_sandbox():
+    """
+    Check if we're running inside a Flatpak sandbox
+    """
+    return Path("/.flatpak-info").exists()
+
+
 def lower_dict(d):
     """
     Return a copy of the dictionary with all keys converted to lowercase.

@@ -17,7 +17,7 @@ from . import __version__
 from .gui import select_steam_app_with_gui
 from .steam import (find_legacy_steam_runtime_path, find_proton_app,
                     find_steam_path, get_steam_apps, get_steam_lib_paths)
-from .util import run_command
+from .util import run_command, is_flatpak_sandbox
 from .winetricks import get_winetricks_path
 
 logger = logging.getLogger("protontricks")
@@ -117,7 +117,6 @@ def main(args=None):
     do_winetricks = bool(args.appid and args.winetricks_command)
 
     use_bwrap = not bool(args.no_bwrap)
-
     if not do_command and not do_search and not do_gui and not do_winetricks:
         parser.print_help()
         return
@@ -129,6 +128,15 @@ def main(args=None):
         return
 
     enable_logging(args.verbose)
+
+    if is_flatpak_sandbox():
+        use_bwrap = False
+
+        if bool(args.no_bwrap):
+            logger.warning(
+                "--no-bwrap is redundant when running Protontricks inside a "
+                "Flatpak sandbox."
+            )
 
     # 1. Find Steam path
     steam_path, steam_root = find_steam_path()

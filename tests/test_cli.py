@@ -370,6 +370,29 @@ class TestCLIRun:
         assert "Proton 5.13 is missing the required Steam Runtime" \
             in str(exc.value)
 
+    def test_flatpak_detected(self, cli, monkeypatch, caplog):
+        """
+        Try performing a Protontricks command when running inside a Flatpak
+        environment and ensure a warning is printed when --no-bwrap is provided
+        redundantly
+        """
+        cli(["--no-bwrap", "-s", "nothing"])
+
+        # No warning is printed since we're not running inside Flatpak
+        assert len(caplog.records) == 0
+
+        # Fake a Flatpak environment
+        monkeypatch.setattr("protontricks.cli.is_flatpak_sandbox", lambda: True)
+
+        cli(["--no-bwrap", "-s", "nothing"])
+
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+
+        assert record.levelname == "WARNING"
+        assert "--no-bwrap is redundant when running Protontricks" \
+            in record.message
+
 
 class TestCLIGUI:
     def test_run_gui(
