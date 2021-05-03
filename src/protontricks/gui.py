@@ -2,7 +2,7 @@ import logging
 import sys
 from subprocess import run, PIPE, CalledProcessError
 
-__all__ = ("select_steam_app_with_gui",)
+__all__ = ("LocaleError", "select_steam_app_with_gui")
 
 logger = logging.getLogger("protontricks")
 

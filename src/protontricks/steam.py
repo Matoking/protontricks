@@ -12,9 +12,12 @@ from .util import lower_dict
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
-    "find_steam_proton_app", "find_proton_app",
-    "find_legacy_steam_runtime_path", "find_appid_proton_prefix",
-    "get_steam_lib_paths", "get_steam_apps", "get_custom_proton_installations"
+    "find_legacy_steam_runtime_path", "get_appinfo_sections",
+    "get_proton_appid", "find_steam_proton_app", "find_appid_proton_prefix",
+    "find_proton_app", "get_steam_lib_paths", "get_compat_tool_dirs",
+    "get_proton_installations", "get_custom_proton_installations",
+    "find_current_steamid3", "get_appid_from_shortcut",
+    "get_custom_windows_shortcuts", "get_steam_apps"
 )
 
 COMMON_STEAM_DIRS = [

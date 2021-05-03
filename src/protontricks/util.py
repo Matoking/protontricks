@@ -6,7 +6,14 @@ import stat
 from pathlib import Path
 from subprocess import check_output, run, PIPE
 
-__all__ = ("get_runtime_library_paths", "create_wine_bin_dir", "run_command")
+__all__ = (
+    "SUPPORTED_STEAM_RUNTIMES", "is_flatpak_sandbox", "lower_dict",
+    "get_legacy_runtime_library_paths", "get_host_library_paths",
+    "RUNTIME_ROOT_GLOB_PATTERNS", "get_runtime_library_paths",
+    "WINE_SCRIPT_RUNTIME_V1_TEMPLATE",
+    "WINE_SCRIPT_RUNTIME_V2_TEMPLATE",
+    "create_wine_bin_dir", "run_command"
+)
 
 logger = logging.getLogger("protontricks")
 
