@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.5.1] - 2021-05-10
 ### Fixed
  - bwrap containerization now tries to mount more root directories except those that have been blacklisted due to potential issues
 
@@ -134,7 +134,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.5.0...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.5.1...HEAD
+[1.5.1]: https://github.com/Matoking/protontricks/compare/1.5.0...1.5.1
 [1.5.0]: https://github.com/Matoking/protontricks/compare/1.4.4...1.5.0
 [1.4.4]: https://github.com/Matoking/protontricks/compare/1.4.3...1.4.4
 [1.4.3]: https://github.com/Matoking/protontricks/compare/1.4.2...1.4.3
