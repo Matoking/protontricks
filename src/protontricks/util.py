@@ -139,7 +139,7 @@ set -o errexit
 PROTONTRICKS_PROXY_SCRIPT_PATH="{script_path}"
 
 BLACKLISTED_ROOT_DIRS=(
-    /bin /dev /lib /lib64 /proc /run /sys /var
+    /bin /dev /lib /lib64 /proc /run /sys /var /usr
 )
 
 ADDITIONAL_MOUNT_DIRS=(
