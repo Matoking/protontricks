@@ -253,6 +253,41 @@ class TestGetSteamApps:
         assert str(found_custom_proton.install_path) == \
             str(custom_proton.install_path)
 
+    def test_get_steam_apps_custom_proton_empty_toolmanifest(
+            self, custom_proton_factory, steam_runtime_soldier,
+            steam_dir, steam_root, caplog):
+        """
+        Create a custom Proton installation with an empty toolmanifest and
+        ensure a warning is printed and the app is ignored
+        """
+        custom_proton = custom_proton_factory(name="Custom Proton")
+        (custom_proton.install_path / "toolmanifest.vdf").write_text("")
+
+        steam_apps = get_steam_apps(
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
+        )
+
+        # Custom Proton is skipped due to empty tool manifest
+        assert not any(
+            app for app in steam_apps if app.name == "Custom Proton"
+        )
+
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]) == 1
+
+        record = next(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        )
+
+        assert record.getMessage().startswith(
+            "Tool manifest for Custom Proton is empty"
+        )
+
     def test_get_steam_apps_in_library_folder(
             self, default_proton, steam_library_factory, steam_app_factory,
             steam_dir, steam_root):
@@ -412,5 +447,3 @@ class TestGetWindowsShortcuts:
         assert len(shortcut_apps) == 1
         assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
         assert shortcut_apps[0].appid == 4149337689
-
-

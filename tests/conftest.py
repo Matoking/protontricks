@@ -473,7 +473,7 @@ def custom_proton_factory(steam_dir):
     """
     Factory function to add fake custom Proton installations
     """
-    def func(name, compat_tool_dir=None):
+    def func(name, compat_tool_dir=None, required_tool_app=None):
         if not compat_tool_dir:
             compat_tool_dir = \
                 steam_dir.parent / "root" / "compatibilitytools.d" / name
@@ -499,6 +499,15 @@ def custom_proton_factory(steam_dir):
                 }
             })
         )
+
+        if required_tool_app:
+            (compat_tool_dir / "toolmanifest.vdf").write_text(
+                vdf.dumps({
+                    "manifest": {
+                        "require_tool_appid": required_tool_app.appid
+                    }
+                })
+            )
 
         return SteamApp(
             name=name,

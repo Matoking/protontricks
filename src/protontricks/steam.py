@@ -196,33 +196,42 @@ class SteamApp(object):
 
         install_path = Path(path).parent / "common" / app_state["installdir"]
 
-        required_tool_appid = None
-
         # Check if the app requires another app. This is the case with
         # newer versions of Proton, which use Steam Runtimes installed as
         # normal Steam apps
-        tool_manifest_path = install_path / "toolmanifest.vdf"
         try:
-            tool_manifest_content = tool_manifest_path.read_text()
-
-            if tool_manifest_content == "":
-                logger.warning(
-                    "Tool manifest for %s is empty. You may need to reinstall "
-                    "the application.",
-                    name
-                )
-                return None
-
-            tool_manifest = vdf.loads(tool_manifest_content)
-            required_tool_appid = \
-                tool_manifest["manifest"].get("require_tool_appid", None)
-        except FileNotFoundError:
-            pass
+            required_tool_appid = _get_required_tool_appid(install_path)
+        except ValueError:
+            logger.warning(
+                "Tool manifest for %s is empty. You may need to reinstall "
+                "the application.",
+                name
+            )
+            return None
 
         return cls(
             appid=appid, name=name, prefix_path=prefix_path,
             install_path=install_path, required_tool_appid=required_tool_appid
         )
+
+
+def _get_required_tool_appid(path):
+    """
+    Get the required tool app ID for the Proton installation at the given path
+
+    :raises ValueError: Tool manifest is empty
+    """
+    tool_manifest_path = path / "toolmanifest.vdf"
+    try:
+        tool_manifest_content = tool_manifest_path.read_text()
+
+        if tool_manifest_content == "":
+            raise ValueError("Tool manifest is empty")
+
+        tool_manifest = vdf.loads(tool_manifest_content)
+        return tool_manifest["manifest"].get("require_tool_appid", None)
+    except FileNotFoundError:
+        return None
 
 
 def find_steam_path():
@@ -678,8 +687,24 @@ def get_proton_installations(compat_tool_dir):
         else:
             install_path = compat_tool_dir / install_path_name
 
+        # Check if the app requires another app. This is the case with
+        # newer versions of Proton, which use Steam Runtimes installed as
+        # normal Steam apps
+        try:
+            required_tool_appid = _get_required_tool_appid(install_path)
+        except ValueError:
+            logger.warning(
+                "Tool manifest for %s is empty. You may need to reinstall "
+                "the application.",
+                install_path.name
+            )
+            continue
+
         custom_proton_apps.append(
-            SteamApp(name=internal_name, install_path=install_path)
+            SteamApp(
+                name=internal_name, install_path=install_path,
+                required_tool_appid=required_tool_appid
+            )
         )
 
     return custom_proton_apps
