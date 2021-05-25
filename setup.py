@@ -10,7 +10,7 @@ LONG_DESCRIPTION = (
     "games. protontricks requires Winetricks."
 )
 AUTHOR = "Janne Pulkkinen"
-AUTHOR_EMAIL = "jannepulk@gmail.com"
+AUTHOR_EMAIL = "janne.pulkkinen@protonmail.com"
 URL = "https://github.com/Matoking/protontricks"
 
 
