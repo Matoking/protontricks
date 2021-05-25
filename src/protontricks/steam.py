@@ -15,7 +15,7 @@ __all__ = (
     "find_legacy_steam_runtime_path", "get_appinfo_sections",
     "get_proton_appid", "find_steam_proton_app", "find_appid_proton_prefix",
     "find_proton_app", "get_steam_lib_paths", "get_compat_tool_dirs",
-    "get_proton_installations", "get_custom_proton_installations",
+    "get_custom_proton_installations_in_dir", "get_custom_proton_installations",
     "find_current_steamid3", "get_appid_from_shortcut",
     "get_custom_windows_shortcuts", "get_steam_apps"
 )
@@ -650,11 +650,11 @@ def get_compat_tool_dirs(steam_root):
     return paths
 
 
-def get_proton_installations(compat_tool_dir):
+def get_custom_proton_installations_in_dir(compat_tool_dir):
     """
-    Return a list of custom Proton installations as a list of SteamApp objects
+    Return a list of custom Proton installations in the given directory
+    as a list of SteamApp objects
     """
-
     if not compat_tool_dir.is_dir():
         return []
 
@@ -711,9 +711,12 @@ def get_proton_installations(compat_tool_dir):
 
 
 def get_custom_proton_installations(steam_root):
+    """
+    Get a list of all custom Proton installations as a list of SteamApp objects
+    """
     custom_proton_apps = {}
     for dir_ in get_compat_tool_dirs(steam_root=steam_root):
-        for proton_app in get_proton_installations(dir_):
+        for proton_app in get_custom_proton_installations_in_dir(dir_):
             # If another Proton app exists with the same name, it will
             # be replaced with an installation that has higher precedence
             # here
