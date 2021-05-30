@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import pytest
+import vdf
 
 from protontricks.steam import (SteamApp, find_appid_proton_prefix,
                                 find_steam_path, find_steam_proton_app,
@@ -101,6 +102,34 @@ class TestSteamApp:
         shutil.rmtree(str(default_proton.install_path / "dist"))
         shutil.rmtree(str(default_proton.install_path / "files"))
         assert default_proton.proton_dist_path is None
+
+    def test_steam_app_userconfig_name(self, steam_app_factory):
+        """
+        Try creating a SteamApp from an older version of the app manifest
+        which contains the application name in a different field
+
+        See GitHub issue #103 for details
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        appmanifest_path = \
+            Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
+        data = vdf.loads(appmanifest_path.read_text())
+
+        # Older installations store the name in `userconfig/name` instead
+        del data["AppState"]["name"]
+        data["AppState"]["userconfig"] = {
+            "name": "Fake game"
+        }
+
+        appmanifest_path.write_text(vdf.dumps(data))
+
+        app = SteamApp.from_appmanifest(
+            path=appmanifest_path,
+            steam_lib_paths=[]
+        )
+
+        assert app.name == "Fake game"
 
 
 class TestFindSteamProtonApp:

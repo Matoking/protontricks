@@ -187,7 +187,12 @@ class SteamApp(object):
         # Use case-insensitive field names to deal with these.
         app_state = lower_dict(app_state)
         appid = int(app_state["appid"])
-        name = app_state["name"]
+
+        try:
+            name = app_state["name"]
+        except KeyError:
+            # Older app installations also use `userconfig/name`
+            name = app_state["userconfig"]["name"]
 
         # Proton prefix may exist on a different library
         prefix_path = find_appid_proton_prefix(

@@ -31,12 +31,19 @@ def is_flatpak_sandbox():
 
 def lower_dict(d):
     """
-    Return a copy of the dictionary with all keys converted to lowercase.
+    Return a copy of the dictionary with all keys recursively converted to
+    lowercase.
 
     This is mainly used when dealing with Steam VDF files, as those tend to
     have either CamelCase or lowercase keys depending on the version.
     """
-    return {k.lower(): v for k, v in d.items()}
+    def _lower_value(value):
+        if not isinstance(value, dict):
+            return value
+
+        return {k.lower(): _lower_value(v) for k, v in value.items()}
+
+    return {k.lower(): _lower_value(v) for k, v in d.items()}
 
 
 def get_legacy_runtime_library_paths(legacy_steam_runtime_path, proton_app):

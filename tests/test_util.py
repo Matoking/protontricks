@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from protontricks.util import create_wine_bin_dir, run_command
+from protontricks.util import create_wine_bin_dir, run_command, lower_dict
 
 
 def get_files_in_dir(d):
@@ -123,3 +123,31 @@ class TestRunCommand:
         )
         assert warning.getMessage() == \
             "Current Steam Runtime not recognized by Protontricks."
+
+
+class TestLowerDict:
+    def test_lower_nested_dict(self):
+        """
+        Turn all keys in a nested dictionary to lowercase using `lower_dict`
+        """
+        before = {
+            "AppState": {
+                "Name": "Blah",
+                "appid": 123450,
+                "userconfig": {
+                    "Language": "English"
+                }
+            }
+        }
+
+        after = {
+            "appstate": {
+                "name": "Blah",
+                "appid": 123450,
+                "userconfig": {
+                    "language": "English"
+                }
+            }
+        }
+
+        assert lower_dict(before) == after
