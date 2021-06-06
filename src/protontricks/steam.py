@@ -168,13 +168,13 @@ class SteamApp(object):
             return None
 
         try:
-            vdf_data = vdf.loads(content)
+            vdf_data = lower_dict(vdf.loads(content))
         except SyntaxError:
             logger.warning("Skipping malformed appmanifest %s", path)
             return None
 
         try:
-            app_state = vdf_data["AppState"]
+            app_state = vdf_data["appstate"]
         except KeyError:
             # Some appmanifest files may be empty. Ignore those.
             logger.info("Skipping empty appmanifest %s", path)
@@ -233,7 +233,7 @@ def _get_required_tool_appid(path):
         if tool_manifest_content == "":
             raise ValueError("Tool manifest is empty")
 
-        tool_manifest = vdf.loads(tool_manifest_content)
+        tool_manifest = lower_dict(vdf.loads(tool_manifest_content))
         return tool_manifest["manifest"].get("require_tool_appid", None)
     except FileNotFoundError:
         return None
@@ -372,7 +372,9 @@ def get_appinfo_sections(path):
         vdf_section_size = entry_size - 40
 
         i += section_size
+
         vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
+        vdf_d = lower_dict(vdf_d)
         sections.append(vdf_d)
 
         i += vdf_section_size
@@ -444,12 +446,12 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     config_vdf_path = steam_path / "config" / "config.vdf"
     content = config_vdf_path.read_text()
 
-    vdf_data = vdf.loads(content)
+    vdf_data = lower_dict(vdf.loads(content))
     # ToolMapping seems to be used in older Steam beta releases
     try:
         tool_mapping = (
-            vdf_data["InstallConfigStore"]["Software"]["Valve"]["Steam"]
-                    ["ToolMapping"]
+            vdf_data["installconfigstore"]["software"]["valve"]["steam"]
+                    ["toolmapping"]
         )
     except KeyError:
         tool_mapping = {}
@@ -458,8 +460,8 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     # We'll prioritize this if it exists
     try:
         compat_tool_mapping = (
-            vdf_data["InstallConfigStore"]["Software"]["Valve"]["Steam"]
-                    ["CompatToolMapping"]
+            vdf_data["installconfigstore"]["software"]["valve"]["steam"]
+                    ["compattoolmapping"]
         )
     except KeyError:
         compat_tool_mapping = {}
@@ -608,10 +610,10 @@ def get_steam_lib_paths(steam_path):
         """
         Parse the Steam library folders in the VDF file using the given data
         """
-        vdf_data = vdf.loads(data)
+        vdf_data = lower_dict(vdf.loads(data))
         # Library folders have integer field names in ascending order
         library_folders = [
-            Path(value) for key, value in vdf_data["LibraryFolders"].items()
+            Path(value) for key, value in vdf_data["libraryfolders"].items()
             if key.isdigit()
         ]
 
@@ -672,10 +674,21 @@ def get_custom_proton_installations_in_dir(compat_tool_dir):
         content = vdf_path.read_text()
 
         vdf_data = vdf.loads(content)
-        internal_name = list(
-            vdf_data["compatibilitytools"]["compat_tools"].keys())[0]
-        tool_info = vdf_data["compatibilitytools"]["compat_tools"][
-            internal_name]
+
+        # Traverse to 'compatibilitytools/compat_tools' in a case-insensitive
+        # way. This is done because we can't turn all keys recursively to
+        # lowercase from the get-go; the app name is stored as a key.
+        compat_tools = {k.lower(): v for k, v in vdf_data.items()}
+        compat_tools = compat_tools["compatibilitytools"]
+        compat_tools = {
+            k.lower(): v for k, v in compat_tools.items()
+        }
+        compat_tools = compat_tools["compat_tools"]
+        internal_name = list(compat_tools.keys())[0]
+        tool_info = compat_tools[internal_name]
+
+        # We can now convert the remainder into lowercase
+        tool_info = lower_dict(tool_info)
 
         install_path_name = tool_info["install_path"]
         from_oslist = tool_info["from_oslist"]
@@ -744,7 +757,7 @@ def find_current_steamid3(steam_path):
     loginusers_path = steam_path / "config" / "loginusers.vdf"
     try:
         content = loginusers_path.read_text()
-        vdf_data = vdf.loads(content)
+        vdf_data = lower_dict(vdf.loads(content))
     except IOError:
         return None
 
@@ -804,7 +817,7 @@ def get_custom_windows_shortcuts(steam_path):
 
     try:
         content = shortcuts_path.read_bytes()
-        vdf_data = vdf.binary_loads(content)
+        vdf_data = lower_dict(vdf.binary_loads(content))
     except IOError:
         logger.info(
             "Couldn't find custom shortcuts. Maybe none have been created yet?"

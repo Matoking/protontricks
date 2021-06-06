@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Custom Proton installations now use Steam Runtime installations when applicable
  - Fix crash caused by older Steam app installations using a different app manifest structure
+ - Fix crash caused by the change to lowercase field names in multiple VDF files
 
 ## [1.5.1] - 2021-05-10
 ### Fixed
