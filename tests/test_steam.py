@@ -9,7 +9,8 @@ import vdf
 from protontricks.steam import (SteamApp, find_appid_proton_prefix,
                                 find_steam_path, find_steam_proton_app,
                                 get_custom_proton_installations,
-                                get_custom_windows_shortcuts, get_steam_apps)
+                                get_custom_windows_shortcuts, get_steam_apps,
+                                get_steam_lib_paths)
 
 
 class TestSteamApp:
@@ -156,6 +157,35 @@ class TestFindSteamProtonApp:
         # Proton 4.20 is the global default, but Proton 6.66 is the selected
         # version for this game
         assert proton_app.name == "Proton 6.66"
+
+
+class TestFindLibraryPaths:
+    @pytest.mark.parametrize(
+        "new_struct", [False, True], ids=["old struct", "new struct"]
+    )
+    def test_get_steam_lib_paths(
+            self, steam_dir, steam_library_factory, new_struct):
+        """
+        Find the Steam library folders generated with either the old or new
+        structure.
+        Older Steam releases only use a field value containing the path
+        to the library, while newer releases store a dict with additional
+        information besides the library path.
+        """
+        library_a = steam_library_factory(
+            "TestLibrary_A", new_struct=new_struct
+        )
+        library_b = steam_library_factory(
+            "TestLibrary_B", new_struct=new_struct
+        )
+
+        lib_paths = get_steam_lib_paths(steam_dir)
+        lib_paths.sort(key=lambda path: str(path))
+
+        assert len(lib_paths) == 3
+        assert str(lib_paths[0]) == str(steam_dir)
+        assert str(lib_paths[1]) == str(library_a)
+        assert str(lib_paths[2]) == str(library_b)
 
 
 class TestFindAppidProtonPrefix:

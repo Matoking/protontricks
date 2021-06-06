@@ -612,10 +612,20 @@ def get_steam_lib_paths(steam_path):
         """
         vdf_data = lower_dict(vdf.loads(data))
         # Library folders have integer field names in ascending order
-        library_folders = [
-            Path(value) for key, value in vdf_data["libraryfolders"].items()
+        library_entries = [
+            value for key, value in vdf_data["libraryfolders"].items()
             if key.isdigit()
         ]
+        library_folders = []
+
+        for value in library_entries:
+            if isinstance(value, dict):
+                # Library data is stored in a dict in newer Steam releases
+                library_folders.append(Path(value["path"]))
+            else:
+                # Older releases just store the library path as a string
+                # and nothing else
+                library_folders.append(Path(value))
 
         logger.info(
             "Found %d Steam library folders", len(library_folders)

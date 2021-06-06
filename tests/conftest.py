@@ -533,7 +533,7 @@ def steam_library_factory(steam_dir, steam_libraryfolders_path, tmp_path):
     """
     Factory function to add fake Steam library folders
     """
-    def func(name):
+    def func(name, new_struct=False):
         library_dir = Path(str(tmp_path)) / "mnt" / name
         library_dir.mkdir(parents=True)
 
@@ -545,9 +545,18 @@ def steam_library_factory(steam_dir, steam_libraryfolders_path, tmp_path):
         # Each new library adds a new entry into the config file with the
         # field name that starts from 1 and increases with each new library
         # folder.
+        # Newer Steam releases stores the library entry in a dict, while
+        # older releases just store the full path as the field value
         library_id = len(libraryfolders_config["LibraryFolders"].keys()) - 1
-        libraryfolders_config["LibraryFolders"][str(library_id)] = \
-            str(library_dir)
+        if new_struct:
+            libraryfolders_config["LibraryFolders"][str(library_id)] = {
+                "path": str(library_dir),
+                "label": "",
+                "mounted": "1"
+            }
+        else:
+            libraryfolders_config["LibraryFolders"][str(library_id)] = \
+                str(library_dir)
 
         steam_libraryfolders_path.write_text(vdf.dumps(libraryfolders_config))
 
