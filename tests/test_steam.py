@@ -31,12 +31,21 @@ class TestSteamApp:
         assert steam_app.name == "Fake game"
         assert steam_app.appid == 10
 
-    def test_steam_app_from_appmanifest_invalid(self, steam_app_factory):
+    @pytest.mark.parametrize(
+        "content",
+        [
+            b"",  # Empty VDF is ignored
+            b"corrupted",  # Can't be parsed as VDF
+            bytes([255]),  # Can't be decoded as Unicode
+        ]
+    )
+    def test_steam_app_from_appmanifest_invalid(
+            self, steam_app_factory, content):
         steam_app = steam_app_factory(name="Fake game", appid=10)
 
         appmanifest_path = \
             Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
-        appmanifest_path.write_text("invalid")
+        appmanifest_path.write_bytes(content)
 
         # Invalid appmanifest file is ignored
         assert not SteamApp.from_appmanifest(
@@ -45,6 +54,10 @@ class TestSteamApp:
         )
 
     def test_steam_app_from_appmanifest_empty(self, steam_app_factory):
+        """
+        Try to deserialize an empty appmanifest and check that no SteamApp
+        is returned
+        """
         steam_app = steam_app_factory(name="Fake game", appid=10)
 
         appmanifest_path = \
@@ -57,18 +70,25 @@ class TestSteamApp:
             steam_lib_paths=[]
         )
 
-    def test_steam_app_from_appmanifest_empty_toolmanifest(
-            self, steam_runtime_soldier, proton_factory, caplog):
+    @pytest.mark.parametrize(
+        "content",
+        [
+            b"",  # Empty VDF is ignored
+            b"corrupted",  # Can't be parsed as VDF
+        ]
+    )
+    def test_steam_app_from_appmanifest_corrupted_toolmanifest(
+            self, steam_runtime_soldier, proton_factory, caplog, content):
         """
         Test trying to a SteamApp manifest from an incomplete
-        Proton installation with an empty toolmanifest.vdf file
+        Proton installation with an empty or corrupted toolmanifest.vdf file
         """
         proton_app = proton_factory(
             name="Proton 5.13", appid=10, compat_tool_name="proton_513",
             required_tool_app=steam_runtime_soldier
         )
         # Empty the "toolmanifest.vdf" file
-        (proton_app.install_path / "toolmanifest.vdf").write_text("")
+        (proton_app.install_path / "toolmanifest.vdf").write_bytes(content)
 
         assert not SteamApp.from_appmanifest(
             path=proton_app.install_path.parent.parent / "appmanifest_10.acf",
@@ -186,6 +206,23 @@ class TestFindLibraryPaths:
         assert str(lib_paths[0]) == str(steam_dir)
         assert str(lib_paths[1]) == str(library_a)
         assert str(lib_paths[2]) == str(library_b)
+
+    def test_get_steam_lib_paths_corrupted_libraryfolders(
+            self, steam_dir, steam_library_factory):
+        """
+        Try to find the Steam library folders and ensure a corrupted
+        libraryfolders.vdf causes an exception to be raised
+        """
+        steam_library_factory("TestLibrary")
+
+        (steam_dir / "steamapps" / "libraryfolders.vdf").write_text(
+            "Corrupted"
+        )
+
+        with pytest.raises(ValueError) as exc:
+            get_steam_lib_paths(steam_dir)
+
+        assert "Library folder configuration file" in str(exc.value)
 
 
 class TestFindAppidProtonPrefix:
@@ -345,6 +382,43 @@ class TestGetSteamApps:
 
         assert record.getMessage().startswith(
             "Tool manifest for Custom Proton is empty"
+        )
+
+    def test_get_steam_apps_custom_proton_corrupted_compatibilitytool(
+            self, custom_proton_factory, steam_dir, steam_root, caplog):
+        """
+        Create a custom Proton installation with a corrupted
+        compatibilitytool.vdf and ensure a warning is printed and the app
+        is ignored
+        """
+        custom_proton = custom_proton_factory(name="Custom Proton")
+        (custom_proton.install_path / "compatibilitytool.vdf").write_text(
+            "corrupted"
+        )
+
+        steam_apps = get_steam_apps(
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
+        )
+
+        # Custom Proton is skipped due to empty tool manifest
+        assert not any(
+            app for app in steam_apps if app.name == "Custom Proton"
+        )
+
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]) == 1
+
+        record = next(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        )
+
+        assert record.getMessage().startswith(
+            "Compatibility tool declaration at"
         )
 
     def test_get_steam_apps_in_library_folder(
