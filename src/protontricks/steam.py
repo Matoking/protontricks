@@ -206,10 +206,10 @@ class SteamApp(object):
         # normal Steam apps
         try:
             required_tool_appid = _get_required_tool_appid(install_path)
-        except ValueError:
+        except (ValueError, SyntaxError):
             logger.warning(
-                "Tool manifest for %s is empty. You may need to reinstall "
-                "the application.",
+                "Tool manifest for %s is empty or corrupted. You may need to "
+                "reinstall the application.",
                 name
             )
             return None
@@ -225,6 +225,7 @@ def _get_required_tool_appid(path):
     Get the required tool app ID for the Proton installation at the given path
 
     :raises ValueError: Tool manifest is empty
+    :raises SyntaxError: Tool manifest is corrupted
     """
     tool_manifest_path = path / "toolmanifest.vdf"
     try:
@@ -234,6 +235,7 @@ def _get_required_tool_appid(path):
             raise ValueError("Tool manifest is empty")
 
         tool_manifest = lower_dict(vdf.loads(tool_manifest_content))
+
         return tool_manifest["manifest"].get("require_tool_appid", None)
     except FileNotFoundError:
         return None
@@ -644,6 +646,12 @@ def get_steam_lib_paths(steam_path):
         # libraryfolders.vdf doesn't exist; maybe no Steam library folders
         # are set?
         library_folders = []
+    except SyntaxError as exc:
+        raise ValueError(
+            "Library folder configuration file {} is corrupted".format(
+                folders_vdf_path
+            )
+        ) from exc
 
     return [steam_path] + library_folders
 
@@ -683,7 +691,15 @@ def get_custom_proton_installations_in_dir(compat_tool_dir):
     for vdf_path in comptool_files:
         content = vdf_path.read_text()
 
-        vdf_data = vdf.loads(content)
+        try:
+            vdf_data = vdf.loads(content)
+        except SyntaxError:
+            logger.warning(
+                "Compatibility tool declaration at %s is corrupted. You may "
+                "need to reinstall the application.",
+                vdf_path
+            )
+            continue
 
         # Traverse to 'compatibilitytools/compat_tools' in a case-insensitive
         # way. This is done because we can't turn all keys recursively to
@@ -720,10 +736,10 @@ def get_custom_proton_installations_in_dir(compat_tool_dir):
         # normal Steam apps
         try:
             required_tool_appid = _get_required_tool_appid(install_path)
-        except ValueError:
+        except (ValueError, SyntaxError):
             logger.warning(
-                "Tool manifest for %s is empty. You may need to reinstall "
-                "the application.",
+                "Tool manifest for %s is empty or corrupted. You may need to "
+                "reinstall the application.",
                 install_path.name
             )
             continue
@@ -769,6 +785,10 @@ def find_current_steamid3(steam_path):
         content = loginusers_path.read_text()
         vdf_data = lower_dict(vdf.loads(content))
     except IOError:
+        logger.warning(
+            "Couldn't determine the currently logged-in Steam user. Custom "
+            "shortcuts won't be detected."
+        )
         return None
 
     user_datas = [
