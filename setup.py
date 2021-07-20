@@ -36,7 +36,8 @@ setup(
     install_requires=["vdf>=3.2"],
     entry_points={
         "console_scripts": [
-            "protontricks = protontricks.cli:main"
+            "protontricks = protontricks.cli.main:main",
+            "protontricks-launch = protontricks.cli.launch:main"
         ]
     },
     include_package_data=True,

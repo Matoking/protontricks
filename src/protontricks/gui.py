@@ -11,7 +11,7 @@ class LocaleError(Exception):
     pass
 
 
-def select_steam_app_with_gui(steam_apps):
+def select_steam_app_with_gui(steam_apps, title=None):
     """
     Prompt the user to select a Proton-enabled Steam app from
     a dropdown list.
@@ -42,13 +42,16 @@ def select_steam_app_with_gui(steam_apps):
 
             raise
 
+    if not title:
+        title = "Select Steam app"
+
     combo_values = "|".join([
         '{}: {}'.format(app.name, app.appid) for app in steam_apps
         if app.prefix_path_exists and app.appid
     ])
     args = [
         "zenity", "--forms", "--text=Steam Game Library",
-        "--title=Choose Game", "--add-combo", "Pick a library game",
+        "--title", title, "--add-combo", "Steam app",
         "--combo-values", combo_values
     ]
 

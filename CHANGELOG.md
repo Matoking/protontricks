@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+ - Add `protontricks-launch` script to launch Windows executables using Proton app specific Wine prefixes
+
 ### Fixed
  - Display proper error messages in certain cases when corrupted VDF files are found
 

@@ -8,7 +8,8 @@ from pathlib import Path
 from subprocess import run
 
 import vdf
-from protontricks.cli import main
+from protontricks.cli.main import main
+from protontricks.cli.launch import main as launch_main
 from protontricks.steam import (APPINFO_STRUCT_HEADER, APPINFO_STRUCT_SECTION,
                                 SteamApp, get_appid_from_shortcut)
 
@@ -632,8 +633,7 @@ def command(monkeypatch):
     yield mock_command
 
 
-@pytest.fixture(scope="function")
-def cli(monkeypatch, capsys):
+def _run_cli(monkeypatch, capsys, cli_func):
     """
     Run protontricks with the given arguments and environment variables
     and return the output
@@ -651,7 +651,7 @@ def cli(monkeypatch, capsys):
                 monkeypatch_ctx.setenv(name, val)
 
             try:
-                main(args)
+                cli_func(args)
             except SystemExit:
                 if expect_exit:
                     system_exit = True
@@ -669,3 +669,21 @@ def cli(monkeypatch, capsys):
             return stdout
 
     return func
+
+
+@pytest.fixture(scope="function")
+def cli(monkeypatch, capsys):
+    """
+    Run `protontricks` with the given arguments and environment variables,
+    and return the output
+    """
+    return _run_cli(monkeypatch, capsys, main)
+
+
+@pytest.fixture(scope="function")
+def launch_cli(monkeypatch, capsys):
+    """
+    Run `protontricks-launch` with the given arguments and environment
+    variables, and return the output
+    """
+    return _run_cli(monkeypatch, capsys, launch_main)

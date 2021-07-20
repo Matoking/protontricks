@@ -13,37 +13,16 @@ import logging
 import os
 import sys
 
-from . import __version__
-from .gui import select_steam_app_with_gui
-from .steam import (find_legacy_steam_runtime_path, find_proton_app,
-                    find_steam_path, get_steam_apps, get_steam_lib_paths)
-from .util import run_command, is_flatpak_sandbox
-from .winetricks import get_winetricks_path
+from .. import __version__
+from ..gui import select_steam_app_with_gui
+from ..steam import (find_legacy_steam_runtime_path, find_proton_app,
+                     find_steam_path, get_steam_apps, get_steam_lib_paths)
+from ..util import is_flatpak_sandbox, run_command
+from ..winetricks import get_winetricks_path
+
+from .util import CustomArgumentParser, enable_logging
 
 logger = logging.getLogger("protontricks")
-
-
-def enable_logging(info=False):
-    """
-    Enables logging.
-    If info is True, print INFO messages in addition to WARNING and ERROR
-    messages
-    """
-    level = logging.INFO if info else logging.WARNING
-    logging.basicConfig(
-        stream=sys.stderr, level=level,
-        format="%(name)s (%(levelname)s): %(message)s")
-
-
-class CustomArgumentParser(argparse.ArgumentParser):
-    """
-    Custom argument parser that prints the full help message
-    when incorrect parameters are provided
-    """
-    def error(self, message):
-        self.print_help(sys.stderr)
-        args = {'prog': self.prog, 'message': message}
-        self.exit(2, '%(prog)s: error: %(message)s\n' % args)
 
 
 def main(args=None):
