@@ -10,6 +10,7 @@ from subprocess import run
 import vdf
 from protontricks.cli.main import main
 from protontricks.cli.launch import main as launch_main
+from protontricks.cli.desktop_install import main as desktop_install_main
 from protontricks.steam import (APPINFO_STRUCT_HEADER, APPINFO_STRUCT_SECTION,
                                 SteamApp, get_appid_from_shortcut)
 
@@ -629,6 +630,10 @@ def command(monkeypatch):
         "protontricks.util.run",
         mock_subprocess_run
     )
+    monkeypatch.setattr(
+        "protontricks.cli.desktop_install.run",
+        mock_subprocess_run
+    )
 
     yield mock_command
 
@@ -687,3 +692,12 @@ def launch_cli(monkeypatch, capsys):
     variables, and return the output
     """
     return _run_cli(monkeypatch, capsys, launch_main)
+
+
+@pytest.fixture(scope="function")
+def desktop_install_cli(monkeypatch, capsys):
+    """
+    Run `protontricks-desktop-install` with the given arguments and environment
+    variables, and return the output
+    """
+    return _run_cli(monkeypatch, capsys, desktop_install_main)

@@ -3,6 +3,7 @@ import os
 import shlex
 import shutil
 import stat
+
 from pathlib import Path
 from subprocess import check_output, run, PIPE
 
@@ -407,3 +408,4 @@ def run_command(
         # Restore original env vars
         os.environ.clear()
         os.environ.update(environ_copy)
+

@@ -43,6 +43,8 @@ protontricks --gui
 protontricks --help
 ```
 
+Protontricks also comes with an application shortcut and desktop integration, adding a Protontricks app shortcut and the ability to launch individual EXE files using Protontricks. Depending on your installation method, you may also need to run `protontricks-desktop-install` to enable this functionality.
+
 Since this is a wrapper, all commands that work for Winetricks will likely work for Protontricks as well.
 
 If you have a different Steam directory, you can export ``$STEAM_DIR`` to the directory where Steam is.
@@ -101,6 +103,12 @@ Close and reopen your terminal. After that, you can install protontricks.
 
 ```sh
 pipx install protontricks
+```
+
+To enable desktop integration as well, run the following command *after* installing Protontricks
+
+```sh
+protontricks-desktop-install
 ```
 
 To upgrade to the latest release:

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Add `protontricks-launch` script to launch Windows executables using Proton app specific Wine prefixes
  - Add desktop integration for Windows executables, which can now be launched using Protontricks
+ - Add `protontricks-desktop-install` to install desktop integration for the local user. This is only necessary if the installation method doesn't do this automatically.
 
 ### Fixed
  - Display proper error messages in certain cases when corrupted VDF files are found

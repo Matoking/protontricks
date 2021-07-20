@@ -46,7 +46,12 @@ setup(
     entry_points={
         "console_scripts": [
             "protontricks = protontricks.cli.main:main",
-            "protontricks-launch = protontricks.cli.launch:main"
+            "protontricks-launch = protontricks.cli.launch:main",
+            # `protontricks-desktop-install` is only responsible for installing
+            # .desktop files and should be omitted if the distro package
+            # already ships .desktop files properly
+            ("protontricks-desktop-install "
+             "= protontricks.cli.desktop_install:main")
         ]
     },
     include_package_data=True,
