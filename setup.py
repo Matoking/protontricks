@@ -21,6 +21,15 @@ setup(
     },
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
+    data_files=[
+        (
+            "share/applications",
+            [
+                "src/protontricks/data/protontricks.desktop",
+                "src/protontricks/data/protontricks-launch.desktop"
+            ]
+        )
+    ],
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     python_requires=">=3.5",

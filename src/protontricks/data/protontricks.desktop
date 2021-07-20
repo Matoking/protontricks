@@ -1,0 +1,7 @@
+[Desktop Entry]
+Exec=protontricks --gui
+Name=Protontricks
+Type=Application
+Terminal=false
+Categories=Utility;
+Icon=wine

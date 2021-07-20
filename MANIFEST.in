@@ -1,10 +1,9 @@
 include MANIFEST.in LICENSE *.md
 
 graft src/protontricks
+graft data
 
 exclude *.yml
-
-prune data
 
 global-exclude *.py[cod]
 global-exclude __pycache__
