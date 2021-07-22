@@ -53,12 +53,40 @@ class TestCLIRun:
         """
         Try running an EXE file but don't pick a Steam app
         """
+        steam_app_factory("Fake game", appid=10)
+
         # Fake the user closing the form
         zenity.mock_stdout = ""
 
         result = launch_cli(["test.exe"], expect_exit=True)
 
         assert "No game was selected." in result
+
+    def test_run_executable_no_apps(self, launch_cli):
+        """
+        Try running an EXE file when no Proton enabled Steam apps are installed or
+        ready
+        """
+        result = launch_cli(["test.exe"], expect_exit=True)
+
+        assert "No Proton enabled Steam apps were found" in result
+
+    def test_run_executable_no_apps_from_desktop(self, launch_cli, monkeypatch):
+        """
+        Try running an EXE file when no Proton enabled Steam apps are installed
+        or ready, and ensure an error dialog is opened using `zenity`.
+        """
+        result = []
+        monkeypatch.setattr(
+            "protontricks.cli.launch.run",
+            lambda *args, **_: result.extend(*args)
+        )
+
+        launch_cli(["--from-desktop", "test.exe"], expect_exit=True)
+
+        assert result[0] == "zenity"
+        assert result[-2] == "--text"
+        assert result[-1].startswith("No Proton enabled Steam apps were found.")
 
     def test_run_executable_passthrough_arguments(
             self, default_proton, steam_app_factory, caplog,

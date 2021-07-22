@@ -3,6 +3,7 @@ import logging
 import shlex
 import sys
 from pathlib import Path
+from subprocess import run
 
 from ..gui import select_steam_app_with_gui
 from ..steam import find_steam_path, get_steam_apps, get_steam_lib_paths
@@ -10,6 +11,20 @@ from .main import main as cli_main
 from .util import CustomArgumentParser, enable_logging
 
 logger = logging.getLogger("protontricks")
+
+
+def exit_with_error(error, display_dialog=False):
+    """
+    Print or display an error, and then exit.
+    """
+    if display_dialog:
+        run([
+            "zenity", "--error", "--width", "400", "--text", error
+        ], check=True)
+    else:
+        print(error)
+
+    sys.exit(-1)
 
 
 def main(args=None):
@@ -42,6 +57,13 @@ def main(args=None):
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument(
+        "--from-desktop", action="store_true",
+        help=(
+            "Display error messages using error dialogs instead of printing "
+            "to stderr."
+        )
+    )
+    parser.add_argument(
         "--verbose", "-v", action="store_true",
         help="Print debug information")
     parser.add_argument(
@@ -69,10 +91,10 @@ def main(args=None):
     # 1. Find Steam path
     steam_path, steam_root = find_steam_path()
     if not steam_path:
-        print(
-            "Steam installation directory could not be found."
+        exit_with_error(
+            "Steam installation directory could not be found.",
+            args.from_desktop
         )
-        sys.exit(-1)
 
     # 2. Find any Steam library folders
     steam_lib_paths = get_steam_lib_paths(steam_path)
@@ -82,6 +104,16 @@ def main(args=None):
         steam_root=steam_root, steam_path=steam_path,
         steam_lib_paths=steam_lib_paths
     )
+    steam_apps = [
+        app for app in steam_apps if app.prefix_path_exists and app.appid
+    ]
+
+    if not steam_apps:
+        exit_with_error(
+            "No Proton enabled Steam apps were found. Have you launched one "
+            "of the apps at least once?",
+            args.from_desktop
+        )
 
     if not args.appid:
         appid = select_steam_app_with_gui(

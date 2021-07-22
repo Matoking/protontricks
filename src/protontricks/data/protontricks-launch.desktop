@@ -1,5 +1,5 @@
 [Desktop Entry]
-Exec=protontricks-launch %f
+Exec=protontricks-launch --from-desktop %f
 Name=Protontricks Launcher
 Type=Application
 Terminal=false
