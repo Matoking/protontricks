@@ -45,14 +45,14 @@ def select_steam_app_with_gui(steam_apps, title=None):
     if not title:
         title = "Select Steam app"
 
-    combo_values = "|".join([
+    list_values = [
         '{}: {}'.format(app.name, app.appid) for app in steam_apps
         if app.prefix_path_exists and app.appid
-    ])
+    ]
     args = [
-        "zenity", "--forms", "--text=Steam Game Library",
-        "--title", title, "--add-combo", "Steam app",
-        "--combo-values", combo_values
+        "zenity", "--list", "--hide-header", "--width", "600",
+        "--height", "400", "--text", title,
+        "--title", "Protontricks", "--column", "Steam app", *list_values
     ]
 
     try:
