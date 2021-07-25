@@ -166,6 +166,15 @@ class SteamApp(object):
                 "Skipping malformed appmanifest %s", path
             )
             return None
+        except PermissionError:
+            # Skip the appmanifest if we can't read it.
+            # Steam also seems to ignore unreadable app manifests, so do the
+            # same here.
+            logger.warning(
+                "Skipping appmanifest %s due to insufficient permissions",
+                path
+            )
+            return None
 
         try:
             vdf_data = lower_dict(vdf.loads(content))

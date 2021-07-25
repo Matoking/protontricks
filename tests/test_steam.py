@@ -100,6 +100,39 @@ class TestSteamApp:
 
         assert "Tool manifest for Proton 5.13 is empty" in record.message
 
+    def test_steam_app_from_appmanifest_permission_denied(
+            self, steam_app_factory, caplog, monkeypatch):
+        """
+        Test trying to read a SteamApp manifest that the user doesn't
+        have read permission for
+        """
+        def _mock_read_text(self, encoding=None):
+            """
+            Mock `pathlib.Path.read_text` that mimics a failure due to
+            insufficient permissions
+            """
+            raise PermissionError("Permission denied")
+
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        appmanifest_path = \
+            Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
+
+        monkeypatch.setattr(
+            "pathlib.Path.read_text", _mock_read_text
+        )
+
+        assert not SteamApp.from_appmanifest(
+            path=appmanifest_path, steam_lib_paths=[]
+        )
+
+        record = caplog.records[-1]
+        assert record.getMessage() == (
+            "Skipping appmanifest {} due to insufficient permissions".format(
+                str(appmanifest_path)
+            )
+        )
+
     def test_steam_app_proton_dist_path(self, default_proton):
         """
         Check that correct path to Proton binarires and libraries is found
