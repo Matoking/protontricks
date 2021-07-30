@@ -360,10 +360,8 @@ def run_command(
             )
 
             if use_bwrap:
-                logger.warning(
-                    "Running Steam Runtime using bwrap containerization. "
-                    "This is an experimental feature and it may still be "
-                    "incompatible in some situations.\n"
+                logger.info(
+                    "Running Steam Runtime using bwrap containerization.\n"
                     "If any problems arise, please try running the command "
                     "again using the `--no-bwrap` flag and make an issue "
                     "report if the problem only occurs when bwrap is in use."
