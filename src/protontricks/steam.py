@@ -13,9 +13,9 @@ from .util import lower_dict
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
     "find_legacy_steam_runtime_path", "get_appinfo_sections",
-    "get_proton_appid", "find_steam_proton_app", "find_appid_proton_prefix",
+    "get_tool_appid", "find_steam_compat_tool_app", "find_appid_proton_prefix",
     "find_proton_app", "get_steam_lib_paths", "get_compat_tool_dirs",
-    "get_custom_proton_installations_in_dir", "get_custom_proton_installations",
+    "get_custom_compat_tool_installations_in_dir", "get_custom_compat_tool_installations",
     "find_current_steamid3", "get_appid_from_shortcut",
     "get_custom_windows_shortcuts", "get_steam_apps"
 )
@@ -394,9 +394,9 @@ def get_appinfo_sections(path):
             return sections
 
 
-def get_proton_appid(compat_tool_name, appinfo_path):
+def get_tool_appid(compat_tool_name, appinfo_path):
     """
-    Get the App ID for Proton installation by the compat tool name
+    Get the App ID for compatibility tool by the compat tool name
     used in STEAM_DIR/config/config.vdf
     """
     # Parse all the individual VDF sections in appinfo.vdf to a list
@@ -439,21 +439,24 @@ def get_proton_appid(compat_tool_name, appinfo_path):
     return None
 
 
-def find_steam_proton_app(steam_path, steam_apps, appid=None):
+def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
     """
-    Get the current Proton installation used by Steam
-    and return a SteamApp object
+    Get the current compatibility tool used by Steam and
+    return a SteamApp object
 
-    If 'appid' is provided, try to find the app-specific Proton installation
+    If 'appid' is provided, try to find the app-specific compatibility tool
     if one is configured
+
+    The compatibility tool *may* not be a Proton installation. This can be
+    checked using `SteamApp.is_proton`.
     """
-    # 1. Find the name of Proton installation in use
+    # 1. Find the name of compatibility tool in use
     #    from STEAM_DIR/config/config.vdf
-    # 2. If the Proton installation's name can be found directly
+    # 2. If the compatibility tool's name can be found directly
     #    in the list of apps we discovered earlier, return that
     # 3. ...or if the name can't be found that way, parse
-    #    the file in STEAM_DIR/appcache/appinfo.vdf to find the Proton
-    #    installation's App ID
+    #    the file in STEAM_DIR/appcache/appinfo.vdf to find the compatibility
+    #    tool's App ID
     config_vdf_path = steam_path / "config" / "config.vdf"
     content = config_vdf_path.read_text()
 
@@ -491,14 +494,14 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
         compat_tool_name = next(name for name in potential_names if name)
     except StopIteration:
         logger.error(
-            "No Proton installation found in config.vdf. "
+            "No compatibility tool found in config.vdf. "
             "Have you enabled Steam Play for all titles under Steam settings?"
         )
         return None
 
     # We've got the name from config.vdf,
     # now there are two possible ways to find the installation
-    # 1. It's a custom Proton installation, and we simply need to find
+    # 1. It's a custom compatibility tool, and we simply need to find
     #    a SteamApp by its internal name
     # 2. It's a production Proton installation, in which case we need
     #    to parse a binary configuration file to find the App ID
@@ -507,7 +510,7 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     try:
         app = next(app for app in steam_apps if app.name == compat_tool_name)
         logger.info(
-            "Found active custom Proton installation: %s", app.name
+            "Found active custom compatibility tool: %s", app.name
         )
         return app
     except StopIteration:
@@ -516,17 +519,19 @@ def find_steam_proton_app(steam_path, steam_apps, appid=None):
     # Try option 2:
     # Find the corresponding App ID from <steam_path>/appcache/appinfo.vdf
     appinfo_path = steam_path / "appcache" / "appinfo.vdf"
-    proton_appid = get_proton_appid(compat_tool_name, appinfo_path)
+    tool_appid = get_tool_appid(compat_tool_name, appinfo_path)
 
-    if not proton_appid:
-        logger.error("Could not find Proton's App ID from appinfo.vdf")
+    if not tool_appid:
+        logger.error(
+            "Could not find compatibility tool's App ID from appinfo.vdf"
+        )
         return None
 
     # We've now got the appid. Return the corresponding SteamApp
     try:
-        app = next(app for app in steam_apps if app.appid == proton_appid)
+        app = next(app for app in steam_apps if app.appid == tool_appid)
         logger.info(
-            "Found active Proton installation: %s", app.name
+            "Found active compatibility tool: %s", app.name
         )
         return app
     except StopIteration:
@@ -601,15 +606,27 @@ def find_proton_app(steam_path, steam_apps, appid=None):
             )
             return None
 
-    proton_app = find_steam_proton_app(
+    tool_app = find_steam_compat_tool_app(
         steam_path=steam_path, steam_apps=steam_apps, appid=appid)
 
-    if not proton_app:
+    if not tool_app:
         logger.error(
             "Active Proton installation could not be found automatically."
         )
+        return None
 
-    return proton_app
+    # Check that it's actually a Proton app; Protontricks doesn't handle
+    # other compatibility tools.
+    if not tool_app.is_proton:
+        logger.error(
+            "Active compatibility tool was found, but it's not a Proton "
+            "installation supported by Protontricks."
+        )
+        return None
+
+    logger.info("Active compatibility tool is a Proton installation")
+
+    return tool_app
 
 
 def get_steam_lib_paths(steam_path):
@@ -684,9 +701,9 @@ def get_compat_tool_dirs(steam_root):
     return paths
 
 
-def get_custom_proton_installations_in_dir(compat_tool_dir):
+def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
     """
-    Return a list of custom Proton installations in the given directory
+    Return a list of custom compatibility tools in the given directory
     as a list of SteamApp objects
     """
     if not compat_tool_dir.is_dir():
@@ -695,7 +712,7 @@ def get_custom_proton_installations_in_dir(compat_tool_dir):
     comptool_files = list(compat_tool_dir.glob("*/compatibilitytool.vdf"))
     comptool_files += list(compat_tool_dir.glob("compatibilitytool.vdf"))
 
-    custom_proton_apps = []
+    custom_tool_apps = []
 
     for vdf_path in comptool_files:
         content = vdf_path.read_text()
@@ -753,32 +770,32 @@ def get_custom_proton_installations_in_dir(compat_tool_dir):
             )
             continue
 
-        custom_proton_apps.append(
+        custom_tool_apps.append(
             SteamApp(
                 name=internal_name, install_path=install_path,
                 required_tool_appid=required_tool_appid
             )
         )
 
-    return custom_proton_apps
+    return custom_tool_apps
 
 
-def get_custom_proton_installations(steam_root):
+def get_custom_compat_tool_installations(steam_root):
     """
-    Get a list of all custom Proton installations as a list of SteamApp objects
+    Get a list of all custom compatibility tools as a list of SteamApp objects
     """
-    custom_proton_apps = {}
+    custom_tool_apps = {}
     for dir_ in get_compat_tool_dirs(steam_root=steam_root):
-        for proton_app in get_custom_proton_installations_in_dir(dir_):
-            # If another Proton app exists with the same name, it will
+        for tool_app in get_custom_compat_tool_installations_in_dir(dir_):
+            # If another tool app exists with the same name, it will
             # be replaced with an installation that has higher precedence
             # here
-            custom_proton_apps[proton_app.name] = proton_app
+            custom_tool_apps[tool_app.name] = tool_app
 
-    # Return the list of Proton apps as a list
-    custom_proton_apps = list(custom_proton_apps.values())
+    # Return the list of tool apps as a list
+    custom_tool_apps = list(custom_tool_apps.values())
 
-    return custom_proton_apps
+    return custom_tool_apps
 
 
 def find_current_steamid3(steam_path):
@@ -894,7 +911,8 @@ def get_custom_windows_shortcuts(steam_path):
         )
 
     logger.info(
-        "Found %d Steam shortcuts running under Proton", len(steam_apps)
+        "Found %d Steam shortcuts running using Steam compatibility tools",
+        len(steam_apps)
     )
 
     return steam_apps
@@ -948,8 +966,8 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
             if steam_app:
                 steam_apps.append(steam_app)
 
-    # Get the custom Proton installations and non-Steam shortcuts as well
-    steam_apps += get_custom_proton_installations(steam_root=steam_root)
+    # Get the custom compatibility tools and non-Steam shortcuts as well
+    steam_apps += get_custom_compat_tool_installations(steam_root=steam_root)
     steam_apps += get_custom_windows_shortcuts(steam_path=steam_path)
 
     # Exclude games that haven't been launched yet

@@ -510,6 +510,10 @@ def custom_proton_factory(steam_dir):
                     }
                 })
             )
+        else:
+            (compat_tool_dir / "toolmanifest.vdf").write_text(
+                vdf.dumps({"manifest": {}})
+            )
 
         return SteamApp(
             name=name,

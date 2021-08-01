@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Display proper error messages in certain cases when corrupted VDF files are found
  - Fix crash caused by appmanifest files that can't be read due to insufficient permissions
+ - Fix crash caused by non-Proton compatibility tool being enabled for the selected app
 
 ## [1.5.2] - 2021-06-09
 ### Fixed

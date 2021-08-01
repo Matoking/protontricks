@@ -7,8 +7,8 @@ import pytest
 import vdf
 
 from protontricks.steam import (SteamApp, find_appid_proton_prefix,
-                                find_steam_path, find_steam_proton_app,
-                                get_custom_proton_installations,
+                                find_steam_compat_tool_app, find_steam_path,
+                                get_custom_compat_tool_installations,
                                 get_custom_windows_shortcuts, get_steam_apps,
                                 get_steam_lib_paths)
 
@@ -186,7 +186,7 @@ class TestSteamApp:
         assert app.name == "Fake game"
 
 
-class TestFindSteamProtonApp:
+class TestFindSteamCompatToolApp:
     def test_find_steam_specific_app_proton(
             self, steam_app_factory, steam_dir, default_proton,
             proton_factory):
@@ -201,7 +201,7 @@ class TestFindSteamProtonApp:
             name="Fake game", appid=10,
             compat_tool_name="proton_6_66")
 
-        proton_app = find_steam_proton_app(
+        proton_app = find_steam_compat_tool_app(
             steam_path=steam_dir,
             steam_apps=[default_proton, custom_proton],
             appid=10

@@ -343,6 +343,33 @@ class TestCLIRun:
 
         assert "Proton installation could not be found" in result
 
+    def test_run_compat_tool_not_proton(
+            self, cli, steam_dir, default_proton, custom_proton_factory,
+            steam_app_factory, caplog):
+        """
+        Try performing a Protontricks command for a Steam app that
+        uses a compatibility tool that isn't Proton.
+
+        Regression test for https://github.com/Matoking/protontricks/issues/113
+        """
+        # Create a compatibility tool that isn't actually Proton
+        tool_app = custom_proton_factory(name="Not Proton")
+        (tool_app.install_path / "proton").unlink()
+
+        steam_app_factory(
+            name="Fake game", appid=10, compat_tool_name="Not Proton"
+        )
+
+        result = cli(["10", "winecfg"], expect_exit=True)
+
+        assert "Proton installation could not be found" in result
+
+        record = caplog.records[-1]
+        assert (
+            "Active compatibility tool was found, but it's not a Proton" in
+            record.getMessage()
+        )
+
     def test_run_command_runtime_incomplete(
             self, cli, steam_app_factory, steam_runtime_soldier,
             command, proton_factory, steam_dir):
