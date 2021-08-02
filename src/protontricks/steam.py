@@ -949,15 +949,25 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
             appmanifest_paths = path.glob("SteamApps/appmanifest_*.acf")
 
         if is_lowercase and is_mixedcase:
-            # Log a warning if both 'steamapps' and 'SteamApps' directories
-            # exist, as both Protontricks and Steam client have problems
-            # dealing with it (see issue #51)
-            logger.warning(
-                "Both 'steamapps' and 'SteamApps' directories were found at "
-                "%s. 'SteamApps' directory should be removed to prevent "
-                "issues with app and Proton discovery.",
-                str(path)
-            )
+            # 'steamapps' and 'SteamApps' may both map to the same
+            # directory if the file system is case-insensitive.
+            # Check that we're actually dealing with more than one directory
+            # before printing a warning.
+            is_case_sensitive_fs = sum(
+                1 for path in path.glob("*")
+                if path.name.lower() == "steamapps"
+            ) >= 2
+
+            if is_case_sensitive_fs:
+                # Log a warning if both 'steamapps' and 'SteamApps' directories
+                # exist, as both Protontricks and Steam client have problems
+                # dealing with it (see issue #51)
+                logger.warning(
+                    "Both 'steamapps' and 'SteamApps' directories were found "
+                    "at %s. 'SteamApps' directory should be removed to "
+                    "prevent issues with app and Proton discovery.",
+                    str(path)
+                )
 
         for manifest_path in appmanifest_paths:
             steam_app = SteamApp.from_appmanifest(

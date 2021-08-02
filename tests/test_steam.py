@@ -545,8 +545,7 @@ class TestGetSteamApps:
         assert str(steam_apps[0].install_path).startswith(str(library_dir))
 
     def test_get_steam_apps_steamapps_case_warning(
-            self, steam_app_factory, steam_library_factory,
-            steam_root, steam_dir, caplog):
+            self, steam_root, steam_dir, caplog):
         """
         Ensure a warning is logged if both 'steamapps' and 'SteamApps'
         directories exist at one of the Steam library directories
@@ -580,6 +579,33 @@ class TestGetSteamApps:
             "directories were found at {}".format(str(steam_dir))
             in log.getMessage()
         )
+
+    def test_get_steam_apps_steamapps_case_insensitive_fs(
+            self, monkeypatch, steam_root, steam_dir, caplog):
+        """
+        Ensure that the "'steamapps' and 'SteamApps' both exist" warning
+        is not printed if a case-insensitive file system is in use
+
+        Regression test for https://github.com/Matoking/protontricks/issues/112
+        """
+        def _mock_is_dir(self):
+            return self.name in ("steamapps", "SteamApps")
+
+        # Mock the "existence" of both 'steamapps' and 'SteamApps' by
+        # monkeypatching pathlib
+        monkeypatch.setattr("pathlib.Path.is_dir", _mock_is_dir)
+
+        get_steam_apps(
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[steam_dir]
+        )
+
+        # No warning is printed
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]) == 0
 
 
 class TestGetWindowsShortcuts:
