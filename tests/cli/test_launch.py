@@ -64,29 +64,30 @@ class TestCLIRun:
 
     def test_run_executable_no_apps(self, launch_cli):
         """
-        Try running an EXE file when no Proton enabled Steam apps are installed or
-        ready
+        Try running an EXE file when no Proton enabled Steam apps are installed
+        or ready
         """
         result = launch_cli(["test.exe"], expect_exit=True)
 
         assert "No Proton enabled Steam apps were found" in result
 
-    def test_run_executable_no_apps_from_desktop(self, launch_cli, monkeypatch):
+    def test_run_executable_no_apps_from_desktop(
+            self, launch_cli, zenity):
         """
         Try running an EXE file when no Proton enabled Steam apps are installed
         or ready, and ensure an error dialog is opened using `zenity`.
         """
-        result = []
-        monkeypatch.setattr(
-            "protontricks.cli.launch.run",
-            lambda *args, **_: result.extend(*args)
-        )
+        launch_cli(["--no-term", "test.exe"], expect_exit=True)
 
-        launch_cli(["--from-desktop", "test.exe"], expect_exit=True)
+        assert zenity.args[0] == "zenity"
+        assert zenity.args[1] == "--text-info"
 
-        assert result[0] == "zenity"
-        assert result[-2] == "--text"
-        assert result[-1].startswith("No Proton enabled Steam apps were found.")
+        message = zenity.kwargs["input"]
+
+        assert b"No Proton enabled Steam apps were found." in message
+
+        # Also ensure log messages are included in the error message
+        assert b"Found Steam directory at" in message
 
     def test_run_executable_passthrough_arguments(
             self, default_proton, steam_app_factory, caplog,
@@ -116,3 +117,31 @@ class TestCLIRun:
         assert cli_args[4].startswith("wine ")
         assert cli_args[4].endswith("test.exe'")
         assert cli_args[5] == "10"
+
+    def test_cli_error_handler_uncaught_exception(
+            self, launch_cli, default_proton, steam_app_factory, monkeypatch,
+            zenity):
+        """
+        Ensure that 'cli_error_handler' correctly catches any uncaught
+        exception and includes a stack trace in the error dialog.
+        """
+        def _mock_from_appmanifest(*args, **kwargs):
+            raise ValueError("Test appmanifest error")
+
+        steam_app_factory(name="Fake game", appid=10)
+
+        monkeypatch.setattr(
+            "protontricks.steam.SteamApp.from_appmanifest",
+            _mock_from_appmanifest
+        )
+
+        launch_cli(
+            ["--no-term", "--appid", "10", "test.exe"], expect_exit=True
+        )
+
+        assert zenity.args[0] == "zenity"
+        assert zenity.args[1] == "--text-info"
+
+        message = zenity.kwargs["input"]
+
+        assert b"Test appmanifest error" in message

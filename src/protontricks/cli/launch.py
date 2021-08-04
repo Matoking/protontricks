@@ -8,25 +8,17 @@ from subprocess import run
 from ..gui import select_steam_app_with_gui
 from ..steam import find_steam_path, get_steam_apps, get_steam_lib_paths
 from .main import main as cli_main
-from .util import CustomArgumentParser, enable_logging
+from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
+                   exit_with_error)
 
 logger = logging.getLogger("protontricks")
 
 
-def exit_with_error(error, display_dialog=False):
-    """
-    Print or display an error, and then exit.
-    """
-    if display_dialog:
-        run([
-            "zenity", "--error", "--width", "400", "--text", error
-        ], check=True)
-    else:
-        print(error)
-
-    sys.exit(-1)
+def cli(args=None):
+    main(args)
 
 
+@cli_error_handler
 def main(args=None):
     """
     'protontricks-launch' script entrypoint
@@ -57,10 +49,11 @@ def main(args=None):
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument(
-        "--from-desktop", action="store_true",
+        "--no-term", action="store_true",
         help=(
-            "Display error messages using error dialogs instead of printing "
-            "to stderr."
+            "Program was launched from desktop and no user-visible "
+            "terminal is available. Error will be shown in a dialog instead "
+            "of being printed."
         )
     )
     parser.add_argument(
@@ -81,7 +74,15 @@ def main(args=None):
 
     args = parser.parse_args(args)
 
-    enable_logging(args.verbose)
+    # 'cli_error_handler' relies on this to know whether to use error dialog or
+    # not
+    main.no_term = args.no_term
+
+    # Shorthand function for aborting with error message
+    def exit_(error):
+        exit_with_error(error, args.no_term)
+
+    enable_logging(args.verbose, record_to_file=args.no_term)
 
     try:
         executable_path = Path(args.executable).resolve(strict=True)
@@ -91,10 +92,7 @@ def main(args=None):
     # 1. Find Steam path
     steam_path, steam_root = find_steam_path()
     if not steam_path:
-        exit_with_error(
-            "Steam installation directory could not be found.",
-            args.from_desktop
-        )
+        exit_("Steam installation directory could not be found.")
 
     # 2. Find any Steam library folders
     steam_lib_paths = get_steam_lib_paths(steam_path)
@@ -109,10 +107,9 @@ def main(args=None):
     ]
 
     if not steam_apps:
-        exit_with_error(
+        exit_(
             "No Proton enabled Steam apps were found. Have you launched one "
-            "of the apps at least once?",
-            args.from_desktop
+            "of the apps at least once?"
         )
 
     if not args.appid:

@@ -45,13 +45,13 @@ setup(
     install_requires=["vdf>=3.2"],
     entry_points={
         "console_scripts": [
-            "protontricks = protontricks.cli.main:main",
-            "protontricks-launch = protontricks.cli.launch:main",
+            "protontricks = protontricks.cli.main:cli",
+            "protontricks-launch = protontricks.cli.launch:cli",
             # `protontricks-desktop-install` is only responsible for installing
             # .desktop files and should be omitted if the distro package
             # already ships .desktop files properly
             ("protontricks-desktop-install "
-             "= protontricks.cli.desktop_install:main")
+             "= protontricks.cli.desktop_install:cli")
         ]
     },
     include_package_data=True,

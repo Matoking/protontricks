@@ -32,6 +32,10 @@ def install_desktop_entries():
     return applications_dir
 
 
+def cli(args=None):
+    main(args)
+
+
 def main(args=None):
     """
     'protontricks-desktop-install' script entrypoint

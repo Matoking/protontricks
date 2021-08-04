@@ -1,5 +1,5 @@
 [Desktop Entry]
-Exec=protontricks --gui
+Exec=protontricks --no-term --gui
 Name=Protontricks
 Type=Application
 Terminal=false

@@ -19,12 +19,17 @@ from ..steam import (find_legacy_steam_runtime_path, find_proton_app,
                      find_steam_path, get_steam_apps, get_steam_lib_paths)
 from ..util import is_flatpak_sandbox, run_command
 from ..winetricks import get_winetricks_path
-
-from .util import CustomArgumentParser, enable_logging
+from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
+                   exit_with_error)
 
 logger = logging.getLogger("protontricks")
 
 
+def cli(args=None):
+    main(args)
+
+
+@cli_error_handler
 def main(args=None):
     """
     'protontricks' script entrypoint
@@ -63,7 +68,16 @@ def main(args=None):
     )
     parser.add_argument(
         "--verbose", "-v", action="store_true",
-        help="Print debug information")
+        help="Print debug information"
+    )
+    parser.add_argument(
+        "--no-term", action="store_true",
+        help=(
+            "Program was launched from desktop. This is used automatically "
+            "when lauching Protontricks from desktop and no user-visible "
+            "terminal is available."
+        )
+    )
     parser.add_argument(
         "-s", "--search", type=str, dest="search", nargs="+",
         required=False, help="Search for game(s) with the given name")
@@ -92,6 +106,14 @@ def main(args=None):
 
     args = parser.parse_args(args)
 
+    # 'cli_error_handler' relies on this to know whether to use error dialog or
+    # not
+    main.no_term = args.no_term
+
+    # Shorthand function for aborting with error message
+    def exit_(error):
+        exit_with_error(error, args.no_term)
+
     do_command = bool(args.command)
     do_search = bool(args.search)
     do_gui = bool(args.gui)
@@ -108,7 +130,7 @@ def main(args=None):
         parser.print_help()
         return
 
-    enable_logging(args.verbose)
+    enable_logging(args.verbose, record_to_file=args.no_term)
 
     if is_flatpak_sandbox():
         use_bwrap = False
@@ -122,10 +144,7 @@ def main(args=None):
     # 1. Find Steam path
     steam_path, steam_root = find_steam_path()
     if not steam_path:
-        print(
-            "Steam installation directory could not be found."
-        )
-        sys.exit(-1)
+        exit_("Steam installation directory could not be found.")
 
     # 2. Find the pre-installed legacy Steam Runtime if enabled
     legacy_steam_runtime_path = None
@@ -137,8 +156,7 @@ def main(args=None):
         )
 
         if not legacy_steam_runtime_path:
-            print("Steam Runtime was enabled but couldn't be found!")
-            sys.exit(-1)
+            exit_("Steam Runtime was enabled but couldn't be found!")
     else:
         use_steam_runtime = False
         logger.info("Steam Runtime disabled.")
@@ -146,11 +164,10 @@ def main(args=None):
     # 3. Find Winetricks
     winetricks_path = get_winetricks_path()
     if not winetricks_path:
-        print(
+        exit_(
             "Winetricks isn't installed, please install "
             "winetricks in order to use this script!"
         )
-        sys.exit(-1)
 
     # 4. Find any Steam library folders
     steam_lib_paths = get_steam_lib_paths(steam_path)
@@ -175,26 +192,23 @@ def main(args=None):
         ])
 
         if not has_installed_apps:
-            print("Found no games. You need to launch a game at least once "
+            exit_("Found no games. You need to launch a game at least once "
                   "before protontricks can find it.")
-            sys.exit(-1)
 
         try:
             steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
         except FileNotFoundError:
-            print(
+            exit_(
                 "Zenity is not installed. Zenity is required for the "
                 "Protontricks GUI."
             )
-            sys.exit(-1)
 
         # 6. Find Proton version of selected app
         proton_app = find_proton_app(
             steam_path=steam_path, steam_apps=steam_apps, appid=steam_app.appid
         )
         if not proton_app:
-            print("Proton installation could not be found!")
-            sys.exit(-1)
+            exit_("Proton installation could not be found!")
 
         run_command(
             winetricks_path=winetricks_path,
@@ -244,8 +258,7 @@ def main(args=None):
         steam_path=steam_path, steam_apps=steam_apps, appid=args.appid)
 
     if not proton_app:
-        print("Proton installation could not be found!")
-        sys.exit(-1)
+        exit_("Proton installation could not be found!")
 
     # If neither search or GUI are set, do a normal Winetricks command
     # Find game by appid
@@ -256,14 +269,13 @@ def main(args=None):
             if not app.is_proton and app.appid == steam_appid
             and app.prefix_path_exists)
     except StopIteration:
-        print(
+        exit_(
             "Steam app with the given app ID could not be found. "
             "Is it installed, Proton compatible and have you launched it at "
             "least once? You can search for the app ID using the following "
             "command:\n"
             "$ protontricks -s <GAME NAME>"
         )
-        sys.exit(-1)
 
     if args.winetricks_command:
         run_command(

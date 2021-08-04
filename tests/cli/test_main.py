@@ -312,6 +312,30 @@ class TestCLIRun:
 
         assert "Winetricks isn't installed" in result
 
+    def test_run_winetricks_from_desktop(
+            self, cli, default_proton, home_dir, steam_app_factory, zenity):
+        """
+        Try performing a command with missing Winetricks executable.
+
+        Run command using --no-term and ensure error dialog is shown
+        with the expected error message
+        """
+        steam_app_factory(name="Fake game 1", appid=10)
+        (home_dir / ".local" / "bin" / "winetricks").unlink()
+
+        cli(["--no-term", "10", "winecfg"], expect_exit=True)
+
+        assert zenity.args[0] == "zenity"
+        assert zenity.args[1] == "--text-info"
+
+        message = zenity.kwargs["input"]
+
+        assert b"Winetricks isn't installed" in message
+
+        # Also ensure log messages are included in the error message
+        assert b"Found Steam directory at" in message
+        assert b"Using default Steam Runtime" in message
+
     def test_run_gui_zenity_not_found(self, cli, home_dir, steam_app_factory):
         """
         Try performing a command with missing Zenity executable
@@ -405,7 +429,10 @@ class TestCLIRun:
         cli(["--no-bwrap", "-s", "nothing"])
 
         # No warning is printed since we're not running inside Flatpak
-        assert len(caplog.records) == 0
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]) == 0
 
         # Fake a Flatpak environment
         monkeypatch.setattr(
@@ -415,12 +442,43 @@ class TestCLIRun:
 
         cli(["--no-bwrap", "-s", "nothing"])
 
-        assert len(caplog.records) == 1
-        record = caplog.records[0]
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]) == 1
+        record = next(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        )
 
         assert record.levelname == "WARNING"
         assert "--no-bwrap is redundant when running Protontricks" \
             in record.message
+
+    def test_cli_error_handler_uncaught_exception(
+            self, cli, default_proton, steam_app_factory, monkeypatch, zenity):
+        """
+        Ensure that 'cli_error_handler' correctly catches any uncaught
+        exception and includes a stack trace in the error dialog.
+        """
+        def _mock_from_appmanifest(*args, **kwargs):
+            raise ValueError("Test appmanifest error")
+
+        steam_app_factory(name="Fake game", appid=10)
+
+        monkeypatch.setattr(
+            "protontricks.steam.SteamApp.from_appmanifest",
+            _mock_from_appmanifest
+        )
+
+        cli(["--no-term", "-s", "Fake"], expect_exit=True)
+
+        assert zenity.args[0] == "zenity"
+        assert zenity.args[1] == "--text-info"
+
+        message = zenity.kwargs["input"]
+
+        assert b"Test appmanifest error" in message
 
 
 class TestCLIGUI:
