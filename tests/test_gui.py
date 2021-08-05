@@ -77,6 +77,10 @@ class TestSelectApp:
 
         assert steam_app == steam_apps[1]
 
+        # Check that choices were displayed
+        assert b"Fake game 1: 10\nFake game 2: 20" \
+            in gui_provider.kwargs["input"]
+
     def test_select_game_no_choice(self, gui_provider, steam_app_factory):
         """
         Try choosing a game but make no choice

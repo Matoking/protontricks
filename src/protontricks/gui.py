@@ -44,22 +44,22 @@ def select_steam_app_with_gui(steam_apps, title=None):
 
     Return the selected SteamApp
     """
-    def _get_yad_args(list_values):
+    def _get_yad_args():
         return [
             "yad", "--list", "--no-headers", "--center",
             "--search-column", "1", "--width", "600", "--height", "400",
             "--text", title, "--title", "Protontricks", "--column",
-            "Steam app", *list_values
+            "Steam app"
         ]
 
-    def _get_zenity_args(list_values):
+    def _get_zenity_args():
         return [
             "zenity", "--list", "--hide-header", "--width", "600",
             "--height", "400", "--text", title,
-            "--title", "Protontricks", "--column", "Steam app", *list_values
+            "--title", "Protontricks", "--column", "Steam app"
         ]
 
-    def run_gui(args, strip_nonascii=False):
+    def run_gui(args, input_=None, strip_nonascii=False):
         """
         Run YAD/Zenity with the given args.
 
@@ -72,9 +72,16 @@ def select_steam_app_with_gui(steam_apps, title=None):
             args = [
                 arg.encode("ascii", "ignore").decode("ascii") for arg in args
             ]
+            if input_:
+                input_ = input_.encode("ascii", "ignore").decode("ascii")
+
+        if input_:
+            input_ = input_.encode("utf-8")
 
         try:
-            return run(args, check=True, stdout=PIPE, stderr=PIPE)
+            return run(
+                args, input=input_, check=True, stdout=PIPE, stderr=PIPE
+            )
         except CalledProcessError as exc:
             if exc.returncode == 255:
                 # User locale incapable of handling all characters in the
@@ -86,18 +93,18 @@ def select_steam_app_with_gui(steam_apps, title=None):
     if not title:
         title = "Select Steam app"
 
-    list_values = [
+    cmd_input = "\n".join([
         '{}: {}'.format(app.name, app.appid) for app in steam_apps
         if app.prefix_path_exists and app.appid
-    ]
+    ])
     if get_gui_provider() == "yad":
-        args = _get_yad_args(list_values)
+        args = _get_yad_args()
     else:
-        args = _get_zenity_args(list_values)
+        args = _get_zenity_args()
 
     try:
         try:
-            result = run_gui(args)
+            result = run_gui(args, input_=cmd_input)
         except LocaleError:
             # User has weird locale settings. Log a warning and
             # run the command while stripping non-ASCII characters.
