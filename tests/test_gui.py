@@ -7,19 +7,19 @@ from conftest import MockResult
 
 
 @pytest.fixture(scope="function")
-def broken_zenity(zenity, monkeypatch):
+def broken_zenity(gui_provider, monkeypatch):
     """
     Mock a broken Zenity executable that prints an error as described in
     the following GitHub issue:
     https://github.com/Matoking/protontricks/issues/20
     """
     def mock_subprocess_run(args, **kwargs):
-        zenity.args = args
+        gui_provider.args = args
 
         raise CalledProcessError(
             returncode=-6,
             cmd=args,
-            output=zenity.mock_stdout,
+            output=gui_provider.mock_stdout,
             stderr=b"free(): double free detected in tcache 2\n"
         )
 
@@ -28,18 +28,18 @@ def broken_zenity(zenity, monkeypatch):
         mock_subprocess_run
     )
 
-    yield zenity
+    yield gui_provider
 
 
 @pytest.fixture(scope="function")
-def locale_error_zenity(zenity, monkeypatch):
+def locale_error_zenity(gui_provider, monkeypatch):
     """
     Mock a Zenity executable returning a 255 error due to a locale issue
     on first run and working normally on second run
     """
     def mock_subprocess_run(args, **kwargs):
-        if not zenity.args:
-            zenity.args = args
+        if not gui_provider.args:
+            gui_provider.args = args
             raise CalledProcessError(
                 returncode=255,
                 cmd=args,
@@ -50,18 +50,19 @@ def locale_error_zenity(zenity, monkeypatch):
                 )
             )
 
-        return MockResult(stdout=zenity.mock_stdout.encode("utf-8"))
+        return MockResult(stdout=gui_provider.mock_stdout.encode("utf-8"))
 
     monkeypatch.setattr(
         "protontricks.gui.run",
         mock_subprocess_run
     )
+    monkeypatch.setenv("PROTONTRICKS_GUI", "zenity")
 
-    yield zenity
+    yield gui_provider
 
 
 class TestSelectApp:
-    def test_select_game(self, zenity, steam_app_factory):
+    def test_select_game(self, gui_provider, steam_app_factory):
         """
         Select a game using the GUI
         """
@@ -71,30 +72,33 @@ class TestSelectApp:
         ]
 
         # Fake user selecting 'Fake game 2'
-        zenity.mock_stdout = "Fake game 2: 20"
+        gui_provider.mock_stdout = "Fake game 2: 20"
         steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
 
         assert steam_app == steam_apps[1]
 
-    def test_select_game_no_choice(self, zenity, steam_app_factory):
+    def test_select_game_no_choice(self, gui_provider, steam_app_factory):
         """
         Try choosing a game but make no choice
         """
         steam_apps = [steam_app_factory(name="Fake game 1", appid=10)]
 
         # Fake user doesn't select any game
-        zenity.mock_stdout = ""
+        gui_provider.mock_stdout = ""
 
         with pytest.raises(SystemExit) as exc:
             select_steam_app_with_gui(steam_apps=steam_apps)
 
         assert exc.value.code == 0
 
-    def test_select_game_broken_zenity(self, broken_zenity, steam_app_factory):
+    def test_select_game_broken_zenity(
+            self, broken_zenity, monkeypatch, steam_app_factory):
         """
         Try choosing a game with a broken Zenity executable that
         prints a specific error message that Protontricks knows how to ignore
         """
+        monkeypatch.setenv("PROTONTRICKS_GUI", "zenity")
+
         steam_apps = [
             steam_app_factory(name="Fake game 1", appid=10),
             steam_app_factory(name="Fake game 2", appid=20)
@@ -127,3 +131,29 @@ class TestSelectApp:
             "Your system locale is incapable of displaying all characters"
             in caplog.records[0].message
         )
+
+    @pytest.mark.parametrize("gui_cmd", ["yad", "zenity"])
+    def test_select_game_gui_provider_env(
+            self, gui_provider, steam_app_factory, monkeypatch, gui_cmd):
+        """
+        Test that the correct GUI provider is selected based on the
+        `PROTONTRICKS_GUI` environment variable
+        """
+        monkeypatch.setenv("PROTONTRICKS_GUI", gui_cmd)
+
+        steam_apps = [
+            steam_app_factory(name="Fake game 1", appid=10),
+            steam_app_factory(name="Fake game 2", appid=20)
+        ]
+
+        gui_provider.mock_stdout = "Fake game 2: 20"
+        select_steam_app_with_gui(steam_apps=steam_apps)
+
+        # The flags should differ slightly depending on which provider is in
+        # use
+        if gui_cmd == "yad":
+            assert gui_provider.args[0] == "yad"
+            assert gui_provider.args[2] == "--no-headers"
+        elif gui_cmd == "zenity":
+            assert gui_provider.args[0] == "zenity"
+            assert gui_provider.args[2] == "--hide-header"

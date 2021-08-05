@@ -15,14 +15,14 @@ def home_cwd(home_dir, monkeypatch):
 class TestCLIRun:
     def test_run_executable(
             self, steam_app_factory, default_proton,
-            command, zenity, launch_cli):
+            command, gui_provider, launch_cli):
         """
         Run an EXE file by selecting using the GUI
         """
         steam_app = steam_app_factory("Fake game", appid=10)
 
         # Fake the user selecting the game
-        zenity.mock_stdout = "Fake game: 10"
+        gui_provider.mock_stdout = "Fake game: 10"
 
         launch_cli(["test.exe"])
 
@@ -48,7 +48,7 @@ class TestCLIRun:
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
 
     def test_run_executable_no_selection(
-            self, default_proton, steam_app_factory, zenity,
+            self, default_proton, steam_app_factory, gui_provider,
             launch_cli):
         """
         Try running an EXE file but don't pick a Steam app
@@ -56,7 +56,7 @@ class TestCLIRun:
         steam_app_factory("Fake game", appid=10)
 
         # Fake the user closing the form
-        zenity.mock_stdout = ""
+        gui_provider.mock_stdout = ""
 
         result = launch_cli(["test.exe"], expect_exit=True)
 
@@ -72,17 +72,17 @@ class TestCLIRun:
         assert "No Proton enabled Steam apps were found" in result
 
     def test_run_executable_no_apps_from_desktop(
-            self, launch_cli, zenity):
+            self, launch_cli, gui_provider):
         """
         Try running an EXE file when no Proton enabled Steam apps are installed
-        or ready, and ensure an error dialog is opened using `zenity`.
+        or ready, and ensure an error dialog is opened using `gui_provider`.
         """
         launch_cli(["--no-term", "test.exe"], expect_exit=True)
 
-        assert zenity.args[0] == "zenity"
-        assert zenity.args[1] == "--text-info"
+        assert gui_provider.args[0] == "yad"
+        assert gui_provider.args[1] == "--text-info"
 
-        message = zenity.kwargs["input"]
+        message = gui_provider.kwargs["input"]
 
         assert b"No Proton enabled Steam apps were found." in message
 
@@ -120,7 +120,7 @@ class TestCLIRun:
 
     def test_cli_error_handler_uncaught_exception(
             self, launch_cli, default_proton, steam_app_factory, monkeypatch,
-            zenity):
+            gui_provider):
         """
         Ensure that 'cli_error_handler' correctly catches any uncaught
         exception and includes a stack trace in the error dialog.
@@ -139,9 +139,9 @@ class TestCLIRun:
             ["--no-term", "--appid", "10", "test.exe"], expect_exit=True
         )
 
-        assert zenity.args[0] == "zenity"
-        assert zenity.args[1] == "--text-info"
+        assert gui_provider.args[0] == "yad"
+        assert gui_provider.args[1] == "--text-info"
 
-        message = zenity.kwargs["input"]
+        message = gui_provider.kwargs["input"]
 
         assert b"Test appmanifest error" in message

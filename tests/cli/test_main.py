@@ -313,7 +313,8 @@ class TestCLIRun:
         assert "Winetricks isn't installed" in result
 
     def test_run_winetricks_from_desktop(
-            self, cli, default_proton, home_dir, steam_app_factory, zenity):
+            self, cli, default_proton, home_dir, steam_app_factory,
+            monkeypatch, gui_provider):
         """
         Try performing a command with missing Winetricks executable.
 
@@ -325,10 +326,10 @@ class TestCLIRun:
 
         cli(["--no-term", "10", "winecfg"], expect_exit=True)
 
-        assert zenity.args[0] == "zenity"
-        assert zenity.args[1] == "--text-info"
+        assert gui_provider.args[0] == "yad"
+        assert gui_provider.args[1] == "--text-info"
 
-        message = zenity.kwargs["input"]
+        message = gui_provider.kwargs["input"]
 
         assert b"Winetricks isn't installed" in message
 
@@ -336,16 +337,17 @@ class TestCLIRun:
         assert b"Found Steam directory at" in message
         assert b"Using default Steam Runtime" in message
 
-    def test_run_gui_zenity_not_found(self, cli, home_dir, steam_app_factory):
+    def test_run_gui_provider_not_found(self, cli, home_dir, steam_app_factory):
         """
-        Try performing a command with missing Zenity executable
+        Try performing a command with missing YAD or Zenity executable
         """
         steam_app_factory(name="Fake game 1", appid=10)
+        (home_dir / ".local" / "bin" / "yad").unlink()
         (home_dir / ".local" / "bin" / "zenity").unlink()
 
         result = cli(["--gui"], expect_exit=True)
 
-        assert "Zenity is not installed" in result
+        assert "YAD or Zenity is not installed" in result
 
     def test_run_steam_runtime_not_found(
             self, cli, steam_dir, steam_app_factory):
@@ -456,7 +458,8 @@ class TestCLIRun:
             in record.message
 
     def test_cli_error_handler_uncaught_exception(
-            self, cli, default_proton, steam_app_factory, monkeypatch, zenity):
+            self, cli, default_proton, steam_app_factory, monkeypatch,
+            gui_provider):
         """
         Ensure that 'cli_error_handler' correctly catches any uncaught
         exception and includes a stack trace in the error dialog.
@@ -473,17 +476,17 @@ class TestCLIRun:
 
         cli(["--no-term", "-s", "Fake"], expect_exit=True)
 
-        assert zenity.args[0] == "zenity"
-        assert zenity.args[1] == "--text-info"
+        assert gui_provider.args[0] == "yad"
+        assert gui_provider.args[1] == "--text-info"
 
-        message = zenity.kwargs["input"]
+        message = gui_provider.kwargs["input"]
 
         assert b"Test appmanifest error" in message
 
 
 class TestCLIGUI:
     def test_run_gui(
-            self, cli, default_proton, steam_app_factory, zenity, command,
+            self, cli, default_proton, steam_app_factory, gui_provider, command,
             home_dir):
         """
         Start the GUI and fake selecting a game
@@ -492,7 +495,7 @@ class TestCLIGUI:
         proton_install_path = Path(default_proton.install_path)
 
         # Fake the user selecting the game
-        zenity.mock_stdout = "Fake game 1: 10"
+        gui_provider.mock_stdout = "Fake game 1: 10"
 
         cli(["--gui"])
 
@@ -528,7 +531,7 @@ class TestCLIGUI:
 
 class TestCLICommand:
     def test_run_command(
-            self, cli, default_proton, steam_app_factory, zenity, command,
+            self, cli, default_proton, steam_app_factory, gui_provider, command,
             home_dir):
         """
         Run a shell command for a given game

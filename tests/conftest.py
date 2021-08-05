@@ -14,6 +14,7 @@ from protontricks.cli.desktop_install import \
     cli as desktop_install_cli_entrypoint
 from protontricks.cli.launch import cli as launch_cli_entrypoint
 from protontricks.cli.main import cli as main_cli_entrypoint
+from protontricks.gui import get_gui_provider
 from protontricks.steam import (APPINFO_STRUCT_HEADER, APPINFO_STRUCT_SECTION,
                                 SteamApp, get_appid_from_shortcut)
 
@@ -25,6 +26,16 @@ def env_vars(monkeypatch):
     intefering with tests
     """
     monkeypatch.setenv("STEAM_RUNTIME", "")
+
+
+@pytest.fixture(scope="function", autouse=True)
+def cleanup():
+    """
+    Miscellaneous cleanup tasks that need to be done before each test
+    """
+    # 'get_gui_provider' uses functools.lru_cache and needs to be cleared
+    # between tests
+    get_gui_provider.cache_clear()
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -40,9 +51,12 @@ def home_dir(monkeypatch, tmp_path):
     (home_dir_ / ".local" / "bin" / "winetricks").touch()
     (home_dir_ / ".local" / "bin" / "winetricks").chmod(0o744)
 
-    # Create fake Zenity executable
+    # Create fake YAD and Zenity executable
     (home_dir_ / ".local" / "bin" / "zenity").touch()
     (home_dir_ / ".local" / "bin" / "zenity").chmod(0o744)
+
+    (home_dir_ / ".local" / "bin" / "yad").touch()
+    (home_dir_ / ".local" / "bin" / "yad").chmod(0o744)
 
     monkeypatch.setenv("HOME", str(home_dir_))
 
@@ -591,18 +605,18 @@ class MockResult:
 
 
 @pytest.fixture(scope="function")
-def zenity(monkeypatch):
+def gui_provider(monkeypatch):
     """
-    Monkeypatch the subprocess.run to store the args passed to the zenity
+    Monkeypatch the subprocess.run to store the args passed to the yad/zenity
     command and to manipulate the output of the command
     """
-    mock_zenity = MockSubprocess()
+    mock_gui_provider = MockSubprocess()
 
     def mock_subprocess_run(args, **kwargs):
-        mock_zenity.args = args
-        mock_zenity.kwargs = kwargs
+        mock_gui_provider.args = args
+        mock_gui_provider.kwargs = kwargs
 
-        return MockResult(stdout=mock_zenity.mock_stdout.encode("utf-8"))
+        return MockResult(stdout=mock_gui_provider.mock_stdout.encode("utf-8"))
 
     monkeypatch.setattr(
         "protontricks.gui.run",
@@ -613,7 +627,7 @@ def zenity(monkeypatch):
         mock_subprocess_run
     )
 
-    yield mock_zenity
+    yield mock_gui_provider
 
 
 @pytest.fixture(scope="function", autouse=True)
