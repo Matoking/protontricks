@@ -115,7 +115,8 @@ def main(args=None):
     if not args.appid:
         appid = select_steam_app_with_gui(
             steam_apps,
-            title="Choose Wine prefix to run {}".format(executable_path.name)
+            title="Choose Wine prefix to run {}".format(executable_path.name),
+            steam_path=steam_path
         ).appid
     else:
         appid = args.appid

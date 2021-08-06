@@ -1,9 +1,13 @@
 import functools
+import itertools
 import logging
-import sys
 import os
 import shutil
+import sys
+from pathlib import Path
 from subprocess import PIPE, CalledProcessError, run
+
+import pkg_resources
 
 __all__ = ("LocaleError", "select_steam_app_with_gui")
 
@@ -37,7 +41,35 @@ def get_gui_provider():
         ) from exc
 
 
-def select_steam_app_with_gui(steam_apps, title=None):
+def _get_appid2icon(steam_apps, steam_path):
+    """
+    Get icons for Steam apps to show in the app selection dialog.
+    Return a {appid: icon_path} dict.
+    """
+    placeholder_path = Path(
+        pkg_resources.resource_filename(
+            "protontricks", "data/icon_placeholder.png"
+        )
+    )
+
+    icon_dir = steam_path / "appcache" / "librarycache"
+    existing_names = [path.name for path in icon_dir.glob("*")]
+
+    appid2icon = {}
+
+    for app in steam_apps:
+        # Use library icon for Steam apps, fallback to placeholder icon
+        # for non-Steam shortcuts and missing icons
+        appid2icon[app.appid] = (
+            icon_dir / "{}_icon.jpg".format(app.appid)
+            if "{}_icon.jpg".format(app.appid) in existing_names
+            else placeholder_path
+        )
+
+    return appid2icon
+
+
+def select_steam_app_with_gui(steam_apps, steam_path, title=None):
     """
     Prompt the user to select a Proton-enabled Steam app from
     a dropdown list.
@@ -47,16 +79,26 @@ def select_steam_app_with_gui(steam_apps, title=None):
     def _get_yad_args():
         return [
             "yad", "--list", "--no-headers", "--center",
-            "--search-column", "1", "--width", "600", "--height", "400",
-            "--text", title, "--title", "Protontricks", "--column",
-            "Steam app"
+            "--window-icon", "wine",
+            # Disabling markup means we won't have to escape special characters
+            "--no-markup",
+            "--search-column", "2",
+            "--print-column", "2",
+            "--width", "600", "--height", "400",
+            "--text", title,
+            "--title", "Protontricks",
+            "--column", "Icon:IMG",
+            "--column", "Steam app"
         ]
 
     def _get_zenity_args():
         return [
-            "zenity", "--list", "--hide-header", "--width", "600",
-            "--height", "400", "--text", title,
-            "--title", "Protontricks", "--column", "Steam app"
+            "zenity", "--list", "--hide-header",
+            "--width", "600",
+            "--height", "400",
+            "--text", title,
+            "--title", "Protontricks",
+            "--column", "Steam app"
         ]
 
     def run_gui(args, input_=None, strip_nonascii=False):
@@ -80,7 +122,7 @@ def select_steam_app_with_gui(steam_apps, title=None):
 
         try:
             return run(
-                args, input=input_, check=True, stdout=PIPE, stderr=PIPE
+                args, input=input_, check=True, stdout=PIPE, stderr=PIPE,
             )
         except CalledProcessError as exc:
             if exc.returncode == 255:
@@ -93,14 +135,31 @@ def select_steam_app_with_gui(steam_apps, title=None):
     if not title:
         title = "Select Steam app"
 
-    cmd_input = "\n".join([
-        '{}: {}'.format(app.name, app.appid) for app in steam_apps
-        if app.prefix_path_exists and app.appid
-    ])
-    if get_gui_provider() == "yad":
+    gui_provider = get_gui_provider()
+
+    if gui_provider == "yad":
         args = _get_yad_args()
+
+        # YAD implementation has icons for app selection
+        appid2icon = _get_appid2icon(steam_apps, steam_path=steam_path)
+
+        cmd_input = [
+            [
+                str(appid2icon[app.appid]),
+                "{}: {}".format(app.name, app.appid)
+            ]
+            for app in steam_apps if app.prefix_path_exists and app.appid
+        ]
+        # Flatten the list
+        cmd_input = list(itertools.chain.from_iterable(cmd_input))
     else:
         args = _get_zenity_args()
+        cmd_input = [
+            '{}: {}'.format(app.name, app.appid) for app in steam_apps
+            if app.prefix_path_exists and app.appid
+        ]
+
+    cmd_input = "\n".join(cmd_input)
 
     try:
         try:

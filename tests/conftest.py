@@ -78,7 +78,7 @@ def steam_dir(home_dir):
 
     (steam_path / "root" / "compatibilitytools.d").mkdir(parents=True)
 
-    (steam_path / "steam" / "appcache").mkdir(parents=True)
+    (steam_path / "steam" / "appcache" / "librarycache").mkdir(parents=True)
     (steam_path / "steam" / "config").mkdir(parents=True)
     (steam_path / "steam" / "steamapps").mkdir(parents=True)
 

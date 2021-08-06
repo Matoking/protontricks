@@ -62,7 +62,9 @@ def main(args=None):
             "WINESERVER: path to a custom 'wineserver' executable\n"
             "STEAM_RUNTIME: 1 = enable Steam Runtime, 0 = disable Steam "
             "Runtime, valid path = custom Steam Runtime path, "
-            "empty = enable automatically (default)"
+            "empty = enable automatically (default)\n"
+            "PROTONTRICKS_GUI: GUI provider to use, accepts either 'yad' "
+            "or 'zenity'"
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -196,7 +198,9 @@ def main(args=None):
                   "before protontricks can find it.")
 
         try:
-            steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
+            steam_app = select_steam_app_with_gui(
+                steam_apps=steam_apps, steam_path=steam_path
+            )
         except FileNotFoundError:
             exit_(
                 "YAD or Zenity is not installed. Either executable is required for the "
