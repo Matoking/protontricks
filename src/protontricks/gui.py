@@ -1,6 +1,9 @@
+import functools
 import logging
 import sys
-from subprocess import run, PIPE, CalledProcessError
+import os
+import shutil
+from subprocess import PIPE, CalledProcessError, run
 
 __all__ = ("LocaleError", "select_steam_app_with_gui")
 
@@ -11,6 +14,29 @@ class LocaleError(Exception):
     pass
 
 
+@functools.lru_cache(maxsize=1)
+def get_gui_provider():
+    """
+    Get the GUI provider used to display dialogs.
+    Returns either 'yad' or 'zenity', preferring 'yad' if both exist.
+    """
+    try:
+        candidates = ["yad", "zenity"]
+        # Allow overriding the GUI provider using an envvar
+        if os.environ.get("PROTONTRICKS_GUI", "").lower() in candidates:
+            candidates.insert(0, os.environ["PROTONTRICKS_GUI"].lower())
+
+        cmd = next(cmd for cmd in candidates if shutil.which(cmd))
+        logger.info("Using '%s' as GUI provider", cmd)
+
+        return cmd
+    except StopIteration as exc:
+        raise FileNotFoundError(
+            "'yad' or 'zenity' was not found. Either executable is required "
+            "for Protontricks GUI."
+        ) from exc
+
+
 def select_steam_app_with_gui(steam_apps, title=None):
     """
     Prompt the user to select a Proton-enabled Steam app from
@@ -18,9 +44,24 @@ def select_steam_app_with_gui(steam_apps, title=None):
 
     Return the selected SteamApp
     """
-    def run_zenity(args, strip_nonascii=False):
+    def _get_yad_args(list_values):
+        return [
+            "yad", "--list", "--no-headers", "--center",
+            "--search-column", "1", "--width", "600", "--height", "400",
+            "--text", title, "--title", "Protontricks", "--column",
+            "Steam app", *list_values
+        ]
+
+    def _get_zenity_args(list_values):
+        return [
+            "zenity", "--list", "--hide-header", "--width", "600",
+            "--height", "400", "--text", title,
+            "--title", "Protontricks", "--column", "Steam app", *list_values
+        ]
+
+    def run_gui(args, strip_nonascii=False):
         """
-        Run Zenity with the given args.
+        Run YAD/Zenity with the given args.
 
         If 'strip_nonascii' is True, strip non-ASCII characters to workaround
         environments that can't handle all characters
@@ -49,15 +90,14 @@ def select_steam_app_with_gui(steam_apps, title=None):
         '{}: {}'.format(app.name, app.appid) for app in steam_apps
         if app.prefix_path_exists and app.appid
     ]
-    args = [
-        "zenity", "--list", "--hide-header", "--width", "600",
-        "--height", "400", "--text", title,
-        "--title", "Protontricks", "--column", "Steam app", *list_values
-    ]
+    if get_gui_provider() == "yad":
+        args = _get_yad_args(list_values)
+    else:
+        args = _get_zenity_args(list_values)
 
     try:
         try:
-            result = run_zenity(args)
+            result = run_gui(args)
         except LocaleError:
             # User has weird locale settings. Log a warning and
             # run the command while stripping non-ASCII characters.
@@ -66,7 +106,7 @@ def select_steam_app_with_gui(steam_apps, title=None):
                 "characters. Some app names may not show up correctly. "
                 "Please use an UTF-8 locale to avoid this warning."
             )
-            result = run_zenity(args, strip_nonascii=True)
+            result = run_gui(args, strip_nonascii=True)
 
         choice = result.stdout
     except CalledProcessError as exc:
@@ -87,7 +127,8 @@ def select_steam_app_with_gui(steam_apps, title=None):
         if exc.returncode == -6:
             logger.info("Ignoring zenity crash bug")
             choice = exc.stdout
-        elif exc.returncode == 1:
+        elif exc.returncode in (1, 252):
+            # YAD returns 252 when dialog is closed by pressing Esc
             # No game was selected
             choice = b""
         else:

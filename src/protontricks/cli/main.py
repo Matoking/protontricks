@@ -199,7 +199,7 @@ def main(args=None):
             steam_app = select_steam_app_with_gui(steam_apps=steam_apps)
         except FileNotFoundError:
             exit_(
-                "Zenity is not installed. Zenity is required for the "
+                "YAD or Zenity is not installed. Either executable is required for the "
                 "Protontricks GUI."
             )
 
