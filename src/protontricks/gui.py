@@ -198,7 +198,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
             # No game was selected
             choice = b""
         else:
-            raise RuntimeError("Zenity returned an error")
+            raise RuntimeError("{} returned an error".format(gui_provider))
 
     if choice in (b"", b" \n"):
         print("No game was selected. Quitting...")
