@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.6.0] - 2021-08-08
 ### Added
  - Add `protontricks-launch` script to launch Windows executables using Proton app specific Wine prefixes
  - Add desktop integration for Windows executables, which can now be launched using Protontricks
@@ -159,6 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
 [Unreleased]: https://github.com/Matoking/protontricks/compare/1.5.2...HEAD
+[1.6.0]: https://github.com/Matoking/protontricks/compare/1.5.2...1.6.0
 [1.5.2]: https://github.com/Matoking/protontricks/compare/1.5.1...1.5.2
 [1.5.1]: https://github.com/Matoking/protontricks/compare/1.5.0...1.5.1
 [1.5.0]: https://github.com/Matoking/protontricks/compare/1.4.4...1.5.0
