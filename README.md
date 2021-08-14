@@ -1,17 +1,17 @@
-protontricks
+Protontricks
 ============
 
 [![image](https://img.shields.io/pypi/v/protontricks.svg)](https://pypi.org/project/protontricks/)
 [![Coverage Status](https://coveralls.io/repos/github/Matoking/protontricks/badge.svg?branch=master)](https://coveralls.io/github/Matoking/protontricks?branch=master)
 [![Build Status](https://travis-ci.com/Matoking/protontricks.png?branch=master)](https://travis-ci.com/Matoking/protontricks)
 
-A simple wrapper that does winetricks things for Proton enabled games, requires Winetricks.
+A wrapper that runs Winetricks commands for Proton enabled games among other useful features, requires Winetricks.
 
 This is a fork of the original project created by sirmentio. The original repository is available at [Sirmentio/protontricks](https://github.com/Sirmentio/protontricks).
 
 # What is it?
 
-This is a simple wrapper script that allows you to easily run Winetricks commands for Steam Play/Proton games. This is often useful when a game requires closed-source runtime libraries that are not included with Proton.
+This is a wrapper script that allows you to easily run Winetricks commands for Steam Play/Proton games among other common Wine features, such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications that are not included with Proton.
 
 # Requirements
 
@@ -22,7 +22,11 @@ This is a simple wrapper script that allows you to easily run Winetricks command
 
 # Usage
 
-The basic usage is as follows:
+**Protontricks can be launched from desktop or using the `protontricks` command.**
+
+## Command-line
+
+The basic command-line usage is as follows:
 
 ```
 # Find your game's App ID by searching for it
@@ -43,8 +47,6 @@ protontricks --gui
 protontricks --help
 ```
 
-Protontricks also comes with an application shortcut and desktop integration, adding a Protontricks app shortcut and the ability to launch individual EXE files using Protontricks. Depending on your installation method, you may also need to run `protontricks-desktop-install` to enable this functionality.
-
 Since this is a wrapper, all commands that work for Winetricks will likely work for Protontricks as well.
 
 If you have a different Steam directory, you can export ``$STEAM_DIR`` to the directory where Steam is.
@@ -55,21 +57,29 @@ You can also set ``$PROTON_VERSION`` to a specific Proton version manually. This
 
 [Wanna see Protontricks in action?](https://asciinema.org/a/229323)
 
+## Desktop
+
+Protontricks comes with desktop integration, adding the Protontricks app shortcut and the ability to launch external Windows executables for Proton apps. To run an executable for a Proton app, select **Protontricks Launcher** when opening a Windows executable (eg. **EXE**) in a file manager.
+
+The **Protontricks** app shortcut should be available automatically after installation. If not, you may need to run `protontricks-desktop-install` in a terminal to enable this functionality.
+
 # Troubleshooting
 
 For common issues and solutions, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 # Installation
 
-You can install Protontricks using an unofficial package or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
+You can install Protontricks using a community package or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
 
 **If you're using the Flatpak version of Steam**, follow the [Flatpak-specific installation instructions](https://github.com/flathub/com.valvesoftware.Steam.Utility.protontricks) instead.
 
-Unless you're using unofficial packages, **you may need to install Winetricks separately**. See the [installation instructions](https://github.com/Winetricks/winetricks#installing) for further details.
+Unless you're using community packages, **you may need to install Winetricks separately**. See the [installation instructions](https://github.com/Winetricks/winetricks#installing) for further details.
 
-## Unofficial packages (recommended)
+## Community packages (recommended)
 
-Unofficial packages allow easier installation and updates using distro-specific package managers. Unofficial packages are maintained by community members and might be out-of-date compared to releases on PyPI.
+Community packages allow easier installation and updates using distro-specific package managers. They also take care of installing dependencies and desktop features out of the box, making them **the recommended option if available for your distribution**.
+
+Community packages are maintained by community members and might be out-of-date compared to releases on PyPI.
 
 * Arch Linux ([release](https://aur.archlinux.org/packages/protontricks/), [git](https://aur.archlinux.org/packages/protontricks-git/))
 * Fedora ([release](https://src.fedoraproject.org/rpms/protontricks))
@@ -78,11 +88,13 @@ Unofficial packages allow easier installation and updates using distro-specific 
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/protontricks.svg)](https://repology.org/project/protontricks/versions)
 
-If you maintain an unofficial package for Protontricks, feel free to create a pull request adding an entry to this section!
+If you maintain a community package for Protontricks, feel free to create a pull request adding an entry to this section!
 
 ## pipx (recommended)
 
-You can use pipx to install the latest version on PyPI or the git repository for the current user. Installing protontricks using pipx is recommended if an unofficial package doesn't exist for your Linux distro.
+You can use pipx to install the latest version on PyPI or the git repository for the current user. Installing Protontricks using pipx is recommended if a community package doesn't exist for your Linux distro.
+
+**pipx does not install Winetricks and other dependencies out of the box.** You can install Winetricks using the [installation instructions](https://github.com/Winetricks/winetricks#installing) provided by the Winetricks project. 
 
 **pipx requires Python 3.6 or newer.**
 
@@ -99,7 +111,7 @@ You can use pipx to install the latest version on PyPI or the git repository for
   ~/.local/bin/pipx ensurepath
   ```
 
-Close and reopen your terminal. After that, you can install protontricks.
+Close and reopen your terminal. After that, you can install Protontricks.
 
 ```sh
 pipx install protontricks
@@ -127,7 +139,7 @@ pipx install --spec git+https://github.com/Matoking/protontricks.git protontrick
 
 You can use pip to install the latest version on PyPI or the git repository. This method should work in any system where Python 3 is available.
 
-**Note that this installation method might cause conflicts with your distro's package manager. To prevent this, consider using the pipx method or an unofficial package instead.**
+**Note that this installation method might cause conflicts with your distro's package manager. To prevent this, consider using the pipx method or a community package instead.**
 
 **You will need to install pip and setuptools first.** Install the correct packages depending on your distribution:
 
@@ -146,7 +158,7 @@ To upgrade to the latest release:
 sudo python3 -m pip install --upgrade protontricks
 ```
 
-To install protontricks only for the current user:
+To install Protontricks only for the current user:
 ```sh
 python3 -m pip install --user protontricks
 ```
