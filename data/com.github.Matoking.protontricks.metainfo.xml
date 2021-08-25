@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component type="addon">
-  <id>com.valvesoftware.Steam.Utility.protontricks</id>
+<component type="console-application">
+  <id>com.github.Matoking.protontricks</id>
   <extends>com.valvesoftware.Steam</extends>
   <name>protontricks</name>
   <summary>A simple wrapper that does winetricks things for Proton enabled games.</summary>
@@ -12,6 +12,10 @@
       <caption>App selection screen</caption>
     </screenshot>
   </screenshots>
+  <content_rating type="oais-1.1"/>
+  <description>
+    <p>A simple wrapper that does winetricks things for Proton enabled games.</p>
+  </description>
   <url type="homepage">https://github.com/Matoking/protontricks/wiki</url>
   <url type="help">https://github.com/Matoking/protontricks/wiki</url>
   <url type="bugtracker">https://github.com/Matoking/protontricks/issues</url>

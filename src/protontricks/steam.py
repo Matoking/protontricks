@@ -8,7 +8,7 @@ from pathlib import Path
 
 import vdf
 
-from .util import lower_dict
+from .util import lower_dict, is_flatpak_sandbox
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
@@ -295,7 +295,14 @@ def find_steam_path():
 
         return None, None
 
-    for steam_path in COMMON_STEAM_DIRS:
+    # If we're inside a Flatpak sandbox, only search for it specifically
+    steam_dirs_to_search = (
+        [".var/app/com.valvesoftware.Steam/data/Steam"]
+        if is_flatpak_sandbox()
+        else COMMON_STEAM_DIRS
+    )
+
+    for steam_path in steam_dirs_to_search:
         # The common Steam directories are found inside the home directory
         steam_path = Path.home() / steam_path
         if has_steamapps_dir(steam_path):
