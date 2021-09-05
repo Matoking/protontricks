@@ -71,7 +71,7 @@ For common issues and solutions, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 You can install Protontricks using a community package or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
 
-**If you're using the Flatpak version of Steam**, follow the [Flatpak-specific installation instructions](https://github.com/flathub/com.valvesoftware.Steam.Utility.protontricks) instead.
+**If you're using the Flatpak version of Steam**, follow the [Flatpak-specific installation instructions](https://github.com/flathub/com.github.Matoking.protontricks) instead.
 
 Unless you're using community packages, **you may need to install Winetricks separately**. See the [installation instructions](https://github.com/Winetricks/winetricks#installing) for further details.
 
