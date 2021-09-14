@@ -3,7 +3,7 @@ Protontricks
 
 [![image](https://img.shields.io/pypi/v/protontricks.svg)](https://pypi.org/project/protontricks/)
 [![Coverage Status](https://coveralls.io/repos/github/Matoking/protontricks/badge.svg?branch=master)](https://coveralls.io/github/Matoking/protontricks?branch=master)
-[![Build Status](https://travis-ci.com/Matoking/protontricks.png?branch=master)](https://travis-ci.com/Matoking/protontricks)
+[![Test Status](https://github.com/Matoking/protontricks/actions/workflows/tests.yml/badge.svg)](https://github.com/Matoking/protontricks/actions/workflows/tests.yml)
 
 A wrapper that runs Winetricks commands for Proton enabled games among other useful features, requires Winetricks.
 
