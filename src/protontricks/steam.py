@@ -686,7 +686,14 @@ def get_steam_lib_paths(steam_path):
             )
         ) from exc
 
-    return [steam_path] + library_folders
+    paths = [steam_path] + library_folders
+
+    # Get rid of duplicate paths by fully resolving them and turning them into
+    # a set and back
+    paths = [path.resolve() for path in paths]
+    paths = list(set(paths))
+
+    return paths
 
 
 def get_compat_tool_dirs(steam_root):

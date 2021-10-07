@@ -257,6 +257,38 @@ class TestFindLibraryPaths:
 
         assert "Library folder configuration file" in str(exc.value)
 
+    def test_get_steam_lib_paths_duplicate_paths(
+            self, steam_dir, steam_library_factory):
+        """
+        Retrive Steam library folders and ensure duplicate paths (eg.
+        an existing path OR a symlink that resolves to an existing path)
+        are removed from the returned list.
+
+        Regression test for #118
+        """
+        library_dir = steam_library_factory("TestLibrary_A")
+
+        # Create a symlink from TestLibrary_B to TestLibrary_A
+        (library_dir.parent / "TestLibrary_B").symlink_to(library_dir)
+
+        # Add the duplicate library folder
+        vdf_data = vdf.loads(
+            (steam_dir / "steamapps" / "libraryfolders.vdf").read_text()
+        )
+        vdf_data["LibraryFolders"]["2"] = str(
+            library_dir.parent / "TestLibrary_B"
+        )
+        (steam_dir / "steamapps" / "libraryfolders.vdf").write_text(
+            vdf.dumps(vdf_data)
+        )
+
+        library_paths = get_steam_lib_paths(steam_dir)
+
+        # Only two paths should be returned
+        assert len(library_paths) == 2
+        assert steam_dir in library_paths
+        assert library_dir in library_paths
+
 
 class TestFindAppidProtonPrefix:
     def test_find_appid_proton_prefix_steamapps_case(
