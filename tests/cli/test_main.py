@@ -544,7 +544,7 @@ class TestCLICommand:
         # The command is just 'bash'
         assert command.args == "bash"
 
-        assert command.kwargs["cwd"] == steam_app.install_path
+        assert command.kwargs["cwd"] == str(steam_app.install_path)
         assert command.kwargs["shell"] is True
 
         # Correct environment vars were set

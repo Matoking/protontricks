@@ -219,7 +219,7 @@ def main(args=None):
             steam_app=steam_app,
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
-            command=[winetricks_path, "--gui"],
+            command=[str(winetricks_path), "--gui"],
             use_bwrap=use_bwrap
         )
 
@@ -288,7 +288,7 @@ def main(args=None):
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
             use_bwrap=use_bwrap,
-            command=[winetricks_path] + args.winetricks_command)
+            command=[str(winetricks_path)] + args.winetricks_command)
     elif args.command:
         run_command(
             winetricks_path=winetricks_path,
@@ -300,7 +300,7 @@ def main(args=None):
             use_bwrap=use_bwrap,
             # Pass the command directly into the shell *without*
             # escaping it
-            cwd=steam_app.install_path,
+            cwd=str(steam_app.install_path),
             shell=True)
 
 
