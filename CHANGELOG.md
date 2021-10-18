@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.6.1] - 2021-10-18
 ### Fixed
  - Fix duplicate Steam application entries
  - Fix crash on Python 3.5
@@ -163,7 +163,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.5.2...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.6.1...HEAD
+[1.6.1]: https://github.com/Matoking/protontricks/compare/1.6.0...1.6.1
 [1.6.0]: https://github.com/Matoking/protontricks/compare/1.5.2...1.6.0
 [1.5.2]: https://github.com/Matoking/protontricks/compare/1.5.1...1.5.2
 [1.5.1]: https://github.com/Matoking/protontricks/compare/1.5.0...1.5.1
