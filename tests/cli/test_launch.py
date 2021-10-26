@@ -7,7 +7,7 @@ def home_cwd(home_dir, monkeypatch):
     Set the current working directory to the user's home directory and add
     an executable named "test.exe"
     """
-    monkeypatch.setattr("os.getcwd", lambda: str(home_dir))
+    monkeypatch.chdir(str(home_dir))
 
     (home_dir / "test.exe").write_text("")
 
