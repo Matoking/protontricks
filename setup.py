@@ -42,7 +42,10 @@ setup(
         "setuptools_scm<6 ; python_version <= '3.5'",
         "setuptools_scm ; python_version > '3.5'"
     ],
-    install_requires=["vdf>=3.2"],
+    install_requires=[
+        "setuptools",  # Required for pkg_resources
+        "vdf>=3.2"
+    ],
     entry_points={
         "console_scripts": [
             "protontricks = protontricks.cli.main:cli",
