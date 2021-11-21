@@ -281,16 +281,17 @@ def main(args=None):
         )
 
     if args.winetricks_command:
-        run_command(
+        returncode = run_command(
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
             use_bwrap=use_bwrap,
-            command=[str(winetricks_path)] + args.winetricks_command)
+            command=[str(winetricks_path)] + args.winetricks_command
+        )
     elif args.command:
-        run_command(
+        returncode = run_command(
             winetricks_path=winetricks_path,
             proton_app=proton_app,
             steam_app=steam_app,
@@ -301,7 +302,10 @@ def main(args=None):
             # Pass the command directly into the shell *without*
             # escaping it
             cwd=str(steam_app.install_path),
-            shell=True)
+            shell=True
+        )
+
+    sys.exit(returncode)
 
 
 if __name__ == "__main__":

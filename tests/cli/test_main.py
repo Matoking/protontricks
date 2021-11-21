@@ -269,7 +269,7 @@ class TestCLIRun:
         """
         Try running a Protontricks command for a non-existing app
         """
-        result = cli(["100", "winecfg"], expect_exit=True)
+        result = cli(["100", "winecfg"], expect_returncode=1)
 
         assert "Steam app with the given app ID could not be found" in result
 
@@ -281,6 +281,15 @@ class TestCLIRun:
 
         # Help will be printed if no specific command is given
         assert result.startswith("usage: ")
+
+    @pytest.mark.usefixtures("default_proton")
+    def test_run_returncode_passed(self, cli, steam_app_factory):
+        """
+        Run a command that returns a specific exit code and ensure it is
+        returned
+        """
+        steam_app_factory(name="Fake game", appid=10)
+        cli(["-c", "exit 5", "10"], expect_returncode=5)
 
     def test_run_multiple_commands(self, cli):
         """
@@ -296,7 +305,7 @@ class TestCLIRun:
         """
         shutil.rmtree(str(steam_dir))
 
-        result = cli(["10", "winecfg"], expect_exit=True)
+        result = cli(["10", "winecfg"], expect_returncode=1)
 
         assert "Steam installation directory could not be found" in result
 
@@ -308,7 +317,7 @@ class TestCLIRun:
         steam_app_factory(name="Fake game 1", appid=10)
         (home_dir / ".local" / "bin" / "winetricks").unlink()
 
-        result = cli(["10", "winecfg"], expect_exit=True)
+        result = cli(["10", "winecfg"], expect_returncode=1)
 
         assert "Winetricks isn't installed" in result
 
@@ -324,7 +333,7 @@ class TestCLIRun:
         steam_app_factory(name="Fake game 1", appid=10)
         (home_dir / ".local" / "bin" / "winetricks").unlink()
 
-        cli(["--no-term", "10", "winecfg"], expect_exit=True)
+        cli(["--no-term", "10", "winecfg"], expect_returncode=1)
 
         assert gui_provider.args[0] == "yad"
         assert gui_provider.args[1] == "--text-info"
@@ -345,7 +354,7 @@ class TestCLIRun:
         (home_dir / ".local" / "bin" / "yad").unlink()
         (home_dir / ".local" / "bin" / "zenity").unlink()
 
-        result = cli(["--gui"], expect_exit=True)
+        result = cli(["--gui"], expect_returncode=1)
 
         assert "YAD or Zenity is not installed" in result
 
@@ -358,14 +367,14 @@ class TestCLIRun:
         steam_app_factory(name="Fake game 1", appid=10)
         result = cli(
             ["10", "winecfg"], env={"STEAM_RUNTIME": "invalid/path"},
-            expect_exit=True
+            expect_returncode=1
         )
 
         assert "Steam Runtime was enabled but couldn't be found" in result
 
     def test_run_proton_not_found(self, cli, steam_dir, steam_app_factory):
         steam_app_factory(name="Fake game 1", appid=10)
-        result = cli(["10", "winecfg"], expect_exit=True)
+        result = cli(["10", "winecfg"], expect_returncode=1)
 
         assert "Proton installation could not be found" in result
 
@@ -386,7 +395,7 @@ class TestCLIRun:
             name="Fake game", appid=10, compat_tool_name="Not Proton"
         )
 
-        result = cli(["10", "winecfg"], expect_exit=True)
+        result = cli(["10", "winecfg"], expect_returncode=1)
 
         assert "Proton installation could not be found" in result
 
@@ -474,7 +483,7 @@ class TestCLIRun:
             _mock_from_appmanifest
         )
 
-        cli(["--no-term", "-s", "Fake"], expect_exit=True)
+        cli(["--no-term", "-s", "Fake"], expect_returncode=1)
 
         assert gui_provider.args[0] == "yad"
         assert gui_provider.args[1] == "--text-info"
@@ -524,7 +533,7 @@ class TestCLIGUI:
         """
         Try starting the GUI when no games are installed
         """
-        result = cli(["--gui"], expect_exit=True)
+        result = cli(["--gui"], expect_returncode=1)
 
         assert "Found no games" in result
 
@@ -673,7 +682,11 @@ def test_cli_error_help(cli):
     Ensure that the full help message is printed when an incorrect argument
     is provided
     """
-    _, stderr = cli(["--nothing"], expect_exit=True, include_stderr=True)
+    _, stderr = cli(
+        ["--nothing"],
+        expect_returncode=2,  # Returned for CLI syntax error
+        include_stderr=True
+    )
 
     # Usage message
     assert "[-h] [--verbose]" in stderr

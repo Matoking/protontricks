@@ -110,8 +110,8 @@ class TestRunCommand:
             proton_app=proton_app,
             steam_app=steam_app,
             command=["echo", "nothing"],
-            use_steam_runtime=True,
-            steam_runtime_path=steam_runtime_medic.install_path
+            shell=True,
+            use_steam_runtime=True
         )
 
         # Warning will be logged since Protontricks does not recognize

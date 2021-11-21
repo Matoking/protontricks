@@ -202,7 +202,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
 
     if choice in (b"", b" \n"):
         print("No game was selected. Quitting...")
-        sys.exit(0)
+        sys.exit(1)
 
     appid = str(choice).rsplit(':')[-1]
     appid = ''.join(x for x in appid if x.isdigit())

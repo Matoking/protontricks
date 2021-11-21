@@ -24,7 +24,7 @@ def test_cli_error_handler_uncaught_exception(
     """
     steam_app_factory(name="Fake game", appid=10)
 
-    cli(["--no-term", "-s", "Fake"], expect_exit=True)
+    cli(["--no-term", "-s", "Fake"], expect_returncode=1)
 
     assert gui_provider.args[0] == "yad"
     assert gui_provider.args[1] == "--text-info"
@@ -47,7 +47,7 @@ def test_cli_error_handler_gui_provider_env(
 
     steam_app_factory(name="Fake game", appid=10)
 
-    cli(["--no-term", "-s", "Fake"], expect_exit=True)
+    cli(["--no-term", "-s", "Fake"], expect_returncode=1)
 
     message = gui_provider.kwargs["input"]
 

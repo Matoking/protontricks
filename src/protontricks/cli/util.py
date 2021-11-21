@@ -102,7 +102,7 @@ def exit_with_error(error, desktop=False):
 
     if not desktop:
         print(error)
-        sys.exit(-1)
+        sys.exit(1)
 
     try:
         log_messages = _get_log_file_path().read_text()
@@ -125,7 +125,7 @@ def exit_with_error(error, desktop=False):
         args = _get_zenity_args()
 
     run(args, input=message.encode("utf-8"), check=False)
-    sys.exit(-1)
+    sys.exit(1)
 
 
 def cli_error_handler(cli_func):

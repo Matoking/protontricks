@@ -587,7 +587,8 @@ def steam_library_factory(steam_dir, steam_libraryfolders_path, tmp_path):
 
 
 class MockSubprocess:
-    def __init__(self, args=None, kwargs=None, mock_stdout=None, env=None):
+    def __init__(
+            self, args=None, kwargs=None, mock_stdout=None, env=None):
         self.args = args
         self.kwargs = kwargs
 
@@ -600,8 +601,9 @@ class MockSubprocess:
 
 
 class MockResult:
-    def __init__(self, stdout):
+    def __init__(self, stdout, returncode=0):
         self.stdout = stdout
+        self.returncode = returncode
 
 
 @pytest.fixture(scope="function")
@@ -630,7 +632,7 @@ def gui_provider(monkeypatch):
     yield mock_gui_provider
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="function")
 def command(monkeypatch):
     """
     Monkeypatch the subprocess.run to store the args and environment
@@ -666,11 +668,9 @@ def _run_cli(monkeypatch, capsys, cli_func):
     Run protontricks with the given arguments and environment variables
     and return the output
     """
-    def func(args, env=None, include_stderr=False, expect_exit=False):
+    def func(args, env=None, include_stderr=False, expect_returncode=0):
         if not env:
             env = {}
-
-        system_exit = False
 
         with monkeypatch.context() as monkeypatch_ctx:
             # Monkeypatch environments values for the duration
@@ -680,15 +680,8 @@ def _run_cli(monkeypatch, capsys, cli_func):
 
             try:
                 cli_func(args)
-            except SystemExit:
-                if expect_exit:
-                    system_exit = True
-                else:
-                    raise
-
-        if expect_exit:
-            assert system_exit, \
-                "Expected command to exit, but command succeeded instead"
+            except SystemExit as exc:
+                assert exc.code == expect_returncode
 
         stdout, stderr = capsys.readouterr()
         if include_stderr:

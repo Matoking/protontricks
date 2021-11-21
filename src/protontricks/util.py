@@ -289,6 +289,8 @@ def run_command(
 
     If 'use_bwrap' is True, run newer Steam Runtime installations using
     bwrap based containerization.
+
+    :returns: Return code of the executed command
     """
     # Check for incomplete Steam Runtime installation
     runtime_install_incomplete = \
@@ -401,7 +403,8 @@ def run_command(
     logger.info("Attempting to run command %s", command)
 
     try:
-        run(command, **kwargs)
+        result = run(command, check=False, **kwargs)
+        return result.returncode
     finally:
         # Restore original env vars
         os.environ.clear()

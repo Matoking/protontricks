@@ -125,7 +125,7 @@ class TestSelectApp:
                 steam_apps=steam_apps, steam_path=steam_dir
             )
 
-        assert exc.value.code == 0
+        assert exc.value.code == 1
 
     def test_select_game_broken_zenity(
             self, broken_zenity, monkeypatch, steam_app_factory, steam_dir):

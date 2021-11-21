@@ -58,7 +58,7 @@ class TestCLIRun:
         # Fake the user closing the form
         gui_provider.mock_stdout = ""
 
-        result = launch_cli(["test.exe"], expect_exit=True)
+        result = launch_cli(["test.exe"], expect_returncode=1)
 
         assert "No game was selected." in result
 
@@ -67,7 +67,7 @@ class TestCLIRun:
         Try running an EXE file when no Proton enabled Steam apps are installed
         or ready
         """
-        result = launch_cli(["test.exe"], expect_exit=True)
+        result = launch_cli(["test.exe"], expect_returncode=1)
 
         assert "No Proton enabled Steam apps were found" in result
 
@@ -77,7 +77,7 @@ class TestCLIRun:
         Try running an EXE file when no Proton enabled Steam apps are installed
         or ready, and ensure an error dialog is opened using `gui_provider`.
         """
-        launch_cli(["--no-term", "test.exe"], expect_exit=True)
+        launch_cli(["--no-term", "test.exe"], expect_returncode=1)
 
         assert gui_provider.args[0] == "yad"
         assert gui_provider.args[1] == "--text-info"
@@ -136,7 +136,7 @@ class TestCLIRun:
         )
 
         launch_cli(
-            ["--no-term", "--appid", "10", "test.exe"], expect_exit=True
+            ["--no-term", "--appid", "10", "test.exe"], expect_returncode=1
         )
 
         assert gui_provider.args[0] == "yad"
