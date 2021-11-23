@@ -1,7 +1,9 @@
 [Desktop Entry]
 Exec=protontricks --no-term --gui
 Name=Protontricks
+Comment=A simple wrapper that does winetricks things for Proton enabled games
 Type=Application
 Terminal=false
 Categories=Utility;
 Icon=wine
+Keywords=Steam;Proton;Wine;Winetricks;
