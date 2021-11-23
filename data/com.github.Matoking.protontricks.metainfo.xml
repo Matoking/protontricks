@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="console-application">
   <id>com.github.Matoking.protontricks</id>
-  <extends>com.valvesoftware.Steam</extends>
   <name>protontricks</name>
-  <summary>A simple wrapper that does winetricks things for Proton enabled games.</summary>
-  <summary xml:lang="pt_BR">Um invólucro simples que executa truques de winetricks para jogos habilitados para usar o Proton.</summary>
-  <summary xml:lang="es">Un contenedor simple que realiza trucos de winetricks para juegos habilitados para usar Proton.</summary>
+  <summary>A simple wrapper that does winetricks things for Proton enabled games</summary>
+  <summary xml:lang="pt_BR">Um invólucro simples que executa truques de winetricks para jogos habilitados para usar o Proton</summary>
+  <summary xml:lang="es">Un contenedor simple que realiza trucos de winetricks para juegos habilitados para usar Proton</summary>
+  <icon type="stock">wine</icon>
+  <provides>
+    <binary>protontricks</binary>
+  </provides>
+  <recommends>com.valvesoftware.Steam</recommends>
   <screenshots>
     <screenshot type="default">
       <image type="source">https://raw.githubusercontent.com/Matoking/protontricks/master/data/screenshot.png</image>
@@ -14,7 +18,9 @@
   </screenshots>
   <content_rating type="oars-1.1"/>
   <description>
-    <p>A simple wrapper that does winetricks things for Proton enabled games.</p>
+    <p>This is a wrapper script that allows you to easily run Winetricks commandsfor Steam Play/Proton games among other common Wine features,
+       such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications
+       that are not included with Proton.</p>
   </description>
   <url type="homepage">https://github.com/Matoking/protontricks/wiki</url>
   <url type="help">https://github.com/Matoking/protontricks/wiki</url>
