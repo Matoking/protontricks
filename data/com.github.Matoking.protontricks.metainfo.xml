@@ -18,7 +18,7 @@
   </screenshots>
   <content_rating type="oars-1.1"/>
   <description>
-    <p>This is a wrapper script that allows you to easily run Winetricks commandsfor Steam Play/Proton games among other common Wine features,
+    <p>This is a wrapper script that allows you to easily run Winetricks commands for Steam Play/Proton games among other common Wine features,
        such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications
        that are not included with Proton.</p>
   </description>
