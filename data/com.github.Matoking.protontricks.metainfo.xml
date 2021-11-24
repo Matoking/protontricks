@@ -8,6 +8,7 @@
   <icon type="stock">wine</icon>
   <provides>
     <binary>protontricks</binary>
+    <binary>protontricks-launch</binary>
   </provides>
   <recommends>com.valvesoftware.Steam</recommends>
   <screenshots>
