@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from protontricks.util import create_wine_bin_dir, run_command, lower_dict
+from protontricks.util import (create_wine_bin_dir,
+                               get_running_flatpak_version, lower_dict,
+                               run_command)
 
 
 def get_files_in_dir(d):
@@ -151,3 +153,30 @@ class TestLowerDict:
         }
 
         assert lower_dict(before) == after
+
+
+class TestGetRunningFlatpakVersion:
+    def test_flatpak_not_active(self):
+        """
+        Test Flatpak version detection when Flatpak is not active
+        """
+        assert get_running_flatpak_version() is None
+
+    def test_flatpak_active(self, monkeypatch, tmp_path):
+        """
+        Test Flatpak version detection when Flatpak is active
+        """
+        flatpak_info_path = tmp_path / "flatpak-info"
+
+        flatpak_info_path.write_text(
+            "[Application]\n"
+            "name=fake.flatpak.Protontricks\n"
+            "\n"
+            "[Instance]\n"
+            "flatpak-version=1.12.1"
+        )
+        monkeypatch.setattr(
+            "protontricks.util.FLATPAK_INFO_PATH", str(flatpak_info_path)
+        )
+
+        assert get_running_flatpak_version() == (1, 12, 1)

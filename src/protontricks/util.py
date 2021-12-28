@@ -1,14 +1,15 @@
+import configparser
 import logging
 import os
 import shlex
 import shutil
 import stat
-
 from pathlib import Path
-from subprocess import check_output, run, PIPE
+from subprocess import PIPE, check_output, run
 
 __all__ = (
-    "SUPPORTED_STEAM_RUNTIMES", "is_flatpak_sandbox", "lower_dict",
+    "SUPPORTED_STEAM_RUNTIMES", "is_flatpak_sandbox",
+    "get_running_flatpak_version", "lower_dict",
     "get_legacy_runtime_library_paths", "get_host_library_paths",
     "RUNTIME_ROOT_GLOB_PATTERNS", "get_runtime_library_paths",
     "WINE_SCRIPT_RUNTIME_V1_TEMPLATE",
@@ -22,12 +23,45 @@ SUPPORTED_STEAM_RUNTIMES = [
     "Steam Linux Runtime - Soldier"
 ]
 
+# Flatpak minimum version required to enable bwrap. In other words, the first
+# Flatpak version with the necessary support for sub-sandboxes.
+FLATPAK_BWRAP_COMPATIBLE_VERSION = (1, 12, 1)
+
+FLATPAK_INFO_PATH = "/.flatpak-info"
+
 
 def is_flatpak_sandbox():
     """
     Check if we're running inside a Flatpak sandbox
     """
-    return Path("/.flatpak-info").exists()
+    return bool(get_running_flatpak_version())
+
+
+def get_running_flatpak_version():
+    """
+    Get the running Flatpak version if running inside a Flatpak sandbox,
+    or None if Flatpak sandbox isn't active
+    """
+    config = configparser.ConfigParser()
+
+    try:
+        config.read_string(Path(FLATPAK_INFO_PATH).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+
+    # If this fails it's because the Flatpak version is older than 0.6.10.
+    # Since Steam Flatpak requires at least 1.0.0, we can fail here instead
+    # of continuing on. It's also extremely unlikely, since even older distros
+    # like CentOS 7 ship Flatpak releases newer than 1.0.0.
+    version = config["Instance"]["flatpak-version"]
+
+    # Remove non-numeric characters just in case (eg. if a suffix like '-pre'
+    # is used).
+    version = "".join([ch for ch in version if ch in ("0123456789.")])
+
+    # Convert version number into a tuple
+    version = tuple([int(part) for part in version.split(".")])
+    return version
 
 
 def lower_dict(d):

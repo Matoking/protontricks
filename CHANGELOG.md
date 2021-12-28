@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
+## [Unreleased]
+### Fixed
+ - bwrap is only disabled when the Flatpak installation is too old. Flatpak 1.12.1 and newer support sub-sandboxes.  
+
 ## [1.6.2] - 2021-11-28
 ### Changed
  - Return code is now returned from the executed user commands

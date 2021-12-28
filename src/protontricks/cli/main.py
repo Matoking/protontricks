@@ -16,7 +16,7 @@ from .. import __version__
 from ..gui import select_steam_app_with_gui
 from ..steam import (find_legacy_steam_runtime_path, find_proton_app,
                      find_steam_path, get_steam_apps, get_steam_lib_paths)
-from ..util import is_flatpak_sandbox, run_command
+from ..util import get_running_flatpak_version, FLATPAK_BWRAP_COMPATIBLE_VERSION, run_command
 from ..winetricks import get_winetricks_path
 from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
                    exit_with_error)
@@ -133,14 +133,18 @@ def main(args=None):
 
     enable_logging(args.verbose, record_to_file=args.no_term)
 
-    if is_flatpak_sandbox():
-        use_bwrap = False
-
-        if bool(args.no_bwrap):
+    flatpak_version = get_running_flatpak_version()
+    if flatpak_version:
+        logger.info(
+            "Running inside Flatpak sandbox, version %s.",
+            ".".join(map(str, flatpak_version))
+        )
+        if flatpak_version < FLATPAK_BWRAP_COMPATIBLE_VERSION:
             logger.warning(
-                "--no-bwrap is redundant when running Protontricks inside a "
-                "Flatpak sandbox."
+                "Flatpak version is too old (<1.12.1) to support "
+                "sub-sandboxes. Disabling bwrap. --no-bwrap will be ignored."
             )
+            use_bwrap = False
 
     # 1. Find Steam path
     steam_path, steam_root = find_steam_path()

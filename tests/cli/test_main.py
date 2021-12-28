@@ -431,13 +431,12 @@ class TestCLIRun:
         assert "Proton 5.13 is missing the required Steam Runtime" \
             in str(exc.value)
 
-    def test_flatpak_detected(self, cli, monkeypatch, caplog):
+    def test_old_flatpak_detected(self, cli, monkeypatch, caplog):
         """
-        Try performing a Protontricks command when running inside a Flatpak
-        environment and ensure a warning is printed when --no-bwrap is provided
-        redundantly
+        Try performing a Protontricks command when running inside an older
+        Flatpak environment and ensure bwrap is disabled.
         """
-        cli(["--no-bwrap", "-s", "nothing"])
+        cli(["-s", "nothing"])
 
         # No warning is printed since we're not running inside Flatpak
         assert len([
@@ -447,11 +446,13 @@ class TestCLIRun:
 
         # Fake a Flatpak environment
         monkeypatch.setattr(
-            "protontricks.cli.main.is_flatpak_sandbox",
-            lambda: True
+            "protontricks.cli.main.get_running_flatpak_version",
+            # Mock version 1.12.0. 1.12.1 is new enough to not require
+            # disabling bwrap.
+            lambda: (1, 12, 0)
         )
 
-        cli(["--no-bwrap", "-s", "nothing"])
+        cli(["-s", "nothing"])
 
         assert len([
             record for record in caplog.records
@@ -463,8 +464,33 @@ class TestCLIRun:
         )
 
         assert record.levelname == "WARNING"
-        assert "--no-bwrap is redundant when running Protontricks" \
+        assert "Flatpak version is too old" \
             in record.message
+
+    def test_new_flatpak_detected(self, cli, monkeypatch, caplog):
+        """
+        Try performing a Protontricks command when running inside a newer
+        Flatpak environment and ensure Flatpak is detected correctly.
+        """
+        # Fake a newer Flatpak environment
+        monkeypatch.setattr(
+            "protontricks.cli.main.get_running_flatpak_version",
+            lambda: (1, 12, 1)
+        )
+
+        cli(["-s", "nothing"])
+
+        # Flatpak is new enough not to generate a warning.
+        assert len([
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]) == 0
+        assert any([
+            record for record in caplog.records
+            if record.levelname == "INFO"
+            and "Running inside Flatpak sandbox, version 1.12.1"
+            in record.message
+        ])
 
     def test_cli_error_handler_uncaught_exception(
             self, cli, default_proton, steam_app_factory, monkeypatch,
