@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 ## [Unreleased]
+### Changed
+ - Enable usage of Flatpak Protontricks with non-Flatpak Steam. Flatpak Steam is prioritized if both are found.
+
 ### Fixed
  - bwrap is only disabled when the Flatpak installation is too old. Flatpak 1.12.1 and newer support sub-sandboxes.  
 

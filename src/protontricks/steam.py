@@ -295,9 +295,10 @@ def find_steam_path():
 
         return None, None
 
-    # If we're inside a Flatpak sandbox, only search for it specifically
+    # If we're inside a Flatpak sandbox,
+    # prioritize Flatpak installation of Steam
     steam_dirs_to_search = (
-        [".var/app/com.valvesoftware.Steam/data/Steam"]
+        [".var/app/com.valvesoftware.Steam/data/Steam"] + COMMON_STEAM_DIRS
         if is_flatpak_sandbox()
         else COMMON_STEAM_DIRS
     )
