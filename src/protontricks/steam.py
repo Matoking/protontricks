@@ -954,6 +954,14 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
     steam_apps = []
 
     for path in steam_lib_paths:
+        if not path.is_dir():
+            logger.warning(
+                "Steam library folder %s not found. Protontricks "
+                "might not have access to the directory.",
+                str(path)
+            )
+            continue
+
         appmanifest_paths = []
         is_lowercase = (path / "steamapps").is_dir()
         is_mixedcase = (path / "SteamApps").is_dir()

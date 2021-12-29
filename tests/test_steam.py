@@ -621,7 +621,7 @@ class TestGetSteamApps:
         Regression test for https://github.com/Matoking/protontricks/issues/112
         """
         def _mock_is_dir(self):
-            return self.name in ("steamapps", "SteamApps")
+            return self.name in ("steamapps", "SteamApps", "steam")
 
         # Mock the "existence" of both 'steamapps' and 'SteamApps' by
         # monkeypatching pathlib
@@ -638,6 +638,36 @@ class TestGetSteamApps:
             record for record in caplog.records
             if record.levelname == "WARNING"
         ]) == 0
+
+    def test_get_steam_apps_missing_library_folder(
+            self, steam_library_factory, steam_dir, steam_root, caplog):
+        """
+        Create multiple Steam library folders, delete one of them and ensure
+        a warning is printed.
+
+        This can happen if Protontricks is executed inside a Flatpak sandbox
+        without the necessary filesystem permissions.
+        """
+        library_dir_a = steam_library_factory(name="LibraryA")
+        library_dir_b = steam_library_factory(name="LibraryB")
+
+        # Delete library B
+        shutil.rmtree(str(library_dir_b))
+
+        get_steam_apps(
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[library_dir_a, library_dir_b]
+        )
+
+        warnings = [
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+        ]
+        assert len(warnings) == 1
+
+        warning = warnings[0]
+        assert "{} not found.".format(str(library_dir_b)) in warning.message
 
 
 class TestGetWindowsShortcuts:
