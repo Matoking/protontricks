@@ -40,10 +40,10 @@ protontricks <APPID> <ACTIONS>
 # Run a custom command within game's installation directory
 protontricks -c <COMMAND> <APPID>
 
-# Run the protontricks GUI
+# Run the Protontricks GUI
 protontricks --gui
 
-# Print the protontricks help message
+# Print the Protontricks help message
 protontricks --help
 ```
 

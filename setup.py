@@ -7,7 +7,7 @@ DESCRIPTION = (
 )
 LONG_DESCRIPTION = (
     "A simple wrapper for running Winetricks commands for Proton-enabled "
-    "games. protontricks requires Winetricks."
+    "games. Protontricks requires Winetricks."
 )
 AUTHOR = "Janne Pulkkinen"
 AUTHOR_EMAIL = "janne.pulkkinen@protonmail.com"

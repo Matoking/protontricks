@@ -198,7 +198,7 @@ def main(args=None):
 
         if not has_installed_apps:
             exit_("Found no games. You need to launch a game at least once "
-                  "before protontricks can find it.")
+                  "before Protontricks can find it.")
 
         try:
             steam_app = select_steam_app_with_gui(
@@ -247,7 +247,7 @@ def main(args=None):
                 "\n{}\n".format(matching_games)
             )
             print(
-                "To run protontricks for the chosen game, run:\n"
+                "To run Protontricks for the chosen game, run:\n"
                 "$ protontricks APPID COMMAND"
             )
         else:
@@ -255,7 +255,7 @@ def main(args=None):
 
         print(
             "\n"
-            "NOTE: A game must be launched at least once before protontricks "
+            "NOTE: A game must be launched at least once before Protontricks "
             "can find the game."
         )
         return

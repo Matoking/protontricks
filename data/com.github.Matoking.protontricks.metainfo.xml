@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="console-application">
   <id>com.github.Matoking.protontricks</id>
-  <name>protontricks</name>
+  <name>Protontricks</name>
   <summary>A simple wrapper that does winetricks things for Proton enabled games</summary>
   <summary xml:lang="pt_BR">Um invólucro simples que executa truques de winetricks para jogos habilitados para usar o Proton</summary>
   <summary xml:lang="es">Un contenedor simple que realiza trucos de winetricks para juegos habilitados para usar Proton</summary>
