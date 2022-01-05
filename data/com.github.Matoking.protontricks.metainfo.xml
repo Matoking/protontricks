@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component type="console-application">
+<component type="desktop-application">
   <id>com.github.Matoking.protontricks</id>
   <name>Protontricks</name>
   <summary>A simple wrapper that does winetricks things for Proton enabled games</summary>
@@ -10,6 +10,7 @@
     <binary>protontricks</binary>
     <binary>protontricks-launch</binary>
   </provides>
+  <launchable type="desktop-id">protontricks.desktop</launchable>
   <recommends>com.valvesoftware.Steam</recommends>
   <screenshots>
     <screenshot type="default">
@@ -17,17 +18,23 @@
       <caption>App selection screen</caption>
     </screenshot>
   </screenshots>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>console</control>
+  </supports>
   <content_rating type="oars-1.1"/>
   <description>
     <p>This is a wrapper script that allows you to easily run Winetricks commands for Steam Play/Proton games among other common Wine features,
        such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications
        that are not included with Proton.</p>
   </description>
-  <url type="homepage">https://github.com/Matoking/protontricks/wiki</url>
-  <url type="help">https://github.com/Matoking/protontricks/wiki</url>
+  <url type="homepage">https://github.com/Matoking/protontricks</url>
+  <url type="help">https://github.com/Matoking/protontricks#readme</url>
   <url type="bugtracker">https://github.com/Matoking/protontricks/issues</url>
   <project_license>GPL-3.0</project_license>
   <metadata_license>CC0-1.0</metadata_license>
+  <update_contact>janne.pulkkinen@protonmail.com</update_contact>
   <releases>
     <release version="1.6.2" date="2021-11-28"/>
   </releases>
