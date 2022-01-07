@@ -193,7 +193,7 @@ def main(args=None):
     # Run the GUI
     if args.gui:
         has_installed_apps = any([
-            app for app in steam_apps if app.prefix_path_exists and app.appid
+            app for app in steam_apps if app.is_windows_app
         ])
 
         if not has_installed_apps:
@@ -234,7 +234,7 @@ def main(args=None):
         search_query = " ".join(args.search)
         matching_apps = [
             app for app in steam_apps
-            if app.prefix_path_exists and app.name_contains(search_query)
+            if app.is_windows_app and app.name_contains(search_query)
         ]
 
         if matching_apps:
@@ -273,8 +273,8 @@ def main(args=None):
     try:
         steam_app = next(
             app for app in steam_apps
-            if not app.is_proton and app.appid == steam_appid
-            and app.prefix_path_exists)
+            if app.is_windows_app and app.appid == steam_appid
+        )
     except StopIteration:
         exit_(
             "Steam app with the given app ID could not be found. "

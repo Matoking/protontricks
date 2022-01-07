@@ -123,6 +123,13 @@ class SteamApp(object):
         return (self.install_path / "toolmanifest.vdf").is_file()
 
     @property
+    def is_windows_app(self):
+        """
+        Return True if this app is a Windows app that's launched using Proton
+        """
+        return not self.is_proton and self.prefix_path_exists and self.appid
+
+    @property
     def proton_dist_path(self):
         """
         Return path to the directory containing Proton binaries and libraries.

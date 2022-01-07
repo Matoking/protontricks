@@ -10,7 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  - Enable usage of Flatpak Protontricks with non-Flatpak Steam. Flatpak Steam is prioritized if both are found.
 
 ### Fixed
- - bwrap is only disabled when the Flatpak installation is too old. Flatpak 1.12.1 and newer support sub-sandboxes.  
+ - bwrap is only disabled when the Flatpak installation is too old. Flatpak 1.12.1 and newer support sub-sandboxes.
+ - Remove Proton installations from app listings
 
 ## [1.6.2] - 2021-11-28
 ### Changed

@@ -148,7 +148,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
                 str(appid2icon[app.appid]),
                 "{}: {}".format(app.name, app.appid)
             ]
-            for app in steam_apps if app.prefix_path_exists and app.appid
+            for app in steam_apps if app.is_windows_app
         ]
         # Flatten the list
         cmd_input = list(itertools.chain.from_iterable(cmd_input))
@@ -156,7 +156,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
         args = _get_zenity_args()
         cmd_input = [
             '{}: {}'.format(app.name, app.appid) for app in steam_apps
-            if app.prefix_path_exists and app.appid
+            if app.is_windows_app
         ]
 
     cmd_input = "\n".join(cmd_input)
