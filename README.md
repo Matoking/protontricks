@@ -98,6 +98,14 @@ Protontricks is available on the Flathub app store:
 
 [<img width="180" src="https://flathub.org/assets/badges/flathub-badge-en.png">](https://flathub.org/apps/details/com.github.Matoking.protontricks)
 
+To use Protontricks as a command-line application, add a shell alias by running the following command:
+
+```
+echo "alias protontricks='flatpak run com.github.Matoking.protontricks'" >> ~/.bashrc
+```
+
+You will need to restart your terminal emulator for the alias to take effect.
+
 The Flatpak installation is sandboxed and only has access to the Steam
 installation directory by default. **You will need to add filesystem permissions when
 using additional Steam library locations or running external Windows
