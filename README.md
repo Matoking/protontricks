@@ -5,6 +5,8 @@ Protontricks
 [![Coverage Status](https://coveralls.io/repos/github/Matoking/protontricks/badge.svg?branch=master)](https://coveralls.io/github/Matoking/protontricks?branch=master)
 [![Test Status](https://github.com/Matoking/protontricks/actions/workflows/tests.yml/badge.svg)](https://github.com/Matoking/protontricks/actions/workflows/tests.yml)
 
+[<img width="240" src="https://flathub.org/assets/badges/flathub-badge-en.png">](https://flathub.org/apps/details/com.github.Matoking.protontricks)
+
 A wrapper that runs Winetricks commands for Proton enabled games among other useful features, requires Winetricks.
 
 This is a fork of the original project created by sirmentio. The original repository is available at [Sirmentio/protontricks](https://github.com/Sirmentio/protontricks).
@@ -90,7 +92,20 @@ Community packages are maintained by community members and might be out-of-date 
 
 If you maintain a community package for Protontricks, feel free to create a pull request adding an entry to this section!
 
-## pipx (recommended)
+## Flatpak (recommended)
+
+Protontricks is available on the Flathub app store:
+
+[<img width="180" src="https://flathub.org/assets/badges/flathub-badge-en.png">](https://flathub.org/apps/details/com.github.Matoking.protontricks)
+
+The Flatpak installation is sandboxed and only has access to the Steam
+installation directory by default. **You will need to add filesystem permissions when
+using additional Steam library locations or running external Windows
+applications.** See
+[here](https://github.com/flathub/com.github.Matoking.protontricks#configuration)
+for instructions on changing the Flatpak permissions.
+
+## pipx
 
 You can use pipx to install the latest version on PyPI or the git repository for the current user. Installing Protontricks using pipx is recommended if a community package doesn't exist for your Linux distro.
 
