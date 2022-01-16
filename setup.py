@@ -25,8 +25,10 @@ setup(
         (
             "share/applications",
             [
-                "src/protontricks/data/protontricks.desktop",
-                "src/protontricks/data/protontricks-launch.desktop"
+                ("src/protontricks/data/share/applications/"
+                 "protontricks.desktop"),
+                ("src/protontricks/data/share/applications/"
+                 "protontricks-launch.desktop")
             ]
         )
     ],

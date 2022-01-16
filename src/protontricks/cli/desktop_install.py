@@ -22,10 +22,11 @@ def install_desktop_entries():
     run([
         "desktop-file-install", "--dir", str(applications_dir),
         pkg_resources.resource_filename(
-            "protontricks", "data/protontricks.desktop"
+            "protontricks", "data/share/applications/protontricks.desktop"
         ),
         pkg_resources.resource_filename(
-            "protontricks", "data/protontricks-launch.desktop"
+            "protontricks",
+            "data/share/applications/protontricks-launch.desktop"
         )
     ], check=True)
 

@@ -48,7 +48,7 @@ def _get_appid2icon(steam_apps, steam_path):
     """
     placeholder_path = Path(
         pkg_resources.resource_filename(
-            "protontricks", "data/icon_placeholder.png"
+            "protontricks", "data/data/icon_placeholder.png"
         )
     )
 
