@@ -7,6 +7,8 @@ import stat
 from pathlib import Path
 from subprocess import PIPE, check_output, run
 
+import pkg_resources
+
 __all__ = (
     "SUPPORTED_STEAM_RUNTIMES", "is_flatpak_sandbox",
     "get_running_flatpak_version", "lower_dict",
@@ -167,87 +169,17 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
     ])
 
 
-WINE_SCRIPT_RUNTIME_V1_TEMPLATE = (
-    "#!/bin/bash\n"
-    "# Helper script created by Protontricks to run Wine binaries using Steam Runtime\n"
-    "export LD_LIBRARY_PATH=\"$PROTON_LD_LIBRARY_PATH\"\n"
-    "exec \"$PROTON_DIST_PATH\"/bin/{name} \"$@\""
-)
+WINE_SCRIPT_RUNTIME_V1_TEMPLATE = Path(
+    pkg_resources.resource_filename(
+        "protontricks", "data/scripts/runtime_launch_legacy.sh"
+    )
+).read_text(encoding="utf-8")
 
-WINE_SCRIPT_RUNTIME_V2_TEMPLATE = """#!/bin/bash
-# Helper script created by Protontricks to run Wine binaries using Steam Runtime
-set -o errexit
-
-PROTONTRICKS_PROXY_SCRIPT_PATH="{script_path}"
-
-BLACKLISTED_ROOT_DIRS=(
-    /bin /dev /lib /lib64 /proc /run /sys /var /usr
-)
-
-ADDITIONAL_MOUNT_DIRS=(
-    /run/media "$PROTON_PATH" "$WINEPREFIX"
-)
-
-mount_dirs=()
-
-# Add any root directories that are not blacklisted
-for dir in /* ; do
-    if [[ ! -d "$dir" ]]; then
-        continue
-    fi
-    if [[ " ${{BLACKLISTED_ROOT_DIRS[*]}} " =~ " $dir " ]]; then
-        continue
-    fi
-    mount_dirs+=("$dir")
-done
-
-# Add additional mount directories, including the Wine prefix and Proton
-# installation directory
-for dir in "${{ADDITIONAL_MOUNT_DIRS[@]}}"; do
-    if [[ ! -d "$dir" ]]; then
-        continue
-    fi
-
-    already_mounted=false
-    # Check if the additional mount directory is already covered by one
-    # of the existing root directories.
-    # Most of the time this is the case, but if the user has placed the Proton
-    # installation or prefix inside a blacklisted directory (eg. '/lib'),
-    # we'll want to ensure it's mounted even if we're not mounting the entire
-    # root directory.
-    for mount_dir in "${{mount_dirs[@]}}"; do
-        if [[ "$dir" =~ ^$mount_dir ]]; then
-            # This directory is already covered by one of the existing mount
-            # points
-            already_mounted=true
-            break
-        fi
-    done
-
-    if [[ "$already_mounted" = false ]]; then
-        mount_dirs+=("$dir")
-    fi
-done
-
-
-mount_params=()
-
-for mount in "${{mount_dirs[@]}}"; do
-    mount_params+=(--filesystem "${{mount}}")
-done
-
-if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME" ]]; then
-  # Command is being executed inside Steam Runtime
-  # LD_LIBRARY_PATH can now be set.
-  export LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"$PROTON_LD_LIBRARY_PATH"
-  "$PROTON_DIST_PATH"/bin/{name} "$@"
-else
-  exec "$STEAM_RUNTIME_PATH"/run --share-pid --batch \
-  "${{mount_params[@]}}" -- \
-  env PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
-  "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
-fi
-"""
+WINE_SCRIPT_RUNTIME_V2_TEMPLATE = Path(
+    pkg_resources.resource_filename(
+        "protontricks", "data/scripts/runtime_launch_bwrap.sh"
+    )
+).read_text(encoding="utf-8")
 
 
 def create_wine_bin_dir(proton_app, use_bwrap=True):
@@ -291,12 +223,14 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     for binary in binaries:
         proxy_script_path = bin_path / binary.name
 
-        content = bin_template.format(
-            name=shlex.quote(binary.name),
-            script_path=str(proxy_script_path)
-        ).encode("utf-8")
+        content = bin_template.replace(
+            "@@name@@", shlex.quote(binary.name),
+        )
+        content = content.replace(
+            "@@script_path@@", str(proxy_script_path)
+        )
 
-        proxy_script_path.write_bytes(content)
+        proxy_script_path.write_text(content, encoding="utf-8")
 
         script_stat = proxy_script_path.stat()
         # Make the helper script executable
