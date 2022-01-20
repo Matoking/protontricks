@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
+## [Unreleased]
+### Fixed
+ - Fix Wine crash when the Steam application and Protontricks are running at the same time
+
 ## [1.7.0] - 2022-01-08
 ### Changed
  - Enable usage of Flatpak Protontricks with non-Flatpak Steam. Flatpak Steam is prioritized if both are found.

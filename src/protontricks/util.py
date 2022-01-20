@@ -312,6 +312,8 @@ def run_command(
     os.environ["PROTON_PATH"] = str(proton_app.install_path)
     os.environ["PROTON_DIST_PATH"] = str(proton_app.proton_dist_path)
 
+    os.environ["STEAM_APP_PATH"] = str(steam_app.install_path)
+
     # Unset WINEARCH, which might be set for another Wine installation
     os.environ.pop("WINEARCH", "")
 
