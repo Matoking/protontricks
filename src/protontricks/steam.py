@@ -302,15 +302,22 @@ def find_steam_path():
 
         return None, None
 
-    # If we're inside a Flatpak sandbox,
-    # prioritize Flatpak installation of Steam
-    steam_dirs_to_search = (
-        [".var/app/com.valvesoftware.Steam/data/Steam"] + COMMON_STEAM_DIRS
-        if is_flatpak_sandbox()
-        else COMMON_STEAM_DIRS
-    )
+    if is_flatpak_sandbox():
+        # If we're inside a Flatpak sandbox,
+        # prioritize Flatpak installation of Steam.
+        # In this case, ensure we don't mix steam_root and steam_path
+        # from Flatpak and non-Flatpak installations of Steam.
+        steam_path = \
+            Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+        if has_steamapps_dir(steam_path):
+            logger.info(
+                "Found Steam directory at %s. You can also define Steam "
+                "directory manually using $STEAM_DIR",
+                steam_path
+            )
+            return steam_path, steam_path
 
-    for steam_path in steam_dirs_to_search:
+    for steam_path in COMMON_STEAM_DIRS:
         # The common Steam directories are found inside the home directory
         steam_path = Path.home() / steam_path
         if has_steamapps_dir(steam_path):

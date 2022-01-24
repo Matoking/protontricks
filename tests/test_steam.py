@@ -388,6 +388,30 @@ class TestFindSteamPath:
         assert str(steam_paths[0]) == str(custom_path)
         assert str(steam_paths[1]) == str(custom_path)
 
+    def test_find_steam_path_flatpak(
+            self, steam_dir, steam_root, tmp_path, home_dir, flatpak_sandbox,
+            monkeypatch):
+        """
+        Ensure that `steam_path` and `steam_root` both point to the Flatpak
+        installation of Steam if Flatpak installation is found.
+
+        Regression test for flathub/com.github.Matoking.protontricks#10
+        """
+        # Create a symlink to act as the Flatpak installation to keep the test
+        # simple.
+        steam_flatpak_dir = (
+            home_dir / ".var" / "app" / "com.valvesoftware.Steam" / "data"
+            / "Steam"
+        )
+        steam_flatpak_dir.parent.mkdir(parents=True)
+        steam_flatpak_dir.symlink_to(steam_dir)
+
+        # Since Flatpak is enabled, both paths should point to Flatpak
+        steam_path, steam_root = find_steam_path()
+
+        assert str(steam_path) == str(steam_flatpak_dir)
+        assert str(steam_root) == str(steam_flatpak_dir)
+
 
 class TestGetSteamApps:
     def test_get_steam_apps_custom_proton(

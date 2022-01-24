@@ -94,6 +94,26 @@ def steam_root(steam_dir):
     yield steam_dir.parent / "root"
 
 
+@pytest.fixture(scope="function")
+def flatpak_sandbox(monkeypatch, tmp_path):
+    """
+    Fake Flatpak sandbox running under Flatpak 1.12.1
+    """
+    flatpak_info_path = tmp_path / "flatpak-info"
+
+    flatpak_info_path.write_text(
+        "[Application]\n"
+        "name=fake.flatpak.Protontricks\n"
+        "\n"
+        "[Instance]\n"
+        "flatpak-version=1.12.1"
+    )
+
+    monkeypatch.setattr(
+        "protontricks.util.FLATPAK_INFO_PATH", str(flatpak_info_path)
+    )
+
+
 @pytest.fixture(scope="function", autouse=True)
 def steam_runtime_dir(steam_dir):
     """
