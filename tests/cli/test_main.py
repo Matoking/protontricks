@@ -404,6 +404,25 @@ class TestCLIRun:
             record.getMessage()
         )
 
+    def test_run_command_proton_incomplete(
+            self, cli, steam_app_factory, default_proton):
+        """
+        Try performing a Protontricks command using a Proton installation that
+        is incomplete because it hasn't been launched yet.
+
+        Regression test for
+        https://github.com/flathub/com.github.Matoking.protontricks/issues/10
+        """
+        # Remove the 'dist' directory to make the Proton installation
+        # incomplete
+        shutil.rmtree(str(default_proton.install_path / "dist"))
+
+        steam_app_factory(name="Fake game", appid=10)
+
+        result = cli(["10", "winecfg"], expect_returncode=1)
+
+        assert "Proton installation is incomplete" in result
+
     def test_run_command_runtime_incomplete(
             self, cli, steam_app_factory, steam_runtime_soldier,
             command, proton_factory, steam_dir):

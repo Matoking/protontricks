@@ -267,6 +267,13 @@ def main(args=None):
     if not proton_app:
         exit_("Proton installation could not be found!")
 
+    if not proton_app.is_proton_ready:
+        exit_(
+            "Proton installation is incomplete. Have you launched a Steam app "
+            "using this Proton version at least once to finish the "
+            "installation?"
+        )
+
     # If neither search or GUI are set, do a normal Winetricks command
     # Find game by appid
     steam_appid = int(args.appid)

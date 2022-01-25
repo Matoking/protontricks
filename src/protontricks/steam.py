@@ -130,6 +130,16 @@ class SteamApp(object):
         return not self.is_proton and self.prefix_path_exists and self.appid
 
     @property
+    def is_proton_ready(self):
+        """
+        Return True if the Proton installation is ready for use.
+
+        Proton installation might be incomplete if it hasn't been launched
+        yet, in which case the Proton binaries don't exist yet.
+        """
+        return bool(self.proton_dist_path)
+
+    @property
     def proton_dist_path(self):
         """
         Return path to the directory containing Proton binaries and libraries.
