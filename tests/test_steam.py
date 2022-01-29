@@ -289,6 +289,42 @@ class TestFindLibraryPaths:
         assert steam_dir in library_paths
         assert library_dir in library_paths
 
+    def test_get_steam_lib_paths_adjust_flatpak_steam_path(
+            self, steam_dir, steam_library_factory, home_dir):
+        """
+        Retrieve Steam library folders and ensure that the
+        "~/.local/share/Steam" path is adjusted in the library folder
+        configuration file if Steam is installed using Flatpak.
+
+        Regression test for flathub/com.github.Matoking.protontricks#10
+        """
+        flatpak_steam_dir = \
+            home_dir / ".var/app/com.valvesoftware.Steam/data/Steam"
+        flatpak_steam_dir.mkdir(parents=True)
+        steam_dir.rename(str(flatpak_steam_dir))
+        shutil.rmtree(str(home_dir / ".local"))
+
+        libraryfolders_data = {
+            "libraryfolders": {
+                "0": {
+                    "path": str(home_dir / ".local/share/Steam")
+                }
+            }
+        }
+        (flatpak_steam_dir / "steamapps/libraryfolders.vdf").write_text(
+            vdf.dumps(libraryfolders_data), "utf-8"
+        )
+
+        library_paths = get_steam_lib_paths(
+            home_dir / ".var/app/com.valvesoftware.Steam/data/Steam"
+        )
+        # The only library folder should point under "~/.var/app", even if the
+        # path in the configuration file is "~/.local/share/Steam".
+        # This needs to be done to adjust for the different path in the
+        # Steam Flatpak sandbox.
+        assert len(library_paths) == 1
+        assert str(library_paths[0]) == str(flatpak_steam_dir)
+
 
 class TestFindAppidProtonPrefix:
     def test_find_appid_proton_prefix_steamapps_case(

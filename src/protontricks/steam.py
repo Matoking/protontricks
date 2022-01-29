@@ -681,11 +681,29 @@ def get_steam_lib_paths(steam_path):
         for value in library_entries:
             if isinstance(value, dict):
                 # Library data is stored in a dict in newer Steam releases
-                library_folders.append(Path(value["path"]))
+                path = Path(value["path"])
             else:
                 # Older releases just store the library path as a string
                 # and nothing else
-                library_folders.append(Path(value))
+                path = Path(value)
+
+            xdg_steam_path = Path.home() / ".local/share/Steam"
+            flatpak_steam_path = \
+                Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+
+            is_library_folder_xdg_steam = str(path) == str(xdg_steam_path)
+            is_flatpak_steam = str(steam_path) == str(flatpak_steam_path)
+
+            # Adjust the path if the library folder is "~/.local/share/Steam"
+            # and we're looking for library folders in
+            # "~/.var/app/com.valvesoftware.Steam"
+            # This is because ~/.local/share/Steam inside a Steam Flatpak
+            # sandbox corresponds to a different location, and we need to
+            # adjust for that.
+            if is_library_folder_xdg_steam and is_flatpak_steam:
+                path = flatpak_steam_path
+
+            library_folders.append(path)
 
         logger.info(
             "Found %d Steam library folders", len(library_folders)
