@@ -125,6 +125,7 @@ class TestCLIRun:
 
         assert command.env["LEGACY_STEAM_RUNTIME_PATH"] == \
             str(steam_runtime_dir / "steam-runtime")
+        assert command.env["PROTONTRICKS_STEAM_RUNTIME"] == "legacy"
         assert "STEAM_RUNTIME_PATH" not in command.env
 
         for name in ("wine", "wineserver"):
@@ -135,9 +136,8 @@ class TestCLIRun:
 
             content = path.read_text()
 
-            # The script template for legacy Steam Runtime is used
+            # Correct binary names used in the scripts
             assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
-            assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" not in content
 
     def test_run_winetricks_steam_runtime_v2(
             self, cli, home_dir, steam_app_factory, steam_runtime_dir,
@@ -177,6 +177,7 @@ class TestCLIRun:
             str(steam_runtime_dir / "steam-runtime")
         assert command.env["STEAM_RUNTIME_PATH"] == \
             str(steam_runtime_soldier.install_path)
+        assert command.env["PROTONTRICKS_STEAM_RUNTIME"] == "bwrap"
 
         # No warning will be created since Steam Runtime Soldier is recognized
         # by Protontricks
@@ -194,9 +195,8 @@ class TestCLIRun:
 
             content = path.read_text()
 
-            # The script template for bwrap-based Steam Runtime is used
+            # Correct binary names used in the scripts
             assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
-            assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" in content
 
     def test_run_winetricks_steam_runtime_v2_no_bwrap(
             self, cli, home_dir, steam_app_factory, steam_runtime_dir,
@@ -243,6 +243,7 @@ class TestCLIRun:
             str(steam_runtime_dir / "steam-runtime")
         assert command.env["STEAM_RUNTIME_PATH"] == \
             str(steam_runtime_soldier.install_path)
+        assert command.env["PROTONTRICKS_STEAM_RUNTIME"] == "legacy"
 
         # No warning will be created since Steam Runtime Soldier is recognized
         # by Protontricks
@@ -260,9 +261,7 @@ class TestCLIRun:
 
             content = path.read_text()
 
-            # The script template for normal Steam Runtime is used
             assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
-            assert "PROTONTRICKS_INSIDE_STEAM_RUNTIME" not in content
 
     def test_run_winetricks_game_not_found(
             self, cli, steam_app_factory, default_proton, command):

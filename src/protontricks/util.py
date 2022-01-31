@@ -14,9 +14,7 @@ __all__ = (
     "get_running_flatpak_version", "lower_dict",
     "get_legacy_runtime_library_paths", "get_host_library_paths",
     "RUNTIME_ROOT_GLOB_PATTERNS", "get_runtime_library_paths",
-    "WINE_SCRIPT_RUNTIME_V1_TEMPLATE",
-    "WINE_SCRIPT_RUNTIME_V2_TEMPLATE",
-    "create_wine_bin_dir", "run_command"
+    "WINE_SCRIPT_TEMPLATE", "create_wine_bin_dir", "run_command"
 )
 
 logger = logging.getLogger("protontricks")
@@ -169,15 +167,9 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
     ])
 
 
-WINE_SCRIPT_RUNTIME_V1_TEMPLATE = Path(
+WINE_SCRIPT_TEMPLATE = Path(
     pkg_resources.resource_filename(
-        "protontricks", "data/scripts/runtime_launch_legacy.sh"
-    )
-).read_text(encoding="utf-8")
-
-WINE_SCRIPT_RUNTIME_V2_TEMPLATE = Path(
-    pkg_resources.resource_filename(
-        "protontricks", "data/scripts/runtime_launch_bwrap.sh"
+        "protontricks", "data/scripts/wine_launch.sh"
     )
 ).read_text(encoding="utf-8")
 
@@ -188,14 +180,6 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     using Steam Runtime and Proton's own libraries instead of the system
     libraries
     """
-    # If the Proton installation uses a newer version of Steam Runtime,
-    # use a different template for the scripts
-    bin_template = (
-        WINE_SCRIPT_RUNTIME_V2_TEMPLATE
-        if proton_app.required_tool_app and use_bwrap
-        else WINE_SCRIPT_RUNTIME_V1_TEMPLATE
-    )
-
     binaries = list((proton_app.proton_dist_path / "bin").iterdir())
 
     # Create the base directory containing files for every Proton installation
@@ -223,7 +207,7 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     for binary in binaries:
         proxy_script_path = bin_path / binary.name
 
-        content = bin_template.replace(
+        content = WINE_SCRIPT_TEMPLATE.replace(
             "@@name@@", shlex.quote(binary.name),
         )
         content = content.replace(
@@ -318,6 +302,7 @@ def run_command(
     os.environ.pop("WINEARCH", "")
 
     wine_bin_dir = None
+    os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "off"
     if use_steam_runtime:
         if proton_app.required_tool_app:
             os.environ["STEAM_RUNTIME_PATH"] = \
@@ -332,12 +317,15 @@ def run_command(
             )
 
             if use_bwrap:
+                os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "bwrap"
                 logger.info(
                     "Running Steam Runtime using bwrap containerization.\n"
                     "If any problems arise, please try running the command "
                     "again using the `--no-bwrap` flag and make an issue "
                     "report if the problem only occurs when bwrap is in use."
                 )
+            else:
+                os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "legacy"
 
             if runtime_name not in SUPPORTED_STEAM_RUNTIMES:
                 logger.warning(
@@ -345,30 +333,29 @@ def run_command(
                 )
         else:
             # Legacy Steam Runtime requires a different LD_LIBRARY_PATH
+            # that is produced by a script.
+            os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "legacy"
             os.environ["PROTON_LD_LIBRARY_PATH"] = \
                 get_legacy_runtime_library_paths(
                     legacy_steam_runtime_path, proton_app
                 )
 
-        # When Steam Runtime is enabled, create a set of helper scripts
-        # that load the underlying Proton Wine executables with Steam Runtime
-        # and Proton libraries instead of system libraries
-        wine_bin_dir = create_wine_bin_dir(
-            proton_app=proton_app, use_bwrap=use_bwrap
-        )
-        os.environ["LEGACY_STEAM_RUNTIME_PATH"] = \
-            str(legacy_steam_runtime_path)
+    # Configure the environment to use launch scripts that take care of
+    # configuring the environment and Wine before launching the underlying
+    # Wine binaries.
+    wine_bin_dir = create_wine_bin_dir(proton_app)
+    os.environ["LEGACY_STEAM_RUNTIME_PATH"] = str(legacy_steam_runtime_path)
 
-        os.environ["PATH"] = "".join([
-            str(wine_bin_dir), os.pathsep, os.environ["PATH"]
-        ])
+    os.environ["PATH"] = os.pathsep.join(
+        [str(wine_bin_dir), os.environ["PATH"]]
+    )
 
-        if not user_provided_wine:
-            os.environ["WINE"] = str(wine_bin_dir / "wine")
-            os.environ["WINELOADER"] = os.environ["WINE"]
+    if not user_provided_wine:
+        os.environ["WINE"] = str(wine_bin_dir / "wine")
+        os.environ["WINELOADER"] = os.environ["WINE"]
 
-        if not user_provided_wineserver:
-            os.environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
+    if not user_provided_wineserver:
+        os.environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
 
     logger.info("Attempting to run command %s", command)
 
