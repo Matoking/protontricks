@@ -50,6 +50,19 @@ if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
         done
     fi
 
+    # Enable fsync & esync by default
+    if [[ -z "$WINEFSYNC" ]]; then
+        if [[ -z "$PROTON_NO_FSYNC" || "$PROTON_NO_FSYNC" = "0" ]]; then
+            export WINEFSYNC=1
+        fi
+    fi
+
+    if [[ -z "$WINEESYNC" ]]; then
+        if [[ -z "$PROTON_NO_ESYNC" || "$PROTON_NO_ESYNC" = "0" ]]; then
+            export WINEESYNC=1
+        fi
+    fi
+
     export PROTONTRICKS_FIRST_START=1
 fi
 

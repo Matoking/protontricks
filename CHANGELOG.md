@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 ## [Unreleased]
+### Added
+ - fsync/esync is enabled by default
+ - `PROTON_NO_FSYNC` and `PROTON_NO_ESYNC` environment variables are supported
+
 ### Fixed
  - Fix Wine crash when the Steam application and Protontricks are running at the same time
  - Fix Steam installation detection when both non-Flatpak and Flatpak versions of Steam are installed for the same user
