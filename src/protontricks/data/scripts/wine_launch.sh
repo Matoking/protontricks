@@ -18,16 +18,38 @@ WINESERVER_ENV_VARS_TO_COPY=(
 
 if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME"
        && "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap"
+       && "$0" = "@@script_path@@"
     ]]; then
+    restart_wineserver=false
+    stop_wineserver=false
+
+    if [[ "$(basename "$0")" = "wineserver"
+        && "$1" = "-w"
+        ]]; then
+        restart_wineserver=true
+    fi
+
+    if [[ ( "$(basename "$0")" = "wine" || "$(basename "$0")" = "wine64" )
+        && "$1" = "regedit"
+        ]]; then
+        stop_wineserver=true
+    fi
+
+    temp_dir="${TMPDIR:-/tmp}"
+
     # Check if we're calling 'wineserver -w' inside a bwrap sandbox.
     # If so, prompt our keepalive wineserver to restart itself by creating
     # a 'restart' file inside the temporary directory
-    if [[ "$(basename "$0")" = "wineserver"
-        && "$0" = "@@script_path@@"
-        && "$1" = "-w"
-        ]]; then
-        temp_dir="${TMPDIR:-/tmp}"
+    if [[ "$restart_wineserver" = true ]]; then
         touch "$temp_dir/protontricks-keepalive-$PROTONTRICKS_SESSION_ID/restart"
+    fi
+
+    # Check if we're about to run a command that requires the wineserver
+    # to be completely shutdown. In this case we have no choice but to
+    # stop the keepalive wineserver entirely for the duration of the
+    # Protontricks session.
+    if [[ "$stop_wineserver" = true ]]; then
+        rm "$temp_dir/protontricks-keepalive-$PROTONTRICKS_SESSION_ID/keepalive" &>/dev/null || true
     fi
 fi
 

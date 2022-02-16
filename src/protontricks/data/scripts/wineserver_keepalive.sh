@@ -32,6 +32,7 @@ while [[ -f "$keepalive_dir/keepalive" ]]; do
         # shut down this process temporarily until the waiting command
         # has terminated.
         wineserver_finished=false
+
         while [[ "$wineserver_finished" = false ]]; do
             wineserver_finished=true
             while read -r pid; do
