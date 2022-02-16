@@ -15,7 +15,7 @@ def home_cwd(home_dir, monkeypatch):
 class TestCLIRun:
     def test_run_executable(
             self, steam_app_factory, default_proton,
-            command, gui_provider, launch_cli):
+            commands, gui_provider, launch_cli):
         """
         Run an EXE file by selecting using the GUI
         """
@@ -27,13 +27,14 @@ class TestCLIRun:
         launch_cli(["test.exe"])
 
         # 'test.exe' was executed
+        command = commands[1]
         assert command.args.startswith("wine ")
         assert command.args.endswith("/test.exe'")
 
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
 
     def test_run_executable_appid(
-            self, default_proton, steam_app_factory, command, launch_cli):
+            self, default_proton, steam_app_factory, commands, launch_cli):
         """
         Run an EXE file directly for a chosen game
         """
@@ -42,6 +43,7 @@ class TestCLIRun:
         launch_cli(["--appid", "10", "test.exe"])
 
         # 'test.exe' was executed
+        command = commands[1]
         assert command.args.startswith("wine ")
         assert command.args.endswith("/test.exe'")
 

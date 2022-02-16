@@ -1,10 +1,11 @@
-def test_run_desktop_install(home_dir, command, desktop_install_cli):
+def test_run_desktop_install(home_dir, commands, desktop_install_cli):
     """
     Ensure that `desktop-file-install` is called properly
     """
     # `protontricks-desktop-install` takes no arguments
     desktop_install_cli([])
 
+    command = commands[0]
     assert command.args[0:3] == [
         "desktop-file-install",
         "--dir",

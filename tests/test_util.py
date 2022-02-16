@@ -22,7 +22,10 @@ class TestCreateWineBinDir:
             home_dir / ".cache" / "protontricks" / "proton" / "Proton 4.20"
             / "bin"
         )
-        assert set(["wine", "wineserver"]) == files
+        assert set([
+            "wine", "wineserver", "wineserver-keepalive.sh",
+            "wineserver-keepalive.bat"
+        ]) == files
 
         # Create a new binary for the Proton installation and delete another
         # one
@@ -40,13 +43,16 @@ class TestCreateWineBinDir:
             / "bin"
         )
         # Scripts are regenerated
-        assert set(["wine", "winedine"]) == files
+        assert set([
+            "wine", "winedine", "wineserver-keepalive.sh",
+            "wineserver-keepalive.bat"
+        ]) == files
 
 
 class TestRunCommand:
     def test_user_environment_variables_used(
             self, default_proton, steam_runtime_dir, steam_app_factory,
-            home_dir, command, monkeypatch):
+            home_dir, commands, monkeypatch):
         """
         Test that user-provided environment variables are used even when
         Steam Runtime is enabled
@@ -68,6 +74,9 @@ class TestRunCommand:
             home_dir / ".cache" / "protontricks" / "proton" / "Proton 4.20"
             / "bin"
         )
+
+        command = commands[0]
+        assert command.args == ["echo", "nothing"]
         assert command.env["WINE"] == str(wine_bin_dir / "wine")
         assert command.env["WINELOADER"] == str(wine_bin_dir / "wine")
         assert command.env["WINESERVER"] == str(wine_bin_dir / "wineserver")
@@ -85,6 +94,8 @@ class TestRunCommand:
         )
 
         # User provided Wine paths are used even when Steam Runtime is enabled
+        command = commands[1]
+        assert command.args == ["echo", "nothing"]
         assert command.env["WINE"] == "/fake/wine"
         assert command.env["WINELOADER"] == "/fake/wine"
         assert command.env["WINESERVER"] == "/fake/wineserver"
