@@ -311,25 +311,8 @@ def run_command(
     user_provided_wine = os.environ.get("WINE", False)
     user_provided_wineserver = os.environ.get("WINESERVER", False)
 
-    if not user_provided_wine:
-        logger.info(
-            "WINE environment variable is not available. "
-            "Setting WINE environment variable to Proton bundled version"
-        )
-        wine_environ["WINE"] = \
-            str(proton_app.proton_dist_path / "bin" / "wine")
-
-    if not user_provided_wineserver:
-        logger.info(
-            "WINESERVER environment variable is not available. "
-            "Setting WINESERVER environment variable to Proton bundled version"
-        )
-        wine_environ["WINESERVER"] = \
-            str(proton_app.proton_dist_path / "bin" / "wineserver")
-
     wine_environ["WINETRICKS"] = str(winetricks_path)
     wine_environ["WINEPREFIX"] = str(steam_app.prefix_path)
-    wine_environ["WINELOADER"] = wine_environ["WINE"]
     wine_environ["WINEDLLPATH"] = "".join([
         str(proton_app.proton_dist_path / "lib64" / "wine"),
         os.pathsep,
@@ -400,10 +383,19 @@ def run_command(
     )
 
     if not user_provided_wine:
+        logger.info(
+            "WINE environment variable is not available. "
+            "Setting WINE environment variable to Proton bundled version."
+        )
         wine_environ["WINE"] = str(wine_bin_dir / "wine")
-        wine_environ["WINELOADER"] = wine_environ["WINE"]
+
+    wine_environ["WINELOADER"] = wine_environ["WINE"]
 
     if not user_provided_wineserver:
+        logger.info(
+            "WINESERVER environment variable is not available. "
+            "Setting WINESERVER environment variable to Proton bundled version"
+        )
         wine_environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
 
     temp_dir = Path(tempfile.mkdtemp(prefix="protontricks-"))
