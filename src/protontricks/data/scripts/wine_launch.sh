@@ -16,6 +16,22 @@ WINESERVER_ENV_VARS_TO_COPY=(
     WINEESYNC WINEFSYNC
 )
 
+if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME"
+       && "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap"
+    ]]; then
+    # Check if we're calling 'wineserver -w' inside a bwrap sandbox.
+    # If so, prompt our keepalive wineserver to restart itself by creating
+    # a 'restart' file inside the temporary directory
+    if [[ "$(basename "$0")" = "wineserver"
+        && "$0" = "@@script_path@@"
+        && "$1" = "-w"
+        ]]; then
+        temp_dir="${TMPDIR:-/tmp}"
+        touch "$temp_dir/protontricks-keepalive-$PROTONTRICKS_SESSION_ID/restart"
+    fi
+fi
+
+
 if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
     # Try to detect if wineserver is already running, and if so, copy a few
     # environment variables from it to ensure our own Wine processes
@@ -34,7 +50,7 @@ if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
             wineserver_found=true
             wineserver_pid="$pid"
         fi
-    done < <(pgrep wineserver)
+    done < <(pgrep "wineserver$")
 
     if [[ "$wineserver_found" = true ]]; then
         # wineserver found, retrieve its environment variables

@@ -608,9 +608,15 @@ def steam_library_factory(steam_dir, steam_libraryfolders_path, tmp_path):
 
 class MockSubprocess:
     def __init__(
-            self, args=None, kwargs=None, mock_stdout=None, env=None):
+            self, args=None, kwargs=None, mock_stdout=None, check=False,
+            cwd=None, shell=False, env=None, **_):
         self.args = args
         self.kwargs = kwargs
+        self.check = check
+        self.shell = shell
+        self.cwd = cwd
+        self.pid = 5
+        self.returncode = 0
 
         if not mock_stdout:
             self.mock_stdout = ""
@@ -618,6 +624,12 @@ class MockSubprocess:
             self.mock_stdout = mock_stdout
 
         self.env = env
+
+    def wait(self):
+        pass
+
+    def terminate(self):
+        pass
 
 
 class MockResult:
@@ -653,34 +665,48 @@ def gui_provider(monkeypatch):
 
 
 @pytest.fixture(scope="function")
-def command(monkeypatch):
+def commands(monkeypatch):
     """
-    Monkeypatch the subprocess.run to store the args and environment
-    variables passed to the last executed command
+    Fixture containing all the commands called using subprocess during
+    the test run
     """
-    mock_command = MockSubprocess()
+    commands_ = []
 
-    def mock_subprocess_run(args, **kwargs):
+    def mock_subprocess_run(*args, **kwargs):
         # Don't mock "/sbin/ldconfig"
         if args[0] == "/sbin/ldconfig":
             return run(args, **kwargs)
 
-        mock_command.args = args
-        mock_command.kwargs = kwargs
-        mock_command.env = os.environ.copy()
+        mock_command = MockSubprocess(
+            *args,
+            **kwargs
+        )
+
+        commands_.append(mock_command)
 
         return MockResult(stdout=b"")
+
+    def mock_Popen(*args, **kwargs):
+        mock_command = MockSubprocess(*args, **kwargs)
+
+        commands_.append(mock_command)
+
+        return mock_command
 
     monkeypatch.setattr(
         "protontricks.util.run",
         mock_subprocess_run
     )
     monkeypatch.setattr(
+        "protontricks.util.Popen",
+        mock_Popen
+    )
+    monkeypatch.setattr(
         "protontricks.cli.desktop_install.run",
         mock_subprocess_run
     )
 
-    yield mock_command
+    return commands_
 
 
 def _run_cli(monkeypatch, capsys, cli_func):

@@ -4,8 +4,9 @@ import os
 import shlex
 import shutil
 import stat
+import random
 from pathlib import Path
-from subprocess import PIPE, check_output, run
+from subprocess import PIPE, check_output, run, Popen
 
 import pkg_resources
 
@@ -172,6 +173,16 @@ WINE_SCRIPT_TEMPLATE = Path(
         "protontricks", "data/scripts/wine_launch.sh"
     )
 ).read_text(encoding="utf-8")
+WINESERVER_KEEPALIVE_SH_SCRIPT = Path(
+    pkg_resources.resource_filename(
+        "protontricks", "data/scripts/wineserver_keepalive.sh"
+    )
+).read_text(encoding="utf-8")
+WINESERVER_KEEPALIVE_BATCH_SCRIPT = Path(
+    pkg_resources.resource_filename(
+        "protontricks", "data/scripts/wineserver_keepalive.bat"
+    )
+).read_text(encoding="utf-8")
 
 
 def create_wine_bin_dir(proton_app, use_bwrap=True):
@@ -220,7 +231,33 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
         # Make the helper script executable
         proxy_script_path.chmod(script_stat.st_mode | stat.S_IEXEC)
 
+    # Create the wineserver keepalive batch script
+    (bin_path / "wineserver-keepalive.bat").write_text(
+        WINESERVER_KEEPALIVE_BATCH_SCRIPT
+    )
+    keepalive_shell_script = bin_path / "wineserver-keepalive"
+    keepalive_shell_script.write_text(
+        WINESERVER_KEEPALIVE_SH_SCRIPT.replace(
+            "@@keepalive_bat_path@@",
+            str(bin_path / "wineserver-keepalive.bat")
+        )
+    )
+    keepalive_shell_script.chmod(
+        keepalive_shell_script.stat().st_mode | stat.S_IEXEC
+    )
+
     return bin_path
+
+
+def _start_process(args, wait=False, **kwargs):
+    """Start a new process and return a Popen instance
+    """
+    process = Popen(args=args, **kwargs)
+
+    if wait:
+        process.wait()
+
+    return process
 
 
 def run_command(
@@ -228,6 +265,7 @@ def run_command(
         use_steam_runtime=False,
         legacy_steam_runtime_path=None,
         use_bwrap=True,
+        start_wineserver=False,
         **kwargs):
     """Run an arbitrary command with the correct environment variables
     for the given Proton app
@@ -242,6 +280,9 @@ def run_command(
     If 'use_bwrap' is True, run newer Steam Runtime installations using
     bwrap based containerization.
 
+    If 'start_wineserver' is True, launch a background wineserver and keep it
+    alive for the duration of the Protontricks call.
+
     :returns: Return code of the executed command
     """
     # Check for incomplete Steam Runtime installation
@@ -255,8 +296,8 @@ def run_command(
             "installation.".format(proton_app.name)
         )
 
-    # Make a copy of the environment variables to restore later
-    environ_copy = os.environ.copy()
+    # Make a copy of the environment variables to use for the subprocesses
+    wine_environ = os.environ.copy()
 
     user_provided_wine = os.environ.get("WINE", False)
     user_provided_wineserver = os.environ.get("WINESERVER", False)
@@ -266,7 +307,7 @@ def run_command(
             "WINE environment variable is not available. "
             "Setting WINE environment variable to Proton bundled version"
         )
-        os.environ["WINE"] = \
+        wine_environ["WINE"] = \
             str(proton_app.proton_dist_path / "bin" / "wine")
 
     if not user_provided_wineserver:
@@ -274,40 +315,40 @@ def run_command(
             "WINESERVER environment variable is not available. "
             "Setting WINESERVER environment variable to Proton bundled version"
         )
-        os.environ["WINESERVER"] = \
+        wine_environ["WINESERVER"] = \
             str(proton_app.proton_dist_path / "bin" / "wineserver")
 
-    os.environ["WINETRICKS"] = str(winetricks_path)
-    os.environ["WINEPREFIX"] = str(steam_app.prefix_path)
-    os.environ["WINELOADER"] = os.environ["WINE"]
-    os.environ["WINEDLLPATH"] = "".join([
+    wine_environ["WINETRICKS"] = str(winetricks_path)
+    wine_environ["WINEPREFIX"] = str(steam_app.prefix_path)
+    wine_environ["WINELOADER"] = wine_environ["WINE"]
+    wine_environ["WINEDLLPATH"] = "".join([
         str(proton_app.proton_dist_path / "lib64" / "wine"),
         os.pathsep,
         str(proton_app.proton_dist_path / "lib" / "wine")
     ])
 
-    os.environ["PATH"] = "".join([
+    wine_environ["PATH"] = "".join([
         str(proton_app.proton_dist_path / "bin"), os.pathsep,
-        os.environ["PATH"]
+        wine_environ["PATH"]
     ])
 
     # Expose the path to Proton installation. This is mainly used for
     # Wine helper scripts, but other scripts could use it as well.
-    os.environ["PROTON_PATH"] = str(proton_app.install_path)
-    os.environ["PROTON_DIST_PATH"] = str(proton_app.proton_dist_path)
+    wine_environ["PROTON_PATH"] = str(proton_app.install_path)
+    wine_environ["PROTON_DIST_PATH"] = str(proton_app.proton_dist_path)
 
-    os.environ["STEAM_APP_PATH"] = str(steam_app.install_path)
+    wine_environ["STEAM_APP_PATH"] = str(steam_app.install_path)
 
     # Unset WINEARCH, which might be set for another Wine installation
-    os.environ.pop("WINEARCH", "")
+    wine_environ.pop("WINEARCH", "")
 
     wine_bin_dir = None
-    os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "off"
+    wine_environ["PROTONTRICKS_STEAM_RUNTIME"] = "off"
     if use_steam_runtime:
         if proton_app.required_tool_app:
-            os.environ["STEAM_RUNTIME_PATH"] = \
+            wine_environ["STEAM_RUNTIME_PATH"] = \
                 str(proton_app.required_tool_app.install_path)
-            os.environ["PROTON_LD_LIBRARY_PATH"] = \
+            wine_environ["PROTON_LD_LIBRARY_PATH"] = \
                 get_runtime_library_paths(proton_app, use_bwrap=use_bwrap)
 
             runtime_name = proton_app.required_tool_app.name
@@ -317,7 +358,7 @@ def run_command(
             )
 
             if use_bwrap:
-                os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "bwrap"
+                wine_environ["PROTONTRICKS_STEAM_RUNTIME"] = "bwrap"
                 logger.info(
                     "Running Steam Runtime using bwrap containerization.\n"
                     "If any problems arise, please try running the command "
@@ -325,7 +366,7 @@ def run_command(
                     "report if the problem only occurs when bwrap is in use."
                 )
             else:
-                os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "legacy"
+                wine_environ["PROTONTRICKS_STEAM_RUNTIME"] = "legacy"
 
             if runtime_name not in SUPPORTED_STEAM_RUNTIMES:
                 logger.warning(
@@ -334,8 +375,8 @@ def run_command(
         else:
             # Legacy Steam Runtime requires a different LD_LIBRARY_PATH
             # that is produced by a script.
-            os.environ["PROTONTRICKS_STEAM_RUNTIME"] = "legacy"
-            os.environ["PROTON_LD_LIBRARY_PATH"] = \
+            wine_environ["PROTONTRICKS_STEAM_RUNTIME"] = "legacy"
+            wine_environ["PROTON_LD_LIBRARY_PATH"] = \
                 get_legacy_runtime_library_paths(
                     legacy_steam_runtime_path, proton_app
                 )
@@ -344,26 +385,50 @@ def run_command(
     # configuring the environment and Wine before launching the underlying
     # Wine binaries.
     wine_bin_dir = create_wine_bin_dir(proton_app)
-    os.environ["LEGACY_STEAM_RUNTIME_PATH"] = str(legacy_steam_runtime_path)
-
-    os.environ["PATH"] = os.pathsep.join(
-        [str(wine_bin_dir), os.environ["PATH"]]
+    wine_environ["LEGACY_STEAM_RUNTIME_PATH"] = str(legacy_steam_runtime_path)
+    wine_environ["PATH"] = os.pathsep.join(
+        [str(wine_bin_dir), wine_environ["PATH"]]
     )
+    # Session ID for this command invocation. Used for the temporary directory
+    # shared between all Wine processes in this session.
+    sys_random = random.SystemRandom()
+    wine_environ["PROTONTRICKS_SESSION_ID"] = "".join([
+        sys_random.choice(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        ) for _ in range(0, 8)
+    ])
 
     if not user_provided_wine:
-        os.environ["WINE"] = str(wine_bin_dir / "wine")
-        os.environ["WINELOADER"] = os.environ["WINE"]
+        wine_environ["WINE"] = str(wine_bin_dir / "wine")
+        wine_environ["WINELOADER"] = wine_environ["WINE"]
 
     if not user_provided_wineserver:
-        os.environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
-
-    logger.info("Attempting to run command %s", command)
+        wine_environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
 
     try:
-        result = run(command, check=False, **kwargs)
-        return result.returncode
-    finally:
-        # Restore original env vars
-        os.environ.clear()
-        os.environ.update(environ_copy)
+        if start_wineserver:
+            logger.info(
+                "Starting wineserver keepalive process: %s",
+                str(wine_bin_dir / "wineserver-keepalive")
+            )
+            keepalive_process = _start_process(
+                str(wine_bin_dir / "wineserver-keepalive"),
+                wait=False,
+                env=wine_environ
+            )
 
+        logger.info("Attempting to run command %s", command)
+
+        process = _start_process(
+            command, wait=True, env=wine_environ, **kwargs
+        )
+        return process.returncode
+    finally:
+        if start_wineserver:
+            logger.info(
+                "Terminating wineserver keepalive process %d",
+                keepalive_process.pid
+            )
+            keepalive_process.terminate()
+            keepalive_process.wait()
+            logger.info("Wineserver keepalive process terminated")
