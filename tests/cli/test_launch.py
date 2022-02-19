@@ -27,7 +27,7 @@ class TestCLIRun:
         launch_cli(["test.exe"])
 
         # 'test.exe' was executed
-        command = commands[1]
+        command = commands[-1]
         assert command.args.startswith("wine ")
         assert command.args.endswith("/test.exe'")
 
@@ -43,7 +43,7 @@ class TestCLIRun:
         launch_cli(["--appid", "10", "test.exe"])
 
         # 'test.exe' was executed
-        command = commands[1]
+        command = commands[-1]
         assert command.args.startswith("wine ")
         assert command.args.endswith("/test.exe'")
 

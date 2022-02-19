@@ -18,19 +18,17 @@ WINESERVER_ENV_VARS_TO_COPY=(
 
 if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME"
        && "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap"
+       && "$0" = "@@script_path@@"
     ]]; then
     # Check if we're calling 'wineserver -w' inside a bwrap sandbox.
     # If so, prompt our keepalive wineserver to restart itself by creating
     # a 'restart' file inside the temporary directory
     if [[ "$(basename "$0")" = "wineserver"
-        && "$0" = "@@script_path@@"
         && "$1" = "-w"
         ]]; then
-        temp_dir="${TMPDIR:-/tmp}"
-        touch "$temp_dir/protontricks-keepalive-$PROTONTRICKS_SESSION_ID/restart"
+        touch "$PROTONTRICKS_TEMP_PATH/restart"
     fi
 fi
-
 
 if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
     # Try to detect if wineserver is already running, and if so, copy a few
@@ -104,61 +102,17 @@ if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME"
     exec "$PROTON_DIST_PATH"/bin/@@name@@ "$@" || :
 elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
     # Command is being executed outside Steam Runtime and bwrap is enabled.
-    # Determine mount point and configure our Wine environment before running
-    # bwrap and continuing execution inside the sandbox.
+    # Use "pressure-vessel-launch" to launch it in the existing container.
 
-    mount_dirs=()
-
-    # Add any root directories that are not blacklisted
-    for dir in /* ; do
-        if [[ ! -d "$dir" ]]; then
-            continue
-        fi
-        if [[ " ${BLACKLISTED_ROOT_DIRS[*]} " =~ " $dir " ]]; then
-            continue
-        fi
-        mount_dirs+=("$dir")
+    # Wait until socket is created
+    while [[ ! -S "$PROTONTRICKS_TEMP_PATH/launcher.sock" ]]; do
+        sleep 0.25
     done
 
-    # Add additional mount directories, including the Wine prefix and Proton
-    # installation directory
-    for dir in "${ADDITIONAL_MOUNT_DIRS[@]}"; do
-        if [[ ! -d "$dir" ]]; then
-            continue
-        fi
-
-        already_mounted=false
-        # Check if the additional mount directory is already covered by one
-        # of the existing root directories.
-        # Most of the time this is the case, but if the user has placed the Proton
-        # installation or prefix inside a blacklisted directory (eg. '/lib'),
-        # we'll want to ensure it's mounted even if we're not mounting the entire
-        # root directory.
-        for mount_dir in "${mount_dirs[@]}"; do
-            if [[ "$dir" =~ ^$mount_dir ]]; then
-                # This directory is already covered by one of the existing mount
-                # points
-                already_mounted=true
-                break
-            fi
-        done
-
-        if [[ "$already_mounted" = false ]]; then
-            mount_dirs+=("$dir")
-        fi
-    done
-
-    mount_params=()
-
-    for mount in "${mount_dirs[@]}"; do
-        mount_params+=(--filesystem "${mount}")
-    done
-
-
-    exec "$STEAM_RUNTIME_PATH"/run --share-pid --batch \
-    "${mount_params[@]}" -- \
-    env PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
-    "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
+    exec "$STEAM_RUNTIME_PATH"/pressure-vessel/bin/pressure-vessel-launch \
+    --share-pids --socket="$PROTONTRICKS_TEMP_PATH/launcher.sock" \
+    --env=PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
+    --pass-env-matching="*" -- "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
 else
     echo "Unknown PROTONTRICKS_STEAM_RUNTIME value $PROTONTRICKS_STEAM_RUNTIME"
     exit 1

@@ -4,9 +4,10 @@ import os
 import shlex
 import shutil
 import stat
-import random
+import shutil
+import tempfile
 from pathlib import Path
-from subprocess import PIPE, check_output, run, Popen
+from subprocess import PIPE, check_output, run, Popen, DEVNULL
 
 import pkg_resources
 
@@ -183,6 +184,11 @@ WINESERVER_KEEPALIVE_BATCH_SCRIPT = Path(
         "protontricks", "data/scripts/wineserver_keepalive.bat"
     )
 ).read_text(encoding="utf-8")
+BWRAP_LAUNCHER_SH_SCRIPT = Path(
+    pkg_resources.resource_filename(
+        "protontricks", "data/scripts/bwrap_launcher.sh"
+    )
+).read_text(encoding="utf-8")
 
 
 def create_wine_bin_dir(proton_app, use_bwrap=True):
@@ -245,6 +251,9 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     keepalive_shell_script.chmod(
         keepalive_shell_script.stat().st_mode | stat.S_IEXEC
     )
+    launcher_script = bin_path / "bwrap-launcher"
+    launcher_script.write_text(BWRAP_LAUNCHER_SH_SCRIPT)
+    launcher_script.chmod(launcher_script.stat().st_mode | stat.S_IEXEC)
 
     return bin_path
 
@@ -389,14 +398,6 @@ def run_command(
     wine_environ["PATH"] = os.pathsep.join(
         [str(wine_bin_dir), wine_environ["PATH"]]
     )
-    # Session ID for this command invocation. Used for the temporary directory
-    # shared between all Wine processes in this session.
-    sys_random = random.SystemRandom()
-    wine_environ["PROTONTRICKS_SESSION_ID"] = "".join([
-        sys_random.choice(
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        ) for _ in range(0, 8)
-    ])
 
     if not user_provided_wine:
         wine_environ["WINE"] = str(wine_bin_dir / "wine")
@@ -405,7 +406,25 @@ def run_command(
     if not user_provided_wineserver:
         wine_environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
 
+    temp_dir = Path(tempfile.mkdtemp(prefix="protontricks-"))
+    wine_environ["PROTONTRICKS_TEMP_PATH"] = str(temp_dir)
+
+    launcher_process = None
+    keepalive_process = None
     try:
+        if use_bwrap:
+            logger.info(
+                "Starting bwrap launcher process: %s",
+                str(wine_bin_dir / "bwrap-launcher")
+            )
+            launcher_process = _start_process(
+                str(wine_bin_dir / "bwrap-launcher"),
+                wait=False,
+                env=wine_environ,
+                stdout=DEVNULL,
+                stderr=DEVNULL
+            )
+
         if start_wineserver:
             logger.info(
                 "Starting wineserver keepalive process: %s",
@@ -414,7 +433,9 @@ def run_command(
             keepalive_process = _start_process(
                 str(wine_bin_dir / "wineserver-keepalive"),
                 wait=False,
-                env=wine_environ
+                env=wine_environ,
+                stdout=DEVNULL,
+                stderr=DEVNULL
             )
 
         logger.info("Attempting to run command %s", command)
@@ -424,11 +445,20 @@ def run_command(
         )
         return process.returncode
     finally:
+        shutil.rmtree(str(temp_dir), ignore_errors=True)
+
         if start_wineserver:
             logger.info(
                 "Terminating wineserver keepalive process %d",
                 keepalive_process.pid
             )
             keepalive_process.terminate()
-            keepalive_process.wait()
-            logger.info("Wineserver keepalive process terminated")
+
+        if use_bwrap:
+            logger.info(
+                "Terminating launcher process %d",
+                launcher_process.pid
+            )
+            launcher_process.terminate()
+            launcher_process.wait()
+            logger.info("Launcher process terminated")

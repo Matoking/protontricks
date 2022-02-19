@@ -23,7 +23,7 @@ class TestCreateWineBinDir:
             / "bin"
         )
         assert set([
-            "wine", "wineserver", "wineserver-keepalive.sh",
+            "wine", "wineserver", "wineserver-keepalive", "bwrap-launcher",
             "wineserver-keepalive.bat"
         ]) == files
 
@@ -44,7 +44,7 @@ class TestCreateWineBinDir:
         )
         # Scripts are regenerated
         assert set([
-            "wine", "winedine", "wineserver-keepalive.sh",
+            "wine", "winedine", "wineserver-keepalive", "bwrap-launcher",
             "wineserver-keepalive.bat"
         ]) == files
 
@@ -75,7 +75,7 @@ class TestRunCommand:
             / "bin"
         )
 
-        command = commands[0]
+        command = commands[-1]
         assert command.args == ["echo", "nothing"]
         assert command.env["WINE"] == str(wine_bin_dir / "wine")
         assert command.env["WINELOADER"] == str(wine_bin_dir / "wine")
@@ -94,7 +94,7 @@ class TestRunCommand:
         )
 
         # User provided Wine paths are used even when Steam Runtime is enabled
-        command = commands[1]
+        command = commands[-1]
         assert command.args == ["echo", "nothing"]
         assert command.env["WINE"] == "/fake/wine"
         assert command.env["WINELOADER"] == "/fake/wine"

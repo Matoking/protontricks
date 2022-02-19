@@ -9,7 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - fsync/esync is enabled by default
  - `PROTON_NO_FSYNC` and `PROTON_NO_ESYNC` environment variables are supported
- - Improve Wine command startup time drastically when bwrap is enabled. This is achieved by launching a background wineserver and keeping it alive for the duration of the Protontricks session.
+ - Improve Wine command startup time with bwrap by launching a background wineserver for the duration of the Protontricks session.
+ - Improve Wine command startup time with bwrap by creating a single container and launching all Wine processes inside it.
 
 ### Fixed
  - Fix Wine crash when the Steam application and Protontricks are running at the same time

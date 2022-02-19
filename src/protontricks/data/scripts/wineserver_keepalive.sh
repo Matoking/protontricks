@@ -9,29 +9,24 @@ set -o errexit
 function cleanup () {
     # Remove the 'keepalive' file in the temp directory. This will prompt
     # the Wine process to stop execution.
-    rm "$keepalive_dir/keepalive"
-    if [[ -n "$keepalive_dir" && -d "$keepalive_dir" ]]; then
-        rm -rf "$keepalive_dir"
-    fi
+    rm "$PROTONTRICKS_TEMP_PATH/keepalive" || true
 }
 
-temp_dir="${TMPDIR:-/tmp}"
-keepalive_dir="$temp_dir/protontricks-keepalive-$PROTONTRICKS_SESSION_ID"
-mkdir "$keepalive_dir"
-touch "$keepalive_dir/keepalive"
+touch "$PROTONTRICKS_TEMP_PATH/keepalive"
 
 trap cleanup EXIT HUP INT QUIT ABRT
 
-cd "$keepalive_dir" || exit 1
+cd "$PROTONTRICKS_TEMP_PATH" || exit 1
 
-while [[ -f "$keepalive_dir/keepalive" ]]; do
+while [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; do
     wine cmd.exe /c "@@keepalive_bat_path@@" &>/dev/null
-    if [[ -f "$keepalive_dir/keepalive" ]]; then
+    if [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; then
         # If 'keepalive' still exists, someone called 'wineserver -w'.
         # To prevent that command from stalling indefinitely, we need to
         # shut down this process temporarily until the waiting command
         # has terminated.
         wineserver_finished=false
+
         while [[ "$wineserver_finished" = false ]]; do
             wineserver_finished=true
             while read -r pid; do

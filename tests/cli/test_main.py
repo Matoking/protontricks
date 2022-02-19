@@ -19,7 +19,7 @@ class TestCLIRun:
         cli(["10", "winecfg"], env={"STEAM_RUNTIME": "0"})
 
         # winecfg was actually run
-        command = commands[1]
+        command = commands[-1]
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
 
@@ -49,7 +49,7 @@ class TestCLIRun:
         cli(["4149337689", "winecfg"])
 
         # Default Proton is used
-        command = commands[1]
+        command = commands[-1]
         assert command.env["PROTON_PATH"] == str(proton_install_path)
         assert command.env["WINEPREFIX"] == str(
             steam_dir / "steamapps" / "compatdata" / "4149337689" / "pfx")
@@ -65,7 +65,7 @@ class TestCLIRun:
         custom_proton = custom_proton_factory(name="Custom Proton")
         cli(["10", "winecfg"], env={"PROTON_VERSION": "Custom Proton"})
 
-        assert commands[1].env["PROTON_PATH"] \
+        assert commands[-1].env["PROTON_PATH"] \
             == str(custom_proton.install_path)
 
     def test_run_winetricks_select_steam(
@@ -90,7 +90,7 @@ class TestCLIRun:
             env={"STEAM_DIR": str(home_dir / ".steam_new")}
         )
 
-        command = commands[1]
+        command = commands[-1]
         assert command.env["WINE"] == str(
             home_dir / ".cache" / "protontricks" / "proton"
             / "Proton 4.20" / "bin" / "wine"
@@ -117,7 +117,7 @@ class TestCLIRun:
         )
 
         # winecfg was actually run
-        command = commands[1]
+        command = commands[-1]
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
         assert command.env["PATH"].startswith(str(wine_bin_dir))
@@ -164,12 +164,16 @@ class TestCLIRun:
             / "bin"
         )
 
-        # Background wineserver was launched since bwrap is enabled
-        command = commands[0]
-        assert command.args == str(wine_bin_dir / "wineserver-keepalive.sh")
+        # Launcher process was launched to handle launching processes
+        # inside the sandbox
+        assert commands[0].args == str(wine_bin_dir / "bwrap-launcher")
+   
+        # keepalive wineserver process launched in background to improve
+        # Wine command launch time
+        assert commands[1].args == str(wine_bin_dir / "wineserver-keepalive")
 
         # winecfg was run
-        command = commands[1]
+        command = commands[-1]
 
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
@@ -229,7 +233,7 @@ class TestCLIRun:
             / "bin"
         )
 
-        command = commands[1]
+        command = commands[-1]
         # winecfg was run
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
@@ -564,7 +568,7 @@ class TestCLIGUI:
 
         cli(["--gui"])
 
-        command = commands[0]
+        command = commands[-1]
         # 'winetricks --gui' was run for the game selected by user
         assert str(command.args[0]) == \
             str(home_dir / ".local" / "bin" / "winetricks")
@@ -607,7 +611,7 @@ class TestCLICommand:
 
         cli(["-c", "bash", "10"])
 
-        command = commands[1]
+        command = commands[-1]
 
         # The command is just 'bash'
         assert command.args == "bash"
