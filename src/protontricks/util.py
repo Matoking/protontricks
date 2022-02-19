@@ -409,6 +409,9 @@ def run_command(
     temp_dir = Path(tempfile.mkdtemp(prefix="protontricks-"))
     wine_environ["PROTONTRICKS_TEMP_PATH"] = str(temp_dir)
 
+    if start_wineserver:
+        wine_environ["PROTONTRICKS_BACKGROUND_WINESERVER"] = "1"
+
     launcher_process = None
     keepalive_process = None
     try:

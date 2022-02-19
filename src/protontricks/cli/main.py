@@ -98,6 +98,26 @@ def main(args=None):
         "--no-bwrap", action="store_true", default=False,
         help="Disable bwrap containerization when using Steam Runtime"
     )
+    parser.add_argument(
+        "--background-wineserver",
+        dest="background_wineserver",
+        action="store_true",
+        help=(
+            "Launch a background wineserver process to improve Wine command "
+            "startup time. Default if bwrap is enabled."
+        )
+    )
+    parser.add_argument(
+        "--no-background-wineserver",
+        dest="background_wineserver",
+        action="store_false",
+        help=(
+            "Do not launch a background wineserver process to improve Wine "
+            "command startup time. Default if bwrap is not enabled."
+        )
+    )
+    parser.set_defaults(background_wineserver=None)
+
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
@@ -121,6 +141,12 @@ def main(args=None):
     do_winetricks = bool(args.appid and args.winetricks_command)
 
     use_bwrap = not bool(args.no_bwrap)
+    start_background_wineserver = (
+        args.background_wineserver
+        if args.background_wineserver is not None
+        else use_bwrap
+    )
+
     if not do_command and not do_search and not do_gui and not do_winetricks:
         parser.print_help()
         return
@@ -225,7 +251,7 @@ def main(args=None):
             legacy_steam_runtime_path=legacy_steam_runtime_path,
             command=[str(winetricks_path), "--gui"],
             use_bwrap=use_bwrap,
-            start_wineserver=use_bwrap
+            start_wineserver=start_background_wineserver
         )
 
         return
@@ -300,7 +326,7 @@ def main(args=None):
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
             use_bwrap=use_bwrap,
-            start_wineserver=use_bwrap,
+            start_wineserver=start_background_wineserver,
             command=[str(winetricks_path)] + args.winetricks_command
         )
     elif args.command:
@@ -312,7 +338,7 @@ def main(args=None):
             use_steam_runtime=use_steam_runtime,
             legacy_steam_runtime_path=legacy_steam_runtime_path,
             use_bwrap=use_bwrap,
-            start_wineserver=use_bwrap,
+            start_wineserver=start_background_wineserver,
             # Pass the command directly into the shell *without*
             # escaping it
             cwd=str(steam_app.install_path),

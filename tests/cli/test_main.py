@@ -167,7 +167,7 @@ class TestCLIRun:
         # Launcher process was launched to handle launching processes
         # inside the sandbox
         assert commands[0].args == str(wine_bin_dir / "bwrap-launcher")
-   
+
         # keepalive wineserver process launched in background to improve
         # Wine command launch time
         assert commands[1].args == str(wine_bin_dir / "wineserver-keepalive")
@@ -278,6 +278,54 @@ class TestCLIRun:
             content = path.read_text()
 
             assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
+
+    @pytest.mark.parametrize(
+        "args,wineserver_launched",
+        [
+            # background wineserver enabled for bwrap by default
+            (["-c", "'echo nothing'", "20"], True),
+
+            # background wineserver disabled by default for everything else
+            (["--no-bwrap", "-c", "'echo nothing'", "20"], False),
+
+            # Manually disable background wineserver
+            (
+                ["--no-background-wineserver", "-c", "'echo nothing'", "20"],
+                False
+            ),
+
+            # Manually enable background wineserver
+            (
+                [
+                    "--background-wineserver", "--no-bwrap",
+                    "-c", "'echo nothing'", "20"
+                ],
+                True
+            )
+        ]
+    )
+    def test_run_background_wineserver_toggle(
+            self, cli, steam_app_factory, default_new_proton, commands,
+            args, wineserver_launched, home_dir):
+        """
+        Try running a Protontricks command with different arguments
+        and ensure background wineserver is (not) launched
+        depending on the scenario
+        """
+        steam_app_factory(name="Fake game 1", appid=20)
+
+        cli(args)
+
+        wineserver_found = any(
+            True for command in commands
+            if isinstance(command.args, str)
+            and command.args == str(
+                home_dir / ".cache/protontricks/proton/Proton 7.0/bin"
+                / "wineserver-keepalive"
+            )
+        )
+
+        assert wineserver_found == wineserver_launched
 
     def test_run_winetricks_game_not_found(
             self, cli, steam_app_factory, default_proton):

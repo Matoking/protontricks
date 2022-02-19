@@ -570,6 +570,17 @@ def default_proton(proton_factory):
 
 
 @pytest.fixture(scope="function")
+def default_new_proton(proton_factory, steam_runtime_soldier):
+    """
+    Mocked newer default Proton installation that uses separate Steam Runtime
+    """
+    return proton_factory(
+        name="Proton 7.0", appid=543210, compat_tool_name="proton_70",
+        is_default_proton=True, required_tool_app=steam_runtime_soldier
+    )
+
+
+@pytest.fixture(scope="function")
 def steam_library_factory(steam_dir, steam_libraryfolders_path, tmp_path):
     """
     Factory function to add fake Steam library folders

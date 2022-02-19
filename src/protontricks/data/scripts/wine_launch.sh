@@ -16,7 +16,7 @@ WINESERVER_ENV_VARS_TO_COPY=(
     WINEESYNC WINEFSYNC
 )
 
-if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME"
+if [[ -n "$PROTONTRICKS_BACKGROUND_WINESERVER"
        && "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap"
        && "$0" = "@@script_path@@"
     ]]; then
