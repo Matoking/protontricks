@@ -120,6 +120,39 @@ class TestCLIRun:
         assert cli_args[4].endswith("test.exe'")
         assert cli_args[5] == "10"
 
+    @pytest.mark.parametrize("argument", [
+        None,
+        "--background-wineserver",
+        "--no-background-wineserver"
+    ])
+    def test_run_executable_passthrough_background_wineserver(
+            self, launch_cli, monkeypatch, steam_app_factory,
+            argument):
+        """
+        Try running an EXE file and apply given wineserver argument.
+        If the argument is set, it should also be passed to the main
+        entrypoint.
+        """
+        cli_args = []
+
+        monkeypatch.setattr(
+            "protontricks.cli.launch.cli_main",
+            cli_args.extend
+        )
+
+        steam_app_factory(name="Fake game", appid=10)
+
+        extra_args = [argument] if argument else []
+        launch_cli(extra_args + ["--appid", "10", "test.exe"])
+
+        if argument:
+            # Ensure the corresponding argument was passd to the main CLI
+            # entrypoint
+            assert argument in cli_args
+        else:
+            assert "--background-wineserver" not in cli_args
+            assert "--no-background-wineserver" not in cli_args
+
     def test_cli_error_handler_uncaught_exception(
             self, launch_cli, default_proton, steam_app_factory, monkeypatch,
             gui_provider):

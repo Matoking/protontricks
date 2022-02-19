@@ -67,10 +67,29 @@ def main(args=None):
         help="Disable bwrap containerization when using Steam Runtime"
     )
     parser.add_argument(
+        "--background-wineserver",
+        dest="background_wineserver",
+        action="store_true",
+        help=(
+            "Launch a background wineserver process to improve Wine command "
+            "startup time. Default if bwrap is enabled."
+        )
+    )
+    parser.add_argument(
+        "--no-background-wineserver",
+        dest="background_wineserver",
+        action="store_false",
+        help=(
+            "Do not launch a background wineserver process to improve Wine "
+            "command startup time. Default if bwrap is not enabled."
+        )
+    )
+    parser.add_argument(
         "--appid", type=int, nargs="?", default=None
     )
     parser.add_argument("executable", type=str)
     parser.add_argument("exec_args", nargs=argparse.REMAINDER)
+    parser.set_defaults(background_wineserver=None)
 
     args = parser.parse_args(args)
 
@@ -135,6 +154,11 @@ def main(args=None):
 
     if args.no_bwrap:
         cli_args += ["--no-bwrap"]
+
+    if args.background_wineserver is True:
+        cli_args += ["--background-wineserver"]
+    elif args.background_wineserver is False:
+        cli_args += ["--no-background-wineserver"]
 
     inner_args = " ".join(
         ["wine", "'{}'".format(str(executable_path))]
