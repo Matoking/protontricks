@@ -160,6 +160,9 @@ def main(args=None):
     elif args.background_wineserver is False:
         cli_args += ["--no-background-wineserver"]
 
+    if args.no_term:
+        cli_args += ["--no-term"]
+
     inner_args = " ".join(
         ["wine", "'{}'".format(str(executable_path))]
         + exec_args

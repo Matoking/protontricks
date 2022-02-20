@@ -108,17 +108,17 @@ class TestCLIRun:
         steam_app_factory(name="Fake game", appid=10)
 
         launch_cli([
-            "--verbose", "--no-bwrap", "--no-runtime", "--appid", "10",
-            "test.exe"
+            "--verbose", "--no-bwrap", "--no-runtime", "--no-term", "--appid",
+            "10", "test.exe"
         ])
 
         # CLI flags are passed through to the main CLI entrypoint
-        assert cli_args[0:4] == [
-            "--verbose", "--no-runtime", "--no-bwrap", "-c"
+        assert cli_args[0:5] == [
+            "--verbose", "--no-runtime", "--no-bwrap", "--no-term", "-c"
         ]
-        assert cli_args[4].startswith("wine ")
-        assert cli_args[4].endswith("test.exe'")
-        assert cli_args[5] == "10"
+        assert cli_args[5].startswith("wine ")
+        assert cli_args[5].endswith("test.exe'")
+        assert cli_args[6] == "10"
 
     @pytest.mark.parametrize("argument", [
         None,
