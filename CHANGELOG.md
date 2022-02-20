@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  - Fix Steam installation detection when both non-Flatpak and Flatpak versions of Steam are installed for the same user
  - Fix Protontricks crash when Proton installation is incomplete
  - Fix Protontricks crash when both Flatpak and non-Flatpak versions of Steam are installed
+ - Fix duplicate log messages when using `protontricks-launch`
 
 ## [1.7.0] - 2022-01-08
 ### Changed

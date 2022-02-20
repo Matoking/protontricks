@@ -1,4 +1,4 @@
-import os
+import logging
 import random
 import shutil
 import struct
@@ -36,6 +36,9 @@ def cleanup():
     # 'get_gui_provider' uses functools.lru_cache and needs to be cleared
     # between tests
     get_gui_provider.cache_clear()
+
+    # Clear log handlers
+    logging.getLogger("protontricks").handlers.clear()
 
 
 @pytest.fixture(scope="function", autouse=True)

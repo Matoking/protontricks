@@ -1,7 +1,9 @@
+import logging
+
 import pytest
 
 from protontricks.cli.util import (_delete_log_file, _get_log_file_path,
-                                   exit_with_error)
+                                   enable_logging, exit_with_error)
 
 
 @pytest.fixture(scope="function")
@@ -13,6 +15,22 @@ def broken_appmanifest(monkeypatch):
         "protontricks.steam.SteamApp.from_appmanifest",
         _mock_from_appmanifest
     )
+
+
+def test_enable_logging():
+    """
+    Ensure that calling 'enable_logging' enables the logging only once
+    """
+    logger = logging.getLogger("protontricks")
+
+    assert len(logger.handlers) == 0
+
+    enable_logging()
+    assert len(logger.handlers) == 2
+
+    # No more handlers are added
+    enable_logging()
+    assert len(logger.handlers) == 2
 
 
 def test_cli_error_handler_uncaught_exception(
@@ -61,7 +79,6 @@ def test_cli_error_handler_gui_provider_env(
         assert gui_provider.args[0] == "zenity"
         # Zenity doesn't have custom button declarations
         assert "--button=OK:1" not in gui_provider.args
-
 
 
 def test_exit_with_error_no_log_file(gui_provider):

@@ -47,36 +47,51 @@ def enable_logging(info=False, record_to_file=True):
     """
     level = logging.INFO if info else logging.WARNING
 
-    # Logs printed to stderr will follow the log level
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(level)
-    stream_handler.setFormatter(
-        logging.Formatter("%(name)s (%(levelname)s): %(message)s")
+    logger = logging.getLogger("protontricks")
+
+    stream_handler_added = any(
+        filter(
+            lambda hndl: hndl.name == "protontricks-stream", logger.handlers
+        )
     )
 
-    logger = logging.getLogger("protontricks")
-    logger.setLevel(logging.INFO)
-    logger.addHandler(stream_handler)
+    if not stream_handler_added:
+        # Logs printed to stderr will follow the log level
+        stream_handler = logging.StreamHandler()
+        stream_handler.name = "protontricks-stream"
+        stream_handler.setLevel(level)
+        stream_handler.setFormatter(
+            logging.Formatter("%(name)s (%(levelname)s): %(message)s")
+        )
+
+        logger.setLevel(logging.INFO)
+        logger.addHandler(stream_handler)
 
     if not record_to_file:
         return
 
-    # Record log files to temporary file. This means log messages can be
-    # printed at the end of the session in an error dialog.
-    # *All* log messages are written into this file whether `--verbose`
-    # is enabled or not.
-    log_file_path = _get_log_file_path()
-    try:
-        log_file_path.unlink()
-    except FileNotFoundError:
-        pass
+    file_handler_added = any(
+        filter(lambda hndl: hndl.name == "protontricks-file", logger.handlers)
+    )
 
-    file_handler = logging.FileHandler(str(_get_log_file_path()))
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
+    if not file_handler_added:
+        # Record log files to temporary file. This means log messages can be
+        # printed at the end of the session in an error dialog.
+        # *All* log messages are written into this file whether `--verbose`
+        # is enabled or not.
+        log_file_path = _get_log_file_path()
+        try:
+            log_file_path.unlink()
+        except FileNotFoundError:
+            pass
 
-    # Ensure the log file is removed before the process exits
-    atexit.register(_delete_log_file)
+        file_handler = logging.FileHandler(str(_get_log_file_path()))
+        file_handler.name = "protontricks-file"
+        file_handler.setLevel(logging.INFO)
+        logger.addHandler(file_handler)
+
+        # Ensure the log file is removed before the process exits
+        atexit.register(_delete_log_file)
 
 
 def exit_with_error(error, desktop=False):
