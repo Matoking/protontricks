@@ -2,6 +2,26 @@
 # Helper script
 set -o errexit
 
+function log_info () {
+    if [[ "$PROTONTRICKS_LOG_LEVEL" != "INFO" ]]; then
+        return
+    fi
+
+    log "$@"
+}
+
+function log_warning () {
+    if [[ "$PROTONTRICKS_LOG_LEVEL" = "INFO" || "$PROTONTRICKS_LOG_LEVEL" = "WARNING" ]]; then
+        return
+    fi
+
+    log "$@"
+}
+
+function log () {
+    >&2 echo "protontricks - $(basename "$0") $$: $*"
+}
+
 BLACKLISTED_ROOT_DIRS=(
     /bin /dev /lib /lib64 /proc /run /sys /var /usr
 )
@@ -57,6 +77,8 @@ for mount in "${mount_dirs[@]}"; do
     mount_params+=(--filesystem "${mount}")
 done
 
+log_info "Following directories will be mounted inside container: ${mount_dirs[*]}"
+log_info "Using temporary directory: $PROTONTRICKS_TEMP_PATH"
 
 exec "$STEAM_RUNTIME_PATH"/run --share-pid --launcher \
 "${mount_params[@]}" -- \

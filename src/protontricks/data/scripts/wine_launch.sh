@@ -2,6 +2,26 @@
 # Helper script created by Protontricks to run Wine binaries using Steam Runtime
 set -o errexit
 
+function log_info () {
+    if [[ "$PROTONTRICKS_LOG_LEVEL" != "INFO" ]]; then
+        return
+    fi
+
+    log "$@"
+}
+
+function log_warning () {
+    if [[ "$PROTONTRICKS_LOG_LEVEL" = "INFO" || "$PROTONTRICKS_LOG_LEVEL" = "WARNING" ]]; then
+        return
+    fi
+
+    log "$@"
+}
+
+function log () {
+    >&2 echo "protontricks - $(basename "$0") $$: $*"
+}
+
 PROTONTRICKS_PROXY_SCRIPT_PATH="@@script_path@@"
 
 BLACKLISTED_ROOT_DIRS=(
@@ -26,6 +46,7 @@ if [[ -n "$PROTONTRICKS_BACKGROUND_WINESERVER"
     if [[ "$(basename "$0")" = "wineserver"
         && "$1" = "-w"
         ]]; then
+        log_info "Touching '$PROTONTRICKS_TEMP_PATH/restart' to restart wineserver."
         touch "$PROTONTRICKS_TEMP_PATH/restart"
     fi
 fi
@@ -38,6 +59,8 @@ if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
     # Protontricks at the same time.
     wineserver_found=false
 
+    log_info "Checking for running wineserver instance"
+
     # Find the correct Wineserver that's using the same prefix
     while read -r pid; do
         if [[ $(xargs -0 -L1 -a "/proc/${pid}/environ" | grep "^WINEPREFIX=${WINEPREFIX}") ]] &> /dev/null; then
@@ -47,6 +70,8 @@ if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
             fi
             wineserver_found=true
             wineserver_pid="$pid"
+
+            log_info "Found running wineserver instance with PID ${wineserver_pid}"
         fi
     done < <(pgrep "wineserver$")
 
@@ -59,6 +84,7 @@ if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
         for env_name in "${WINESERVER_ENV_VARS_TO_COPY[@]}"; do
             env_declr=$(echo "$wineserver_env_vars" | grep "^${env_name}=" || :)
             if [[ -n "$env_declr" ]]; then
+                log_info "Copying env var from running wineserver: ${env_declr}"
                 export "${env_declr?}"
             fi
         done
@@ -68,12 +94,14 @@ if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
     if [[ "$wineserver_found" = false ]]; then
         if [[ -z "$WINEFSYNC" ]]; then
             if [[ -z "$PROTON_NO_FSYNC" || "$PROTON_NO_FSYNC" = "0" ]]; then
+                log_info "Setting default env: WINEFSYNC=1"
                 export WINEFSYNC=1
             fi
         fi
 
         if [[ -z "$WINEESYNC" ]]; then
             if [[ -z "$PROTON_NO_ESYNC" || "$PROTON_NO_ESYNC" = "0" ]]; then
+                log_info "Setting default env: WINEESYNC=1"
                 export WINEESYNC=1
             fi
         fi
@@ -95,21 +123,34 @@ if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME"
        || "$PROTONTRICKS_STEAM_RUNTIME" = "off"
     ]]; then
 
+    if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME" ]]; then
+        log_info "Starting Wine process inside the container"
+    else
+        log_info "Starting Wine process directly, Steam runtime: $PROTONTRICKS_STEAM_RUNTIME"
+    fi
+
     # If either Steam Runtime is enabled, change LD_LIBRARY_PATH
     if [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
         export LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"$PROTON_LD_LIBRARY_PATH"
+        log_info "Appending to LD_LIBRARY_PATH: $PROTON_LD_LIBRARY_PATH"
     elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "legacy" ]]; then
         export LD_LIBRARY_PATH="$PROTON_LD_LIBRARY_PATH"
+        log_info "LD_LIBRARY_PATH set to $LD_LIBRARY_PATH"
     fi
     exec "$PROTON_DIST_PATH"/bin/@@name@@ "$@" || :
 elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
     # Command is being executed outside Steam Runtime and bwrap is enabled.
     # Use "pressure-vessel-launch" to launch it in the existing container.
 
+    log_info "Starting Wine process using 'pressure-vessel-launch'"
+
     # Wait until socket is created
-    while [[ ! -S "$PROTONTRICKS_TEMP_PATH/launcher.sock" ]]; do
-        sleep 0.25
-    done
+    if [[ ! -S "$PROTONTRICKS_TEMP_PATH/launcher.sock" ]]; then
+        log_info "bwrap-launcher socket not yet available, waiting..."
+        while [[ ! -S "$PROTONTRICKS_TEMP_PATH/launcher.sock" ]]; do
+            sleep 0.25
+        done
+    fi
 
     exec "$STEAM_RUNTIME_PATH"/pressure-vessel/bin/pressure-vessel-launch \
     --share-pids --socket="$PROTONTRICKS_TEMP_PATH/launcher.sock" \

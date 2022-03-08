@@ -6,10 +6,31 @@
 # session.
 set -o errexit
 
+function log_info () {
+    if [[ "$PROTONTRICKS_LOG_LEVEL" != "INFO" ]]; then
+        return
+    fi
+
+    log "$@"
+}
+
+function log_warning () {
+    if [[ "$PROTONTRICKS_LOG_LEVEL" = "INFO" || "$PROTONTRICKS_LOG_LEVEL" = "WARNING" ]]; then
+        return
+    fi
+
+    log "$@"
+}
+
+function log () {
+    >&2 echo "protontricks - $(basename "$0") $$: $*"
+}
+
 function cleanup () {
     # Remove the 'keepalive' file in the temp directory. This will prompt
     # the Wine process to stop execution.
-    rm "$PROTONTRICKS_TEMP_PATH/keepalive" || true
+    rm "$PROTONTRICKS_TEMP_PATH/keepalive" &>/dev/null || true
+    log_info "Cleanup finished, goodbye!"
 }
 
 touch "$PROTONTRICKS_TEMP_PATH/keepalive"
@@ -19,6 +40,8 @@ trap cleanup EXIT HUP INT QUIT ABRT
 cd "$PROTONTRICKS_TEMP_PATH" || exit 1
 
 while [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; do
+    log_info "Starting wineserver-keepalive process..."
+
     wine cmd.exe /c "@@keepalive_bat_path@@" &>/dev/null
     if [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; then
         # If 'keepalive' still exists, someone called 'wineserver -w'.
@@ -26,6 +49,8 @@ while [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; do
         # shut down this process temporarily until the waiting command
         # has terminated.
         wineserver_finished=false
+
+        log_info "'wineserver -w' was called, waiting until all processes are finished..."
 
         while [[ "$wineserver_finished" = false ]]; do
             wineserver_finished=true
@@ -45,5 +70,7 @@ while [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; do
             done < <(pgrep wineserver)
             sleep 0.25
         done
+
+        log_info "All wineserver processes finished, restarting keepalive process..."
     fi
 done

@@ -417,7 +417,6 @@ def run_command(
                 wait=False,
                 env=wine_environ,
                 stdout=DEVNULL,
-                stderr=DEVNULL
             )
 
         if start_wineserver:
@@ -430,7 +429,6 @@ def run_command(
                 wait=False,
                 env=wine_environ,
                 stdout=DEVNULL,
-                stderr=DEVNULL
             )
 
         logger.info("Attempting to run command %s", command)

@@ -47,6 +47,11 @@ def enable_logging(info=False, record_to_file=True):
     """
     level = logging.INFO if info else logging.WARNING
 
+    # 'PROTONTRICKS_LOG_LEVEL' env var allows separate Bash scripts
+    # to detect when logging is enabled.
+    os.environ["PROTONTRICKS_LOG_LEVEL"] = \
+        "INFO" if level == logging.INFO else "WARNING"
+
     logger = logging.getLogger("protontricks")
 
     stream_handler_added = any(
