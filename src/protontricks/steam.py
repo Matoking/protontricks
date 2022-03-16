@@ -8,7 +8,8 @@ from pathlib import Path
 
 import vdf
 
-from .util import lower_dict, is_flatpak_sandbox
+from .flatpak import is_flatpak_sandbox
+from .util import lower_dict
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",

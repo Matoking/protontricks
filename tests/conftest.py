@@ -114,7 +114,7 @@ def flatpak_sandbox(monkeypatch, tmp_path):
     )
 
     monkeypatch.setattr(
-        "protontricks.util.FLATPAK_INFO_PATH", str(flatpak_info_path)
+        "protontricks.flatpak.FLATPAK_INFO_PATH", str(flatpak_info_path)
     )
 
 
