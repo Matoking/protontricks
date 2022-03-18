@@ -26,6 +26,7 @@ def env_vars(monkeypatch):
     intefering with tests
     """
     monkeypatch.setenv("STEAM_RUNTIME", "")
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
 
 
 @pytest.fixture(scope="function", autouse=True)
