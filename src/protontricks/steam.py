@@ -18,12 +18,17 @@ __all__ = (
     "find_proton_app", "get_steam_lib_paths", "get_compat_tool_dirs",
     "get_custom_compat_tool_installations_in_dir", "get_custom_compat_tool_installations",
     "find_current_steamid3", "get_appid_from_shortcut",
-    "get_custom_windows_shortcuts", "get_steam_apps"
+    "get_custom_windows_shortcuts", "get_steam_apps", "is_steam_deck"
 )
 
 COMMON_STEAM_DIRS = [
     ".steam/steam",
     ".local/share/Steam"
+]
+
+OS_RELEASE_PATHS = [
+    "/run/host/os-release",  # The host file if we're inside a Flatpak sandbox
+    "/etc/os-release"
 ]
 
 logger = logging.getLogger("protontricks")
@@ -1060,3 +1065,20 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
     steam_apps.sort(key=lambda app: app.name)
 
     return steam_apps
+
+
+def is_steam_deck():
+    """
+    Check if we're running on a Steam Deck
+    """
+    for path in OS_RELEASE_PATHS:
+        try:
+            lines = Path(path).read_text("utf-8").split("\n")
+        except FileNotFoundError:
+            continue
+
+        if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
+            logger.info("The current device is a Steam Deck")
+            return True
+
+    return False

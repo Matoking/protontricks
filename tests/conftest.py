@@ -727,6 +727,26 @@ def commands(monkeypatch):
     return commands_
 
 
+@pytest.fixture(scope="function")
+def steam_deck(monkeypatch, tmp_path):
+    """
+    Mock a Steam Deck environment
+    """
+    os_release_path = tmp_path / "etc" / "os-release"
+    os_release_path.parent.mkdir(parents=True)
+
+    os_release_path.write_text("\n".join([
+        'NAME="SteamOS"',
+        "ID=steamos",
+        "VARIANT_ID=steamdeck"
+    ]))
+
+    monkeypatch.setattr(
+        "protontricks.steam.OS_RELEASE_PATHS",
+        [str(tmp_path / "etc" / "os-release")]
+    )
+
+
 def _run_cli(monkeypatch, capsys, cli_func):
     """
     Run protontricks with the given arguments and environment variables
