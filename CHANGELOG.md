@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+
 ## [Unreleased]
+### Added
+ - Prompt the user to update Flatpak permissions if inaccessible paths are detected
+
 ### Removed
  - Drop Python 3.5 support
 

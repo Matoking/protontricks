@@ -180,3 +180,25 @@ class TestCLIRun:
         message = gui_provider.kwargs["input"]
 
         assert b"Test appmanifest error" in message
+
+    @pytest.mark.usefixtures("flatpak_sandbox", "default_proton", "commands")
+    def test_run_filesystem_permission_missing(
+            self, launch_cli, steam_library_factory, steam_app_factory,
+            caplog):
+        """
+        Try performing a launch command in a Flatpak sandbox where the user
+        hasn't provided adequate fileystem permissions. Ensure warning is
+        printed.
+        """
+        steam_app_factory(name="Fake game 1", appid=10)
+        path = steam_library_factory(name="GameDrive")
+
+        launch_cli(["--appid", "10", "test.exe"])
+
+        record = next(
+            record for record in caplog.records
+            if "grant access to the required directories" in record.message
+        )
+        assert record.levelname == "WARNING"
+        assert str(path) in record.message
+

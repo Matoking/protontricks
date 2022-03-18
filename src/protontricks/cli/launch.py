@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from subprocess import run
 
-from ..gui import select_steam_app_with_gui
+from ..gui import prompt_filesystem_access, select_steam_app_with_gui
 from ..steam import find_steam_path, get_steam_apps, get_steam_lib_paths
 from .main import main as cli_main
 from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
@@ -115,6 +115,12 @@ def main(args=None):
 
     # 2. Find any Steam library folders
     steam_lib_paths = get_steam_lib_paths(steam_path)
+
+    # Check if Protontricks has access to all the required paths
+    prompt_filesystem_access(
+        paths=[steam_path, steam_root] + steam_lib_paths,
+        show_dialog=args.no_term
+    )
 
     # 3. Find any Steam apps
     steam_apps = get_steam_apps(

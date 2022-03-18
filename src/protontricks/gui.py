@@ -1,7 +1,9 @@
 import functools
 import itertools
+import json
 import logging
 import os
+import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -9,7 +11,13 @@ from subprocess import PIPE, CalledProcessError, run
 
 import pkg_resources
 
-__all__ = ("LocaleError", "select_steam_app_with_gui")
+from .config import get_config
+from .flatpak import get_inaccessible_paths
+
+__all__ = (
+    "LocaleError", "get_gui_provider", "select_steam_app_with_gui",
+    "show_text_dialog", "prompt_filesystem_access"
+)
 
 logger = logging.getLogger("protontricks")
 
@@ -111,12 +119,14 @@ def show_text_dialog(
 
         return args
 
-    if get_gui_provider() == "yad":
+    gui_provider = get_gui_provider()
+    if gui_provider == "yad":
         args = _get_yad_args()
     else:
         args = _get_zenity_args()
 
     process = run(args, input=text.encode("utf-8"), check=False)
+
     return process.returncode == 0
 
 
@@ -263,3 +273,76 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
         app for app in steam_apps
         if app.appid == appid)
     return steam_app
+
+
+def prompt_filesystem_access(paths, show_dialog=False):
+    """
+    Check whether Protontricks has access to the provided file system paths
+    and prompt the user to grant access if necessary.
+
+    :param show_dialog: Show a dialog. If disabled, just print the message
+                        instead.
+    """
+    config = get_config()
+
+    inaccessible_paths = get_inaccessible_paths(paths)
+    inaccessible_paths = set(map(str, inaccessible_paths))
+
+    # Check what paths the user has ignored previously
+    ignored_paths = set(
+        json.loads(config.get("Dialog", "DismissedPaths", "[]"))
+    )
+
+    # Remaining paths that are inaccessible and that haven't been dismissed
+    # by the user
+    remaining_paths = inaccessible_paths - ignored_paths
+
+    if not remaining_paths:
+        return None
+
+    cmd_filesystem = " ".join([
+        "--filesystem={}".format(shlex.quote(path))
+        for path in remaining_paths
+    ])
+
+    # TODO: Showing a text dialog and asking user to manually run the command
+    # is very janky. Replace this with a proper permission prompt when
+    # Flatpak supports it.
+    message = (
+        "Protontricks does not appear to have access to the following "
+        "directories:\n"
+        " {paths}\n"
+        "\n"
+        "To fix this problem, grant access to the required directories by "
+        "copying the following command and running it in a terminal:\n"
+        "\n"
+        "flatpak override --user {cmd_filesystem} "
+        "com.github.Matoking.protontricks\n"
+        "\n"
+        "You will need to restart Protontricks for the settings to take "
+        "effect.".format(
+            paths=" ".join(remaining_paths),
+            cmd_filesystem=cmd_filesystem
+        )
+    )
+
+    if show_dialog:
+        ignore = show_text_dialog(
+            title="Protontricks",
+            text=message,
+            window_icon="wine",
+            cancel_label="Close",
+            ok_label="Ignore, don't ask again",
+            add_cancel_button=True
+        )
+
+        if ignore:
+            # If user clicked "Don't ask again", store the paths to ensure the
+            # user isn't prompted again for these directories
+            ignored_paths |= inaccessible_paths
+
+            config.set(
+                "Dialog", "DismissedPaths", json.dumps(list(ignored_paths))
+            )
+
+    logger.warning(message)

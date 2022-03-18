@@ -1,9 +1,10 @@
 from subprocess import CalledProcessError
 
-from protontricks.gui import select_steam_app_with_gui
-
 import pytest
 from conftest import MockResult
+
+from protontricks.gui import (prompt_filesystem_access,
+                              select_steam_app_with_gui)
 
 
 @pytest.fixture(scope="function")
@@ -199,3 +200,103 @@ class TestSelectApp:
         elif gui_cmd == "zenity":
             assert gui_provider.args[0] == "zenity"
             assert gui_provider.args[2] == "--hide-header"
+
+
+@pytest.mark.usefixtures("flatpak_sandbox")
+class TestPromptFilesystemAccess:
+    def test_prompt_without_desktop(self, home_dir, caplog):
+        """
+        Test that calling 'prompt_filesystem_access' without showing the dialog
+        only generates a warning
+        """
+        prompt_filesystem_access(
+            [home_dir / "fake_path", "/mnt/fake_SSD", "/mnt/fake_SSD_2"],
+            show_dialog=False
+        )
+
+        assert len(caplog.records) == 1
+
+        record = caplog.records[0]
+
+        assert record.levelname == "WARNING"
+        assert "Protontricks does not appear to have access" in record.message
+
+        assert "--filesystem=/mnt/fake_SSD" in record.message
+        assert "--filesystem=/mnt/fake_SSD_2" in record.message
+        assert str(home_dir / "fake_path") not in record.message
+
+    def test_prompt_with_desktop_no_dialog(self, home_dir, gui_provider):
+        """
+        Test that calling 'prompt_filesystem_access' with 'show_dialog'
+        displays a dialog
+        """
+        prompt_filesystem_access(
+            [home_dir / "fake_path", "/mnt/fake_SSD", "/mnt/fake_SSD_2"],
+            show_dialog=True
+        )
+
+        input_ = gui_provider.kwargs["input"].decode("utf-8")
+
+        assert str(home_dir / "fake_path") not in input_
+        assert "--filesystem=/mnt/fake_SSD" in input_
+        assert "--filesystem=/mnt/fake_SSD_2" in input_
+
+    def test_prompt_with_desktop_dialog(self, home_dir, gui_provider):
+        """
+        Test that calling 'prompt_filesystem_access' with 'show_dialog'
+        displays a dialog
+        """
+        # Mock the user closing the dialog without ignoring the messages
+        gui_provider.returncode = 1
+
+        prompt_filesystem_access(
+            [home_dir / "fake_path", "/mnt/fake_SSD", "/mnt/fake_SSD_2"],
+            show_dialog=True
+        )
+
+        input_ = gui_provider.kwargs["input"].decode("utf-8")
+
+        # Dialog was displayed
+        assert "/mnt/fake_SSD" in input_
+        assert "/mnt/fake_SSD_2" in input_
+
+        # Mock the user selecting "Ignore, don't ask again"
+        gui_provider.returncode = 0
+        gui_provider.kwargs["input"] = None
+
+        prompt_filesystem_access(
+            [home_dir / "fake_path", "/mnt/fake_SSD", "/mnt/fake_SSD_2"],
+            show_dialog=True
+        )
+
+        # Dialog is still displayed, but it won't be the next time
+        input_ = gui_provider.kwargs["input"].decode("utf-8")
+        assert "/mnt/fake_SSD" in input_
+        assert "/mnt/fake_SSD_2" in input_
+
+        gui_provider.kwargs["input"] = None
+
+        prompt_filesystem_access(
+            [home_dir / "fake_path", "/mnt/fake_SSD", "/mnt/fake_SSD_2"],
+            show_dialog=True
+        )
+
+        # Dialog is not shown, since the user has opted to ignore the warning
+        # for the current paths
+        assert not gui_provider.kwargs["input"]
+
+        # A new path makes the warning reappear
+        prompt_filesystem_access(
+            [
+                home_dir / "fake_path",
+                "/mnt/fake_SSD",
+                "/mnt/fake_SSD_2",
+                "/mnt/fake_SSD_3"
+            ],
+            show_dialog=True
+        )
+
+        input_ = gui_provider.kwargs["input"].decode("utf-8")
+        assert "/mnt/fake_SSD " not in input_
+        assert "/mnt/fake_SSD_2" not in input_
+        assert "/mnt/fake_SSD_3" in input_

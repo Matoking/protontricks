@@ -101,7 +101,8 @@ def steam_root(steam_dir):
 @pytest.fixture(scope="function")
 def flatpak_sandbox(monkeypatch, tmp_path):
     """
-    Fake Flatpak sandbox running under Flatpak 1.12.1
+    Fake Flatpak sandbox running under Flatpak 1.12.1, with access to
+    the home directory
     """
     flatpak_info_path = tmp_path / "flatpak-info"
 
@@ -110,7 +111,10 @@ def flatpak_sandbox(monkeypatch, tmp_path):
         "name=fake.flatpak.Protontricks\n"
         "\n"
         "[Instance]\n"
-        "flatpak-version=1.12.1"
+        "flatpak-version=1.12.1\n"
+        "\n"
+        "[Context]\n"
+        "filesystems=home"
     )
 
     monkeypatch.setattr(
@@ -665,7 +669,10 @@ def gui_provider(monkeypatch):
         mock_gui_provider.args = args
         mock_gui_provider.kwargs = kwargs
 
-        return MockResult(stdout=mock_gui_provider.mock_stdout.encode("utf-8"))
+        return MockResult(
+            stdout=mock_gui_provider.mock_stdout.encode("utf-8"),
+            returncode=mock_gui_provider.returncode
+        )
 
     monkeypatch.setattr(
         "protontricks.gui.run",
