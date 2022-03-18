@@ -69,6 +69,57 @@ def _get_appid2icon(steam_apps, steam_path):
     return appid2icon
 
 
+def show_text_dialog(
+        title,
+        text,
+        window_icon,
+        cancel_label=None,
+        add_cancel_button=False,
+        ok_label=None,
+        width=600,
+        height=600):
+    """
+    Show a text dialog to the user
+
+    :returns: True if user clicked OK, False otherwise
+    """
+    if not ok_label:
+        ok_label = "OK"
+
+    if not cancel_label:
+        cancel_label = "Cancel"
+
+    def _get_yad_args():
+        args = [
+            "yad", "--text-info", "--window-icon", window_icon,
+            "--title", title, "--width", str(width), "--height", str(height),
+            f"--button={ok_label}:0", "--wrap",
+            "--margins", "2", "--center"
+        ]
+
+        if add_cancel_button:
+            args += [f"--button={cancel_label}:1"]
+
+        return args
+
+    def _get_zenity_args():
+        args = [
+            "zenity", "--text-info", "--window-icon", window_icon,
+            "--title", title, "--width", str(width), "--height",
+            str(height), "--cancel-label", cancel_label, "--ok-label", ok_label
+        ]
+
+        return args
+
+    if get_gui_provider() == "yad":
+        args = _get_yad_args()
+    else:
+        args = _get_zenity_args()
+
+    process = run(args, input=text.encode("utf-8"), check=False)
+    return process.returncode == 0
+
+
 def select_steam_app_with_gui(steam_apps, steam_path, title=None):
     """
     Prompt the user to select a Proton-enabled Steam app from

@@ -671,10 +671,6 @@ def gui_provider(monkeypatch):
         "protontricks.gui.run",
         mock_subprocess_run
     )
-    monkeypatch.setattr(
-        "protontricks.cli.util.run",
-        mock_subprocess_run
-    )
 
     yield mock_gui_provider
 

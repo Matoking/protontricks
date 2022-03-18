@@ -7,9 +7,8 @@ import sys
 import tempfile
 import traceback
 from pathlib import Path
-from subprocess import run
 
-from ..gui import get_gui_provider
+from ..gui import get_gui_provider, show_text_dialog
 
 
 def _get_log_file_path():
@@ -107,19 +106,6 @@ def exit_with_error(error, desktop=False):
     :param bool desktop: If enabled, display an error dialog containing
                          the error itself and additional log messages.
     """
-    def _get_yad_args():
-        return [
-            "yad", "--text-info", "--window-icon", "error",
-            "--title", "Protontricks", "--width", "600", "--height", "600",
-            "--button=OK:1", "--wrap", "--margins", "2", "--center"
-        ]
-
-    def _get_zenity_args():
-        return [
-            "zenity", "--text-info", "--window-icon", "error",
-            "--title", "Protontricks", "--width", "600", "--height", "600"
-        ]
-
     if not desktop:
         print(error)
         sys.exit(1)
@@ -139,12 +125,11 @@ def exit_with_error(error, desktop=False):
         "{}".format(log_messages)
     ])
 
-    if get_gui_provider() == "yad":
-        args = _get_yad_args()
-    else:
-        args = _get_zenity_args()
-
-    run(args, input=message.encode("utf-8"), check=False)
+    show_text_dialog(
+        title="Protontricks",
+        text=message,
+        window_icon=error
+    )
     sys.exit(1)
 
 

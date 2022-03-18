@@ -74,11 +74,11 @@ def test_cli_error_handler_gui_provider_env(
     if gui_cmd == "yad":
         assert gui_provider.args[0] == "yad"
         # YAD has custom button declarations
-        assert "--button=OK:1" in gui_provider.args
+        assert "--button=OK:0" in gui_provider.args
     elif gui_cmd == "zenity":
         assert gui_provider.args[0] == "zenity"
         # Zenity doesn't have custom button declarations
-        assert "--button=OK:1" not in gui_provider.args
+        assert "--button=OK:0" not in gui_provider.args
 
 
 def test_exit_with_error_no_log_file(gui_provider):

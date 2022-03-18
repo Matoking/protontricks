@@ -13,7 +13,7 @@ import os
 import sys
 
 from .. import __version__
-from ..gui import select_steam_app_with_gui
+from ..gui import select_steam_app_with_gui, show_text_dialog
 from ..steam import (find_legacy_steam_runtime_path, find_proton_app,
                      find_steam_path, get_steam_apps, get_steam_lib_paths)
 from ..util import get_running_flatpak_version, FLATPAK_BWRAP_COMPATIBLE_VERSION, run_command
