@@ -13,12 +13,13 @@ from .util import lower_dict
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
-    "find_legacy_steam_runtime_path", "get_appinfo_sections",
-    "get_tool_appid", "find_steam_compat_tool_app", "find_appid_proton_prefix",
-    "find_proton_app", "get_steam_lib_paths", "get_compat_tool_dirs",
-    "get_custom_compat_tool_installations_in_dir", "get_custom_compat_tool_installations",
-    "find_current_steamid3", "get_appid_from_shortcut",
-    "get_custom_windows_shortcuts", "get_steam_apps", "is_steam_deck"
+    "find_legacy_steam_runtime_path", "iter_appinfo_sections",
+    "get_appinfo_sections", "get_tool_appid", "find_steam_compat_tool_app",
+    "find_appid_proton_prefix", "find_proton_app", "get_steam_lib_paths",
+    "get_compat_tool_dirs", "get_custom_compat_tool_installations_in_dir",
+    "get_custom_compat_tool_installations", "find_current_steamid3",
+    "get_appid_from_shortcut", "get_custom_windows_shortcuts",
+    "get_steam_apps", "is_steam_deck"
 )
 
 COMMON_STEAM_DIRS = [
@@ -30,6 +31,10 @@ OS_RELEASE_PATHS = [
     "/run/host/os-release",  # The host file if we're inside a Flatpak sandbox
     "/etc/os-release"
 ]
+
+# 'cache/appinfo.vdf' contains a VDF section with metadata about
+# "Proton name -> app ID" mappings with this app ID
+STEAM_PLAY_MANIFESTS_APPID = 891390
 
 logger = logging.getLogger("protontricks")
 
@@ -384,10 +389,10 @@ APPINFO_STRUCT_HEADER = "<4sL"
 APPINFO_STRUCT_SECTION = "<LLLLQ20sL"
 
 
-def get_appinfo_sections(path):
+def iter_appinfo_sections(path):
     """
-    Parse an appinfo.vdf file and return all the deserialized binary VDF
-    objects inside it
+    Parse an appinfo.vdf file and iterate through all the binary VDF objects
+    inside it
     """
     # appinfo.vdf is not actually a (binary) VDF file, but a binary file
     # containing multiple binary VDF sections.
@@ -407,8 +412,6 @@ def get_appinfo_sections(path):
     if magic != b"'DV\x07":
         raise SyntaxError("Invalid file magic number")
 
-    sections = []
-
     section_size = struct.calcsize(APPINFO_STRUCT_SECTION)
     while True:
         # We don't need any of the fields besides 'entry_size',
@@ -424,53 +427,41 @@ def get_appinfo_sections(path):
 
         vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
         vdf_d = lower_dict(vdf_d)
-        sections.append(vdf_d)
+        yield vdf_d
 
         i += vdf_section_size
 
         if i == len(data) - 4:
-            return sections
+            return
 
 
-def get_tool_appid(compat_tool_name, appinfo_path):
+def get_appinfo_sections(path):
+    """
+    Parse an appinfo.vdf file and return all the deserialized binary VDF
+    objects inside it
+    """
+    return list(iter_appinfo_sections(path))
+
+
+def get_tool_appid(compat_tool_name, steam_play_manifest):
     """
     Get the App ID for compatibility tool by the compat tool name
     used in STEAM_DIR/config/config.vdf
     """
-    # Parse all the individual VDF sections in appinfo.vdf to a list
-    vdf_sections = get_appinfo_sections(appinfo_path)
+    compat_tools = steam_play_manifest["appinfo"]["extended"]["compat_tools"]
 
-    for section in vdf_sections:
-        if not section.get("appinfo", {}).get("extended", {}).get(
-                "compat_tools", None):
-            continue
+    for default_name, entry in compat_tools.items():
+        # A single compatibility tool may have multiple valid names
+        # eg. "proton_316" and "proton_316_beta"
+        aliases = [default_name]
 
-        compat_tools = section["appinfo"]["extended"]["compat_tools"]
+        # Each compat tool entry can also contain an 'aliases' field
+        # with a different compat tool name
+        if "aliases" in entry:
+            aliases += entry["aliases"].split(",")
 
-        for default_name, entry in compat_tools.items():
-            # A single compatibility tool may have multiple valid names
-            # eg. "proton_316" and "proton_316_beta"
-            aliases = [default_name]
-
-            # Each compat tool entry can also contain an 'aliases' field
-            # with a different compat tool name
-            if "aliases" in entry:
-                # All of the appinfo.vdf files encountered so far
-                # only have a single string inside the "aliases" field,
-                # but let's assume the field could be a list of strings
-                # as well
-                if isinstance(entry["aliases"], str):
-                    aliases.append(entry["aliases"])
-                elif isinstance(entry["aliases"], list):
-                    aliases += entry["aliases"]
-                else:
-                    raise TypeError(
-                        "Unexpected type {} for 'fields' in "
-                        "appinfo.vdf".format(type(aliases))
-                    )
-
-            if compat_tool_name in aliases:
-                return entry["appid"]
+        if compat_tool_name in aliases:
+            return entry["appid"]
 
     logger.error("Could not find the Steam Play manifest in appinfo.vdf")
 
@@ -557,7 +548,11 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
     # Try option 2:
     # Find the corresponding App ID from <steam_path>/appcache/appinfo.vdf
     appinfo_path = steam_path / "appcache" / "appinfo.vdf"
-    tool_appid = get_tool_appid(compat_tool_name, appinfo_path)
+    steam_play_manifest = next(
+        section for section in iter_appinfo_sections(appinfo_path)
+        if section["appinfo"]["appid"] == STEAM_PLAY_MANIFESTS_APPID
+    )
+    tool_appid = get_tool_appid(compat_tool_name, steam_play_manifest)
 
     if not tool_appid:
         logger.error(

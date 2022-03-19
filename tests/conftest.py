@@ -290,7 +290,7 @@ def appinfo_factory(steam_dir):
 
         # Serialize the Proton manifest VDF section, which contains
         # information about different Proton installations
-        appid = 123500
+        appid = 891390
         infostate = 2
         last_updated = 2
         access_token = 2
@@ -309,6 +309,7 @@ def appinfo_factory(steam_dir):
 
         binary_vdf = vdf.binary_dumps({
             "appinfo": {
+                "appid": appid,
                 "extended": {
                     "compat_tools": compat_tool_entries
                 }
