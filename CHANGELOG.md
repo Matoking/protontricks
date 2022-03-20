@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [1.8.1] - 2022-03-20
 ### Added
  - Prompt the user to update Flatpak permissions if inaccessible paths are detected
 
@@ -202,7 +202,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.8.0...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.8.1...HEAD
+[1.8.1]: https://github.com/Matoking/protontricks/compare/1.8.0...1.8.1
 [1.8.0]: https://github.com/Matoking/protontricks/compare/1.7.0...1.8.0
 [1.7.0]: https://github.com/Matoking/protontricks/compare/1.6.2...1.7.0
 [1.6.2]: https://github.com/Matoking/protontricks/compare/1.6.1...1.6.2
