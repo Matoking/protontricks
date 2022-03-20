@@ -40,7 +40,7 @@ class TestGetInaccessiblePaths:
         """
         assert get_inaccessible_paths(["/fake", "/fake_2"]) == []
 
-    def test_flatpak_active(self, monkeypatch, tmp_path):
+    def test_flatpak_active(self, monkeypatch, home_dir, tmp_path):
         """
         Test that inaccessible paths are correctly detected when
         Flatpak is active
@@ -62,13 +62,14 @@ class TestGetInaccessiblePaths:
         )
 
         inaccessible_paths = get_inaccessible_paths([
-            "/mnt/SSD_A", "/mnt/SSD_C", "~/.local/share/SteamOld",
-            "~/.local/share/Steam"
+            "/mnt/SSD_A", "/mnt/SSD_C",
+            str(home_dir / ".local/share/SteamOld"),
+            str(home_dir / ".local/share/Steam")
         ])
         assert len(inaccessible_paths) == 2
         assert str(inaccessible_paths[0]) == "/mnt/SSD_C"
         assert str(inaccessible_paths[1]) == \
-            str(Path("~/.local/share/SteamOld").resolve())
+            str(Path("~/.local/share/SteamOld").expanduser())
 
     def test_flatpak_home(self, monkeypatch, tmp_path, home_dir):
         """
@@ -100,6 +101,35 @@ class TestGetInaccessiblePaths:
         assert len(inaccessible_paths) == 2
         assert str(inaccessible_paths[0]) == "/mnt/SSD_A"
         assert str(inaccessible_paths[1]) == "/var/fake_path"
+
+    def test_flatpak_home_tilde(self, monkeypatch, tmp_path, home_dir):
+        """
+        Test that tilde slash is expanded if included in the list of
+        file systems
+        """
+        flatpak_info_path = tmp_path / "flatpak-info"
+
+        flatpak_info_path.write_text(
+            "[Application]\n"
+            "name=fake.flatpak.Protontricks\n"
+            "\n"
+            "[Instance]\n"
+            "flatpak-version=1.12.1\n"
+            "\n"
+            "[Context]\n"
+            "filesystems=~/fake_path"
+        )
+        monkeypatch.setattr(
+            "protontricks.flatpak.FLATPAK_INFO_PATH", str(flatpak_info_path)
+        )
+
+        inaccessible_paths = get_inaccessible_paths([
+            str(home_dir / "fake_path"),
+            str(home_dir / "fake_path_2")
+        ])
+
+        assert len(inaccessible_paths) == 1
+        assert str(inaccessible_paths[0]) == str(home_dir / "fake_path_2")
 
     def test_flatpak_host(self, monkeypatch, tmp_path, home_dir):
         """

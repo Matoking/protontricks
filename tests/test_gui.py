@@ -225,6 +225,39 @@ class TestPromptFilesystemAccess:
         assert "--filesystem=/mnt/fake_SSD_2" in record.message
         assert str(home_dir / "fake_path") not in record.message
 
+    def test_prompt_home_dir(self, home_dir, tmp_path, caplog):
+        """
+        Test that calling 'prompt_filesystem_access' with a path
+        in the home directory will result in the command using a tilde slash
+        as the shorthand instead
+        """
+        flatpak_info_path = tmp_path / "flatpak-info"
+
+        flatpak_info_path.write_text(
+            "[Application]\n"
+            "name=fake.flatpak.Protontricks\n"
+            "\n"
+            "[Instance]\n"
+            "flatpak-version=1.12.1\n"
+            "\n"
+            "[Context]\n"
+            "filesystems=/mnt/SSD_A"
+        )
+        prompt_filesystem_access(
+            [home_dir / "fake_path", "/mnt/SSD_A"],
+            show_dialog=False
+        )
+
+        assert len(caplog.records) == 1
+
+        record = caplog.records[0]
+
+        assert record.levelname == "WARNING"
+        assert "Protontricks does not appear to have access" in record.message
+
+        assert "--filesystem='~/fake_path'" in record.message
+        assert "/mnt/SSD_A" not in record.message
+
     def test_prompt_with_desktop_no_dialog(self, home_dir, gui_provider):
         """
         Test that calling 'prompt_filesystem_access' with 'show_dialog'

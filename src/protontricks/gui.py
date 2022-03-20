@@ -283,6 +283,20 @@ def prompt_filesystem_access(paths, show_dialog=False):
     :param show_dialog: Show a dialog. If disabled, just print the message
                         instead.
     """
+    def _map_path(path):
+        """
+        Map path to a path to be added into the `flatpak override` command.
+        This means adding a tilde slash if the path is inside the home
+        directory.
+        """
+        home_dir = str(Path.home())
+        path = str(path)
+
+        if path.startswith(home_dir):
+            path = f"~/{path[len(home_dir)+1:]}"
+
+        return path
+
     config = get_config()
 
     inaccessible_paths = get_inaccessible_paths(paths)
@@ -301,7 +315,7 @@ def prompt_filesystem_access(paths, show_dialog=False):
         return None
 
     cmd_filesystem = " ".join([
-        "--filesystem={}".format(shlex.quote(path))
+        "--filesystem={}".format(shlex.quote(_map_path(path)))
         for path in remaining_paths
     ])
 

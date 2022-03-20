@@ -84,14 +84,19 @@ def get_inaccessible_paths(paths):
             return None
 
         if path.startswith("xdg-data/"):
-            return \
-                Path("~/.local/share").resolve() / path.split("xdg-data/")[1]
+            return (
+                Path("~/.local/share").expanduser()
+                / path.split("xdg-data/")[1]
+            )
 
         if path == "home":
             return Path.home()
 
         if path.startswith("/"):
             return Path(path).resolve()
+
+        if path.startswith("~"):
+            return Path(path).expanduser()
 
         logger.warning(
             "Unknown Flatpak file system permission '%s', ignoring.",
