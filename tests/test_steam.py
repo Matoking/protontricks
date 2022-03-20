@@ -211,6 +211,144 @@ class TestFindSteamCompatToolApp:
         # version for this game
         assert proton_app.name == "Proton 6.66"
 
+    @pytest.mark.usefixtures("verbose_logging")
+    def test_find_legacy_tool_mapping_global(
+            self, steam_dir, steam_config_path, proton_factory,
+            steam_app_factory):
+        """
+        Check that legacy tool mappings are detected
+        """
+        custom_proton_a = proton_factory(
+            name="Proton A", compat_tool_name="proton_a", appid=123
+        )
+        custom_proton_b = proton_factory(
+            name="Proton B", compat_tool_name="proton_b", appid=321
+        )
+
+        # Set Proton A as the game specific Proton, and B as the global default
+        steam_config_path.write_text(
+            vdf.dumps({
+                "InstallConfigStore": {
+                    "Software": {
+                        "Valve": {
+                            "Steam": {
+                                "ToolMapping": {
+                                    "0": {
+                                        "name": "proton_b"
+                                    },
+                                    "10": {
+                                        "name": "proton_a"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        )
+
+        # Game specific Proton detected correctly
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[custom_proton_a, custom_proton_b],
+            appid=10
+        )
+        assert proton_app.name == "Proton A"
+
+        # Global Proton detected correctly
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[custom_proton_a, custom_proton_b]
+        )
+        assert proton_app.name == "Proton B"
+
+
+
+    @pytest.mark.usefixtures("steam_deck", "verbose_logging")
+    def test_find_steam_deck_profile(
+            self, steam_app_factory, proton_factory, appinfo_factory,
+            default_proton, steam_config_path, steam_dir):
+        """
+        Create a Steam Deck compatibility profile for a game and ensure
+        that it is used if `config.vdf` doesn't contain any configuration
+        """
+        custom_proton = proton_factory(
+            name="Proton 7.77", compat_tool_name="proton_7_77", appid=777
+        )
+
+        steam_app_factory(name="Fake game", appid=10)
+
+        # Add Steam Deck compatibility profile
+        appinfo_factory(
+            appid=10,
+            appinfo={
+                "common": {
+                    "steam_deck_compatibility": {
+                        "configuration": {
+                            "recommended_runtime": "proton_7_77"
+                        }
+                    }
+                }
+            }
+        )
+
+        # Remove the tool mappings from 'config.vdf' to ensure it won't be used
+        steam_config_path.write_text(
+            vdf.dumps({
+                "InstallConfigStore": {
+                    "Software": {
+                        "Valve": {
+                            "Steam": {}
+                        }
+                    }
+                }
+            })
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[default_proton, custom_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 7.77"
+
+    @pytest.mark.usefixtures("verbose_logging")
+    def test_find_steam_default_proton(
+            self, steam_app_factory, steam_dir, default_proton,
+            proton_factory, steam_config_path, caplog):
+        """
+        Ensure the function returns the stable version of Proton if no
+        other configuration is available
+        """
+        steam_app_factory(name="Fake game", appid=10)
+
+        # Clear the 'config.vdf' and remove any tool mappings, emulating
+        # a situation in which the user has only installed games but hasn't
+        # touched any Steam Play settings
+        steam_config_path.write_text(
+            vdf.dumps({
+                "InstallConfigStore": {
+                    "Software": {
+                        "Valve": {
+                            "Steam": {}
+                        }
+                    }
+                }
+            })
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[default_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 4.20"
+
+        record = caplog.records[-2]
+        assert "Using stable version of Proton" in record.message
+
 
 class TestFindLibraryPaths:
     @pytest.mark.parametrize(

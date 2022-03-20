@@ -463,8 +463,6 @@ def get_tool_appid(compat_tool_name, steam_play_manifest):
         if compat_tool_name in aliases:
             return entry["appid"]
 
-    logger.error("Could not find the Steam Play manifest in appinfo.vdf")
-
     return None
 
 
@@ -479,17 +477,49 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
     The compatibility tool *may* not be a Proton installation. This can be
     checked using `SteamApp.is_proton`.
     """
-    # 1. Find the name of compatibility tool in use
-    #    from STEAM_DIR/config/config.vdf
-    # 2. If the compatibility tool's name can be found directly
-    #    in the list of apps we discovered earlier, return that
-    # 3. ...or if the name can't be found that way, parse
-    #    the file in STEAM_DIR/appcache/appinfo.vdf to find the compatibility
-    #    tool's App ID
+    def _get_tool_app(compat_tool_name, steam_apps, steam_play_manifest):
+        tool_appid = get_tool_appid(compat_tool_name, steam_play_manifest)
+
+        if not tool_appid:
+            return None
+
+        try:
+            app = next(
+                app for app in steam_apps if app.appid == tool_appid
+            )
+            return app
+        except StopIteration:
+            return None
+
+    # Determine which Proton version to use (either globally or for
+    # a specific app if `appid` was provided) by checking
+    # `<steam_dir>/config/config.vdf` and `<steam_dir>/appcache/appinfo.vdf`.
+    # Multiple configuration values might be found. In such case, select the
+    # one with the highest priority.
     config_vdf_path = steam_path / "config" / "config.vdf"
     content = config_vdf_path.read_text()
 
     vdf_data = lower_dict(vdf.loads(content))
+
+    appinfo_path = steam_path / "appcache" / "appinfo.vdf"
+    appinfo_sections = [
+        section for section in iter_appinfo_sections(appinfo_path)
+        if section["appinfo"]["appid"] in (STEAM_PLAY_MANIFESTS_APPID, appid)
+    ]
+    steam_play_manifest = next(
+        section for section in appinfo_sections
+        if section["appinfo"]["appid"] == STEAM_PLAY_MANIFESTS_APPID
+    )
+
+    try:
+        app_section = next(
+            section for section in appinfo_sections
+            if section["appinfo"]["appid"] == appid
+        )
+    except StopIteration:
+        # App ID was most likely not provided
+        app_section = None
+
     # ToolMapping seems to be used in older Steam beta releases
     try:
         tool_mapping = (
@@ -509,26 +539,78 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
     except KeyError:
         compat_tool_mapping = {}
 
-    compat_tool_name = None
-
     # The name of potential names in order of priority
-    potential_names = [
-        compat_tool_mapping.get(str(appid), {}).get("name", None),
-        compat_tool_mapping.get("0", {}).get("name", None),
-        tool_mapping.get(str(appid), {}).get("name", None),
-        tool_mapping.get("0", {}).get("name", None)
-    ]
-    # Get the first name that was valid
+    potential_names = []
+
+    # Game specific user settings have the 1st priority, if they exist
+    if compat_tool_mapping.get(str(appid), {}).get("name"):
+        tool_name = compat_tool_mapping[str(appid)]["name"]
+        logger.info(
+            "User has configured app Proton version (CompatToolMapping): %s",
+            tool_name
+        )
+        potential_names.append(tool_name)
+
+    # Steam Deck compatibility profile has the 2nd highest priority
+    if app_section and is_steam_deck():
+        logger.info(
+            "We're on a Steam Deck, checking if compatibility profile is "
+            "available for the app"
+        )
+        recommended_runtime = (
+            app_section["appinfo"]
+            .get("common", {})
+            .get("steam_deck_compatibility", {})
+            .get("configuration", {})
+            .get("recommended_runtime", None)
+        )
+
+        if recommended_runtime not in (None, "native"):
+            logger.info(
+                "App has Steam Deck compatibility profile with Proton "
+                "version: %s",
+                recommended_runtime
+            )
+            potential_names.append(recommended_runtime)
+
+    # Global user settings have the 3rd highest priority
+    if compat_tool_mapping.get("0", {}).get("name"):
+        tool_name = compat_tool_mapping["0"]["name"]
+        logger.info(
+            "User has configured default Proton version (CompatToolMapping): "
+            "%s",
+            tool_name
+        )
+        potential_names.append(tool_name)
+
+    # Legacy user settings (ToolMapping) have the 4th highest priority
+    if tool_mapping.get(str(appid), {}).get("name", {}):
+        tool_name = tool_mapping[str(appid)]["name"]
+        logger.info(
+            "User has configured app Proton version (ToolMapping): %s",
+            tool_name
+        )
+        potential_names.append(tool_name)
+
+    if tool_mapping.get("0", {}).get("name", {}):
+        tool_name = tool_mapping["0"]["name"]
+        logger.info(
+            "User has configured default Proton version (ToolMapping): %s",
+            tool_name
+        )
+        potential_names.append(tool_name)
+
+    # Get the first name that was valid, or use stable Proton as fallback
     try:
         compat_tool_name = next(name for name in potential_names if name)
     except StopIteration:
-        logger.error(
-            "No compatibility tool found in config.vdf. "
-            "Have you enabled Steam Play for all titles under Steam settings?"
+        logger.info(
+            "No compatibility tool found by reading Steam configuration. "
+            "Using stable version of Proton as fallback."
         )
-        return None
+        compat_tool_name = "proton-stable"
 
-    # We've got the name from config.vdf,
+    # We've got a compatibility tool name,
     # now there are two possible ways to find the installation
     # 1. It's a custom compatibility tool, and we simply need to find
     #    a SteamApp by its internal name
@@ -537,7 +619,9 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
 
     # Let's try option 1 first
     try:
-        app = next(app for app in steam_apps if app.name == compat_tool_name)
+        app = next(
+            app for app in steam_apps if app.name == compat_tool_name
+        )
         logger.info(
             "Found active custom compatibility tool: %s", app.name
         )
@@ -547,28 +631,19 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
 
     # Try option 2:
     # Find the corresponding App ID from <steam_path>/appcache/appinfo.vdf
-    appinfo_path = steam_path / "appcache" / "appinfo.vdf"
-    steam_play_manifest = next(
-        section for section in iter_appinfo_sections(appinfo_path)
-        if section["appinfo"]["appid"] == STEAM_PLAY_MANIFESTS_APPID
+    tool_app = _get_tool_app(
+        compat_tool_name=compat_tool_name,
+        steam_apps=steam_apps,
+        steam_play_manifest=steam_play_manifest
     )
-    tool_appid = get_tool_appid(compat_tool_name, steam_play_manifest)
 
-    if not tool_appid:
-        logger.error(
-            "Could not find compatibility tool's App ID from appinfo.vdf"
-        )
-        return None
-
-    # We've now got the appid. Return the corresponding SteamApp
-    try:
-        app = next(app for app in steam_apps if app.appid == tool_appid)
+    if tool_app:
         logger.info(
-            "Found active compatibility tool: %s", app.name
+            "Found active compatibility tool: %s", tool_app.name
         )
-        return app
-    except StopIteration:
-        return None
+        return tool_app
+
+    logger.error("Could not find configured Proton installation!")
 
 
 def find_appid_proton_prefix(appid, steam_lib_paths):

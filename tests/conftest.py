@@ -14,6 +14,7 @@ from protontricks.cli.desktop_install import \
     cli as desktop_install_cli_entrypoint
 from protontricks.cli.launch import cli as launch_cli_entrypoint
 from protontricks.cli.main import cli as main_cli_entrypoint
+from protontricks.cli.util import enable_logging
 from protontricks.gui import get_gui_provider
 from protontricks.steam import (APPINFO_STRUCT_HEADER, APPINFO_STRUCT_SECTION,
                                 SteamApp, get_appid_from_shortcut)
@@ -40,6 +41,15 @@ def cleanup():
 
     # Clear log handlers
     logging.getLogger("protontricks").handlers.clear()
+
+
+@pytest.fixture(scope="function")
+def verbose_logging():
+    """
+    Enable verbose logging to ensure INFO messages are captured by
+    the caplog fixture as well
+    """
+    enable_logging(info=True)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -267,68 +277,111 @@ def steam_config_path(steam_dir):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def appinfo_factory(steam_dir):
+def appinfo_compat_tool_factory(appinfo_factory):
     """
-    Factory function to add entries to the appinfo.vdf binary file
+    Factory function to add compat tool entries to the appinfo.vdf binary file
     """
     compat_tools = []
 
-    (steam_dir / "appcache" / "appinfo.vdf").touch()
+    def func(proton_app, compat_tool_name, aliases=None):
+        if not aliases:
+            aliases = []
 
-    def func(proton_app, compat_tool_name):
+        aliases.append(compat_tool_name)
+
         compat_tools.append({
             "appid": proton_app.appid,
-            "compat_tool_name": compat_tool_name
+            "compat_tool_name": compat_tool_name,
+            "aliases": [compat_tool_name] + aliases
         })
 
-        # Add the header section
+        compat_tool_entries = {}
+
+        for compat_tool in compat_tools:
+            compat_tool_entries[compat_tool["compat_tool_name"]] = {
+                "aliases": ",".join(compat_tool["aliases"]),
+                "appid": compat_tool["appid"]
+            }
+
+        # Update the appinfo.vdf with the compat tools that have been
+        # added so far.
+        appinfo_factory(
+            appid=891390,  # Steam Play 2.0 Manifests app ID,
+            appinfo={
+                "extended": {
+                    "compat_tools": compat_tool_entries
+                }
+            }
+        )
+
+    return func
+
+
+@pytest.fixture(scope="function", autouse=True)
+def appinfo_factory(steam_dir):
+    """
+    Factory function to add app entries to the appinfo.vdf binary file
+    """
+    app_entries = {
+        # Populate the file with empty Steam Play 2.0 Manifests.
+        # Protontricks assumes this always exists.
+        891390: {
+            "appinfo": {
+                "appid": 891390,
+                "extended": {
+                    "compat_tools": {}
+                }
+            }
+        }
+    }
+
+    def save_vdf():
+        # Compile all app entries to the appinfo.vdf file.
+        # Start with the header.
         content = struct.pack(
             APPINFO_STRUCT_HEADER,
             b"'DV\x07",  # Magic number
             1  # Universe, protontricks ignores this
         )
 
-        # Serialize the Proton manifest VDF section, which contains
-        # information about different Proton installations
-        appid = 891390
+        # The fields in the header preceding every VDF section.
+        # Use hardcoded values for everything except the app ID and section
+        # size.
         infostate = 2
         last_updated = 2
         access_token = 2
         change_number = 2
         sha_hash = b"0"*20
 
-        compat_tool_entries = {}
+        for appid_, entry in app_entries.items():
+            binary_vdf = vdf.binary_dumps(entry)
+            entry_size = len(binary_vdf) + 40
 
-        for compat_tool in compat_tools:
-            compat_tool_entries[compat_tool["compat_tool_name"]] = {
-                # The name implies it could be a list, but in practice
-                # it has been a string. Do the same thing here.
-                "aliases": compat_tool["compat_tool_name"],
-                "appid": compat_tool["appid"]
-            }
-
-        binary_vdf = vdf.binary_dumps({
-            "appinfo": {
-                "appid": appid,
-                "extended": {
-                    "compat_tools": compat_tool_entries
-                }
-            }
-        })
-
-        entry_size = len(binary_vdf) + 40
-
-        # Add the only VDF binary section
-        content += struct.pack(
-            APPINFO_STRUCT_SECTION,
-            appid, entry_size, infostate, last_updated, access_token,
-            sha_hash, change_number
-        )
-        content += binary_vdf
+            content += struct.pack(
+                APPINFO_STRUCT_SECTION,
+                appid_, entry_size, infostate, last_updated, access_token,
+                sha_hash, change_number
+            )
+            content += binary_vdf
 
         # Add the EOF section
         content += b"ffff"
         (steam_dir / "appcache" / "appinfo.vdf").write_bytes(content)
+
+    def func(appid, appinfo):
+        entry = {
+            "appinfo": {
+                "appid": appid
+            }
+        }
+        entry["appinfo"].update(appinfo)
+
+        app_entries[appid] = entry
+
+        save_vdf()
+
+    # Create the empty VDF file
+    save_vdf()
 
     return func
 
@@ -429,13 +482,17 @@ def steam_app_factory(steam_dir, steam_config_path):
 
 
 @pytest.fixture(scope="function")
-def proton_factory(steam_app_factory, appinfo_factory, steam_config_path):
+def proton_factory(
+        steam_app_factory, appinfo_compat_tool_factory, steam_config_path):
     """
     Factory function to add fake Proton installations
     """
     def func(
             name, appid, compat_tool_name, is_default_proton=True,
-            library_dir=None, required_tool_app=None):
+            library_dir=None, required_tool_app=None, aliases=None):
+        if not aliases:
+            aliases = []
+
         steam_app = steam_app_factory(
             name=name, appid=appid, library_dir=library_dir,
             required_tool_app=required_tool_app
@@ -463,8 +520,9 @@ def proton_factory(steam_app_factory, appinfo_factory, steam_config_path):
 
         # Add the Proton installation to the appinfo.vdf, which contains
         # a manifest of all official Proton installations
-        appinfo_factory(
-            proton_app=steam_app, compat_tool_name=compat_tool_name
+        appinfo_compat_tool_factory(
+            proton_app=steam_app, compat_tool_name=compat_tool_name,
+            aliases=aliases
         )
 
         return steam_app
@@ -473,7 +531,8 @@ def proton_factory(steam_app_factory, appinfo_factory, steam_config_path):
 
 
 @pytest.fixture(scope="function")
-def runtime_app_factory(steam_app_factory, appinfo_factory, steam_config_path):
+def runtime_app_factory(
+        steam_app_factory, appinfo_compat_tool_factory, steam_config_path):
     """
     Factory function to add fake Steam Runtimes that are installed as Steam
     apps
@@ -574,7 +633,7 @@ def default_proton(proton_factory):
     """
     return proton_factory(
         name="Proton 4.20", appid=123450, compat_tool_name="proton_420",
-        is_default_proton=True
+        is_default_proton=True, aliases=["proton-stable"]
     )
 
 

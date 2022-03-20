@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Prompt the user to update Flatpak permissions if inaccessible paths are detected
 
+### Fixed
+ - Fix Proton discovery on Steam Deck
+
 ### Removed
  - Drop Python 3.5 support
 
