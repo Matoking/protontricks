@@ -52,6 +52,27 @@ if [[ -n "$PROTONTRICKS_BACKGROUND_WINESERVER"
 fi
 
 if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
+    if [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
+        # Check if the launch script is named 'pressure-vessel-launch' or
+        # 'steam-runtime-launch-client'. The latter name is newer and used
+        # since steam-runtime-tools v0.20220420.0
+        launch_script=""
+        script_names=('pressure-vessel-launch' 'steam-runtime-launch-client')
+        for name in "${script_names[@]}"; do
+            if [[ -f "$STEAM_RUNTIME_PATH/pressure-vessel/bin/$name" ]]; then
+                launch_script="$STEAM_RUNTIME_PATH/pressure-vessel/bin/$name"
+                log_info "Found Steam Runtime launch client at $launch_script"
+            fi
+        done
+
+        if [[ "$launch_script" = "" ]]; then
+            echo "Launch script could not be found, aborting..."
+            exit 1
+        fi
+
+        export STEAM_RUNTIME_LAUNCH_SCRIPT="$launch_script"
+    fi
+
     # Try to detect if wineserver is already running, and if so, copy a few
     # environment variables from it to ensure our own Wine processes
     # are able to run at the same time without any issues.
@@ -152,7 +173,7 @@ elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
         done
     fi
 
-    exec "$STEAM_RUNTIME_PATH"/pressure-vessel/bin/pressure-vessel-launch \
+    exec "$STEAM_RUNTIME_LAUNCH_SCRIPT" \
     --share-pids --socket="$PROTONTRICKS_TEMP_PATH/launcher.sock" \
     --env=PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
     --pass-env-matching="*" -- "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"

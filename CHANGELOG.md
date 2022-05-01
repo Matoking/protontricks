@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
+## [Unreleased]
+### Fixed
+ - Fix Wine crash on newer Steam Runtime installations due to renamed runtime executable
+
 ## [1.8.1] - 2022-03-20
 ### Added
  - Prompt the user to update Flatpak permissions if inaccessible paths are detected
