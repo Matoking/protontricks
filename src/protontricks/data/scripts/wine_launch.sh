@@ -173,10 +173,25 @@ elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
         done
     fi
 
+    # Pass all environment variables to 'steam-runtime-launch-client' except
+    # for problematic variables that should be determined by the launch command
+    # instead.
+    env_params=()
+    for env_name in $(compgen -e); do
+        # Skip vars that should be set by 'steam-runtime-launch-client' instead
+        if [[ "$env_name" = "XAUTHORITY"
+              || "$env_name" = "DISPLAY"
+              || "$env_name" = "WAYLAND_DISPLAY" ]]; then
+            continue
+        fi
+
+        env_params+=(--pass-env "${env_name}")
+    done
+
     exec "$STEAM_RUNTIME_LAUNCH_SCRIPT" \
     --share-pids --socket="$PROTONTRICKS_TEMP_PATH/launcher.sock" \
     --env=PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
-    --pass-env-matching="*" -- "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
+    "${env_params[@]}" -- "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
 else
     echo "Unknown PROTONTRICKS_STEAM_RUNTIME value $PROTONTRICKS_STEAM_RUNTIME"
     exit 1
