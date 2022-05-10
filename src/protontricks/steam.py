@@ -1022,7 +1022,15 @@ def get_custom_windows_shortcuts(steam_path):
         shortcut_id = int(shortcut_id)
 
         if "appid" in shortcut_data:
-            appid = shortcut_data["appid"] & 0xffffffff
+            try:
+                appid = shortcut_data["appid"] & 0xffffffff
+            except TypeError:
+                logger.info(
+                    "Skipping unrecognized non-Steam shortcut with app ID "
+                    "'%s'",
+                    shortcut_data["appid"]
+                )
+                continue
         else:
             appid = get_appid_from_shortcut(
                 target=shortcut_data["exe"], name=shortcut_data["appname"]

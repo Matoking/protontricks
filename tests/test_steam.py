@@ -900,6 +900,40 @@ class TestGetWindowsShortcuts:
         assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
         assert shortcut_apps[0].appid == 4149337689
 
+    @pytest.mark.usefixtures("verbose_logging")
+    def test_get_custom_windows_shortcuts_non_numeric_appid(
+            self, steam_dir, shortcut_factory, caplog):
+        """
+        Retrieve custom Windows shortcuts when one of the contained shortcuts
+        has a non-numeric app ID. This is usually the case for app IDs created
+        with 3rd party applications such as Lutris.
+        """
+        # This won't be reported by Protontricks
+        shortcut_factory(
+            install_dir="/usr/bin", name="lutris",
+            appid_in_vdf=True, appid="lutris-fake-game"
+        )
+        shortcut_factory(
+            install_dir="fake/path/", name="fakegame.exe", appid_in_vdf=True
+        )
+
+        shortcut_apps = get_custom_windows_shortcuts(steam_dir)
+
+        assert len(shortcut_apps) == 1
+        assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
+
+        # The non-numeric app ID was logged
+        record = next(
+            record for record in caplog.records
+            if "Skipping unrecognized" in record.message
+        )
+
+        assert record.levelname == "INFO"
+        assert (
+            "Skipping unrecognized non-Steam shortcut with "
+            "app ID 'lutris-fake-game'" in record.message
+        )
+
 
 class TestIsSteamDeck:
     def test_not_steam_deck(self):

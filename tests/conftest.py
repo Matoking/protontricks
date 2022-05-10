@@ -194,14 +194,15 @@ def shortcut_factory(steam_dir, steam_user):
     """
     shortcuts_by_user = defaultdict(list)
 
-    def func(install_dir, name, steamid64=None, appid_in_vdf=False):
+    def func(
+            install_dir, name, steamid64=None, appid_in_vdf=False, appid=None):
         if not steamid64:
             steamid64 = steam_user
 
         # Update shortcuts.vdf first
         steamid3 = int(steamid64) & 0xffffffff
         shortcuts_by_user[steamid3].append({
-            "install_dir": install_dir, "name": name
+            "install_dir": install_dir, "name": name, "appid": appid
         })
 
         shortcut_path = (
@@ -213,13 +214,14 @@ def shortcut_factory(steam_dir, steam_user):
         for shortcut_data in shortcuts_by_user[steamid3]:
             install_dir_ = shortcut_data["install_dir"]
             name_ = shortcut_data["name"]
+            appid_ = shortcut_data["appid"]
 
             entry = {
                 "AppName": name_,
                 "StartDir": install_dir_,
                 "exe": str(Path(install_dir_) / name_)
             }
-            # Derive the shortcut ID
+            # Derive the shortcut ID like Steam would
             crc_data = b"".join([
                 entry["exe"].encode("utf-8"),
                 entry["AppName"].encode("utf-8")
@@ -231,15 +233,21 @@ def shortcut_factory(steam_dir, steam_user):
             if appid_in_vdf:
                 # Store the app ID in `shortcuts.vdf`. This is similar
                 # in behavior to newer Steam releases.
-                entry["appid"] = ~(result ^ 0xffffffff)
+                if appid_ is None:
+                    entry["appid"] = ~(result ^ 0xffffffff)
+                else:
+                    # For pre-determined app IDs, such as those created by
+                    # Lutris, use them as-is
+                    entry["appid"] = appid_
 
             data["shortcuts"][str(shortcut_id)] = entry
 
         shortcut_path.write_bytes(vdf.binary_dumps(data))
 
-        appid = get_appid_from_shortcut(
-            target=str(Path(install_dir) / name), name=name
-        )
+        if not appid:
+            appid = get_appid_from_shortcut(
+                target=str(Path(install_dir) / name), name=name
+            )
 
         # Create the fake prefix
         (steam_dir / "steamapps" / "compatdata" / str(appid) / "pfx").mkdir(
