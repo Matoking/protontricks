@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [1.8.2] - 2022-05-16
 ### Fixed
  - Fix Wine crash on newer Steam Runtime installations due to renamed runtime executable
  - Fix graphical Wine applications crashing on Wayland
@@ -208,7 +208,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.8.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.8.2...HEAD
+[1.8.2]: https://github.com/Matoking/protontricks/compare/1.8.1...1.8.2
 [1.8.1]: https://github.com/Matoking/protontricks/compare/1.8.0...1.8.1
 [1.8.0]: https://github.com/Matoking/protontricks/compare/1.7.0...1.8.0
 [1.7.0]: https://github.com/Matoking/protontricks/compare/1.6.2...1.7.0
