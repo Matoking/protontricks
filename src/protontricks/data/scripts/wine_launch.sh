@@ -37,10 +37,10 @@ WINESERVER_ENV_VARS_TO_COPY=(
 )
 
 if [[ -n "$PROTONTRICKS_BACKGROUND_WINESERVER"
-       && "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap"
        && "$0" = "@@script_path@@"
     ]]; then
-    # Check if we're calling 'wineserver -w' inside a bwrap sandbox.
+    # Check if we're calling 'wineserver -w' when background wineserver is
+    # enabled.
     # If so, prompt our keepalive wineserver to restart itself by creating
     # a 'restart' file inside the temporary directory
     if [[ "$(basename "$0")" = "wineserver"
