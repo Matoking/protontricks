@@ -861,6 +861,18 @@ class TestCLISearch:
         assert "Non-Steam shortcut: fakegame.exe (4149337689)" in result
         assert "Non-Steam shortcut: fakegame.exe (4136117770)" in result
 
+    def test_list_all_apps(self, cli, steam_app_factory):
+        """
+        List all apps using `-l` CLI flag
+        """
+        steam_app_factory(name="Game number one", appid=10)
+        steam_app_factory(name="Fake game", appid=20)
+
+        result = cli(["-l"])
+
+        assert "Game number one" in result
+        assert "Fake game" in result
+
 
 def test_cli_error_help(cli):
     """

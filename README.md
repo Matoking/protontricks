@@ -34,6 +34,9 @@ The basic command-line usage is as follows:
 # Find your game's App ID by searching for it
 protontricks -s <GAME NAME>
 
+# or by listing all games
+protontricks -l
+
 # Run winetricks for the game.
 # Any parameters in <ACTIONS> are passed directly to Winetricks.
 # Parameters specific to Protontricks need to be placed *before* <APPID>.

@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 ## [Unreleased]
+### Added
+ - Add `-l/--list` command to list all games
+
 ### Fixed
  - Fix `wineserver -w` calls hanging when legacy Steam Runtime and background wineserver are enabled
  - Do not attempt to launch bwrap-launcher if bwrap is not available

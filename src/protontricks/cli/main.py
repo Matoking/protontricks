@@ -51,6 +51,9 @@ def main(args=None):
             "Search installed games to find the APPID\n"
             "$ protontricks -s GAME_NAME\n"
             "\n"
+            "List all installed games\n"
+            "$ protontricks -l\n"
+            "\n"
             "Use Protontricks GUI to select the game\n"
             "$ protontricks --gui\n"
             "\n"
@@ -84,6 +87,10 @@ def main(args=None):
     parser.add_argument(
         "-s", "--search", type=str, dest="search", nargs="+",
         required=False, help="Search for game(s) with the given name")
+    parser.add_argument(
+        "-l", "--list", action="store_true", dest="list", default=False,
+        help="List all apps"
+    )
     parser.add_argument(
         "-c", "--command", type=str, dest="command",
         required=False,
@@ -138,7 +145,7 @@ def main(args=None):
         exit_with_error(error, args.no_term)
 
     do_command = bool(args.command)
-    do_search = bool(args.search)
+    do_list_apps = bool(args.search) or bool(args.list)
     do_gui = bool(args.gui)
     do_winetricks = bool(args.appid and args.winetricks_command)
 
@@ -155,12 +162,12 @@ def main(args=None):
         else use_bwrap
     )
 
-    if not do_command and not do_search and not do_gui and not do_winetricks:
+    if not do_command and not do_list_apps and not do_gui and not do_winetricks:
         parser.print_help()
         return
 
     # Don't allow more than one action
-    if sum([do_search, do_gui, do_winetricks, do_command]) != 1:
+    if sum([do_list_apps, do_gui, do_winetricks, do_command]) != 1:
         print("Only one action can be performed at a time.")
         parser.print_help()
         return
@@ -269,14 +276,19 @@ def main(args=None):
         )
 
         return
-    # Perform a search
-    elif args.search:
-        # Search for games
-        search_query = " ".join(args.search)
-        matching_apps = [
-            app for app in steam_apps
-            if app.is_windows_app and app.name_contains(search_query)
-        ]
+    # List apps (either all or using a search)
+    elif do_list_apps:
+        if args.list:
+            matching_apps = [
+                app for app in steam_apps if app.is_windows_app
+            ]
+        else:
+            # Search for games
+            search_query = " ".join(args.search)
+            matching_apps = [
+                app for app in steam_apps
+                if app.is_windows_app and app.name_contains(search_query)
+            ]
 
         if matching_apps:
             matching_games = "\n".join([
