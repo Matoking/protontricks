@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix `wineserver -w` calls hanging when legacy Steam Runtime and background wineserver are enabled
+ - Do not attempt to launch bwrap-launcher if bwrap is not available
 
 ## [1.8.2] - 2022-05-16
 ### Fixed

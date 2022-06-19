@@ -97,7 +97,7 @@ def main(args=None):
         "--no-runtime", action="store_true", default=False,
         help="Disable Steam Runtime")
     parser.add_argument(
-        "--no-bwrap", action="store_true", default=False,
+        "--no-bwrap", action="store_true", default=None,
         help="Disable bwrap containerization when using Steam Runtime"
     )
     parser.add_argument(
@@ -142,7 +142,13 @@ def main(args=None):
     do_gui = bool(args.gui)
     do_winetricks = bool(args.appid and args.winetricks_command)
 
-    use_bwrap = not bool(args.no_bwrap)
+    # Set 'use_bwrap' to opposite of args.no_bwrap if it was provided.
+    # If not, keep it as None and determine the correct value to use later
+    # once we've determined whether the selected Steam Runtime is a bwrap-based
+    # one.
+    use_bwrap = (
+        not bool(args.no_bwrap) if args.no_bwrap in (True, False) else None
+    )
     start_background_wineserver = (
         args.background_wineserver
         if args.background_wineserver is not None

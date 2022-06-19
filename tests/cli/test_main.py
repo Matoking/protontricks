@@ -619,6 +619,60 @@ class TestCLIRun:
         assert record.levelname == "WARNING"
         assert str(path) in record.message
 
+    @pytest.mark.usefixtures("commands")
+    def test_run_bwrap_default(
+            self, cli, steam_app_factory, steam_runtime_soldier,
+            proton_factory, commands, caplog):
+        """
+        Perform commands for two Proton apps, one using a Proton version
+        using the legacy Steam Runtime and another app using newer Steam
+        Runtime with bwrap. Ensure that the correct defaults for `use_bwrap`
+        and `background_wineserver` are used in both cases.
+
+        Regression test for #150
+        """
+        proton_factory(
+            name="Old Proton", appid=123450, compat_tool_name="old_proton",
+        )
+        proton_factory(
+            name="New Proton", appid=543210, compat_tool_name="new_proton",
+            required_tool_app=steam_runtime_soldier
+        )
+
+        steam_app_factory(
+            name="Fake game", appid=10, compat_tool_name="old_proton"
+        )
+        steam_app_factory(
+            name="Fake game 2", appid=20, compat_tool_name="new_proton"
+        )
+
+        # bwrap and background wineserver are disabled for the old app by
+        # default
+        cli(["-v", "-c", "bash", "10"])
+        assert any(
+            filter(lambda msg: "Using 'bwrap = False'" in msg, caplog.messages)
+        )
+        assert any(
+            filter(
+                lambda msg: "Using 'background-wineserver = False'" in msg,
+                caplog.messages
+            )
+        )
+
+        caplog.clear()
+
+        # bwrap and background wineserver is enabled for the new app by
+        # default
+        cli(["-v", "-c", "bash", "20"])
+        assert any(
+            filter(lambda msg: "Using 'bwrap = True'" in msg, caplog.messages)
+        )
+        assert any(
+            filter(
+                lambda msg: "Using 'background-wineserver = True'" in msg,
+                caplog.messages
+            )
+        )
 
 
 class TestCLIGUI:

@@ -233,8 +233,8 @@ def run_command(
         winetricks_path, proton_app, steam_app, command,
         use_steam_runtime=False,
         legacy_steam_runtime_path=None,
-        use_bwrap=True,
-        start_wineserver=False,
+        use_bwrap=None,
+        start_wineserver=None,
         **kwargs):
     """Run an arbitrary command with the correct environment variables
     for the given Proton app
@@ -247,10 +247,12 @@ def run_command(
     Steam Runtime installation, depending on which one is required.
 
     If 'use_bwrap' is True, run newer Steam Runtime installations using
-    bwrap based containerization.
+    bwrap based containerization. If None, determine whether bwrap is available
+    and use it if so.
 
     If 'start_wineserver' is True, launch a background wineserver and keep it
-    alive for the duration of the Protontricks call.
+    alive for the duration of the Protontricks call. If None, launch background
+    wineserver if bwrap can be enabled.
 
     :returns: Return code of the executed command
     """
@@ -297,6 +299,17 @@ def run_command(
     wine_bin_dir = None
     wine_environ["PROTONTRICKS_STEAM_RUNTIME"] = "off"
     if use_steam_runtime:
+        if use_bwrap is None:
+            use_bwrap = bool(proton_app.required_tool_app)
+            logger.info("Using 'bwrap = %s' as default value", use_bwrap)
+
+        if start_wineserver is None:
+            start_wineserver = use_bwrap
+            logger.info(
+                "Using 'background-wineserver = %s' as default value",
+                start_wineserver
+            )
+
         if proton_app.required_tool_app:
             wine_environ["STEAM_RUNTIME_PATH"] = \
                 str(proton_app.required_tool_app.install_path)
@@ -332,6 +345,10 @@ def run_command(
                 get_legacy_runtime_library_paths(
                     legacy_steam_runtime_path, proton_app
                 )
+
+            # bwrap is not available, so ensure it is not launched even if the
+            # user configured it so
+            use_bwrap = False
 
     # Configure the environment to use launch scripts that take care of
     # configuring the environment and Wine before launching the underlying
