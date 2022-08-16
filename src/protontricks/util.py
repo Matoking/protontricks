@@ -292,6 +292,7 @@ def run_command(
     wine_environ["PROTON_DIST_PATH"] = str(proton_app.proton_dist_path)
 
     wine_environ["STEAM_APP_PATH"] = str(steam_app.install_path)
+    wine_environ["STEAM_APPID"] = str(steam_app.appid)
 
     # Unset WINEARCH, which might be set for another Wine installation
     wine_environ.pop("WINEARCH", "")
@@ -377,6 +378,7 @@ def run_command(
 
     temp_dir = Path(tempfile.mkdtemp(prefix="protontricks-"))
     wine_environ["PROTONTRICKS_TEMP_PATH"] = str(temp_dir)
+    wine_environ["PROTONTRICKS_SESSION_ID"] = temp_dir.name.split("-")[1]
 
     if start_wineserver:
         wine_environ["PROTONTRICKS_BACKGROUND_WINESERVER"] = "1"

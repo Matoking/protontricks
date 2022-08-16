@@ -165,10 +165,15 @@ elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
 
     log_info "Starting Wine process using 'pressure-vessel-launch'"
 
+    # It would be nicer to use the PID here, but that would break multiple
+    # simultaneous Protontricks sessions inside Flatpak, which doesn't seem to
+    # expose the unique host PID.
+    bus_name="com.github.Matoking.protontricks.App$STEAM_APPID-$PROTONTRICKS_SESSION_ID"
+
     # Wait until socket is created
-    if [[ ! -S "$PROTONTRICKS_TEMP_PATH/launcher.sock" ]]; then
-        log_info "bwrap-launcher socket not yet available, waiting..."
-        while [[ ! -S "$PROTONTRICKS_TEMP_PATH/launcher.sock" ]]; do
+    if ! dbus-send --print-reply --dest=org.freedesktop.DBus  /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep -q "$bus_name"; then
+        log_info "bwrap-launcher D-Bus object not yet available, waiting..."
+        while ! dbus-send --print-reply --dest=org.freedesktop.DBus  /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep -q "$bus_name"; do
             sleep 0.25
         done
     fi
@@ -189,7 +194,7 @@ elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
     done
 
     exec "$STEAM_RUNTIME_LAUNCH_SCRIPT" \
-    --share-pids --socket="$PROTONTRICKS_TEMP_PATH/launcher.sock" \
+    --share-pids --bus-name="$bus_name" \
     --env=PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
     "${env_params[@]}" -- "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
 else
