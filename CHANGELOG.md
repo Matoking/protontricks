@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
  - Launch Steam Runtime sandbox with `--bus-name` parameter instead of the now deprecated `--socket`
 
+### Fixed
+ - Fix various crashes due to Wine processes under Steam Runtime sandbox using the incorrect working directory
+
 ## [1.9.0] - 2022-07-02
 ### Added
  - Add `-l/--list` command to list all games

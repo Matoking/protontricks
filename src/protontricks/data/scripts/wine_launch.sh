@@ -195,6 +195,7 @@ elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
 
     exec "$STEAM_RUNTIME_LAUNCH_SCRIPT" \
     --share-pids --bus-name="$bus_name" \
+    --directory "$PWD" \
     --env=PROTONTRICKS_INSIDE_STEAM_RUNTIME=1 \
     "${env_params[@]}" -- "$PROTONTRICKS_PROXY_SCRIPT_PATH" "$@"
 else
