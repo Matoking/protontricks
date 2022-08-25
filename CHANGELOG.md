@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 ## [Unreleased]
+### Added
+ - Print a warning when multiple Steam directories are detected and `STEAM_DIR` is not used to specify the directory
+ 
 ### Changed
  - Launch Steam Runtime sandbox with `--bus-name` parameter instead of the now deprecated `--socket`
 

@@ -5,6 +5,7 @@ import string
 import struct
 import zlib
 from pathlib import Path
+from collections import OrderedDict
 
 import vdf
 
@@ -301,7 +302,7 @@ def find_steam_path():
 
     # as far as @admalledd can tell,
     # this should always be correct for the tools root:
-    steam_root = Path.home() / ".steam" / "root"
+    steam_root = (Path.home() / ".steam" / "root").resolve()
 
     if not (steam_root / "ubuntu12_32").is_dir():
         # Check that runtime dir exists, if not make root=path and hope
@@ -323,6 +324,12 @@ def find_steam_path():
 
         return None, None
 
+    # Track the found Steam directory candidates using an ordered dict,
+    # ensuring that any duplicates are eliminated and that we pick the first
+    # candidate we find.
+    # We essentially use this as an ordered set.
+    candidates = OrderedDict()
+
     if is_flatpak_sandbox():
         # If we're inside a Flatpak sandbox,
         # prioritize Flatpak installation of Steam.
@@ -330,28 +337,44 @@ def find_steam_path():
         # from Flatpak and non-Flatpak installations of Steam.
         steam_path = \
             Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+        steam_path = steam_path.resolve()
         if has_steamapps_dir(steam_path):
-            logger.info(
-                "Found Steam directory at %s. You can also define Steam "
-                "directory manually using $STEAM_DIR",
-                steam_path
-            )
-            return steam_path, steam_path
+            candidates[(str(steam_path), str(steam_path))] = True
 
     for steam_path in COMMON_STEAM_DIRS:
         # The common Steam directories are found inside the home directory
-        steam_path = Path.home() / steam_path
+        steam_path = (Path.home() / steam_path).resolve()
         if has_steamapps_dir(steam_path):
-            logger.info(
-                "Found Steam directory at %s. You can also define Steam "
-                "directory manually using $STEAM_DIR",
-                steam_path
-            )
             if not steam_root:
-                steam_root = steam_path
-            return steam_path, steam_root
+                steam_root_ = steam_path
+            else:
+                steam_root_ = steam_root
 
-    return None, None
+            candidates[(str(steam_path), str(steam_root_))] = True
+
+    for steam_path, _ in candidates.keys():
+        logger.info("Found Steam directory at %s", steam_path)
+
+    if len(candidates) > 1:
+        logger.warning(
+            "Found multiple Steam directories. If you want to select a "
+            "specific installation, use STEAM_DIR environment variable to set "
+            "the correct directory:"
+        )
+        logger.warning("$ STEAM_DIR=<path> protontricks <appid> <command>")
+        logger.warning("The following Steam directories were found:")
+        for steam_path, _ in candidates.keys():
+            logger.warning(" %s", str(steam_path))
+
+    try:
+        steam_path, steam_root = list(candidates.keys())[0]
+        logger.info(
+            "Using Steam directory at %s. You can also define Steam directory "
+            "manually using $STEAM_DIR", str(steam_path)
+        )
+        return Path(steam_path), Path(steam_root)
+    except IndexError:
+        return None, None
 
 
 def find_legacy_steam_runtime_path(steam_root):

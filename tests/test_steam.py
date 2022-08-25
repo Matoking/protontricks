@@ -562,9 +562,8 @@ class TestFindSteamPath:
         assert str(steam_paths[0]) == str(custom_path)
         assert str(steam_paths[1]) == str(custom_path)
 
-    def test_find_steam_path_flatpak(
-            self, steam_dir, steam_root, tmp_path, home_dir, flatpak_sandbox,
-            monkeypatch):
+    @pytest.mark.usefixtures("flatpak_sandbox")
+    def test_find_steam_path_flatpak(self, steam_dir, steam_root, home_dir):
         """
         Ensure that `steam_path` and `steam_root` both point to the Flatpak
         installation of Steam if Flatpak installation is found.
@@ -573,18 +572,42 @@ class TestFindSteamPath:
         """
         # Create a symlink to act as the Flatpak installation to keep the test
         # simple.
+        # Copy the existing Steam directory
         steam_flatpak_dir = (
             home_dir / ".var" / "app" / "com.valvesoftware.Steam" / "data"
             / "Steam"
         )
         steam_flatpak_dir.parent.mkdir(parents=True)
-        steam_flatpak_dir.symlink_to(steam_dir)
+        shutil.copytree(steam_dir, steam_flatpak_dir)
 
         # Since Flatpak is enabled, both paths should point to Flatpak
         steam_path, steam_root = find_steam_path()
 
         assert str(steam_path) == str(steam_flatpak_dir)
         assert str(steam_root) == str(steam_flatpak_dir)
+
+    @pytest.mark.usefixtures("flatpak_sandbox")
+    def test_find_steam_path_multiple_install_warning(
+            self, steam_dir, steam_root, home_dir, caplog):
+        """
+        Ensure that warning is printed if multiple Steam directories are found,
+        instructing the user to select the correct one as necessary.
+        """
+        steam_flatpak_dir = (
+            home_dir / ".var" / "app" / "com.valvesoftware.Steam" / "data"
+            / "Steam"
+        )
+        steam_flatpak_dir.parent.mkdir(parents=True)
+        shutil.copytree(steam_dir, steam_flatpak_dir)
+
+        find_steam_path()
+
+        assert "Found multiple Steam directories" in caplog.records[2].message
+        assert "STEAM_DIR=<path>" in caplog.records[3].message
+        assert "The following Steam directories were found" \
+            in caplog.records[4].message
+        assert str(steam_flatpak_dir) in caplog.records[5].message
+        assert str(steam_dir) in caplog.records[6].message
 
 
 class TestGetSteamApps:
