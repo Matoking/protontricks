@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
+## [Unreleased]
+### Fixed
+ - Fix random crashes when running Wine commands in quick succession due to race condition in Wine launcher script
+
 ## [1.9.1] - 2022-08-28
 ### Added
  - Print a warning when multiple Steam directories are detected and `STEAM_DIR` is not used to specify the directory

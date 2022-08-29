@@ -97,8 +97,11 @@ if [[ -z "$PROTONTRICKS_FIRST_START" ]]; then
     done < <(pgrep "wineserver$")
 
     if [[ "$wineserver_found" = true ]]; then
-        # wineserver found, retrieve its environment variables
-        wineserver_env_vars=$(xargs -0 -L1 -a "/proc/${wineserver_pid}/environ")
+        # wineserver found, retrieve its environment variables.
+        # wineserver might disappear from under our foot especially if we're
+        # in the middle of running a lot of Wine commands in succession,
+        # so don't assume the wineserver still exists.
+        wineserver_env_vars=$(xargs -0 -L1 -a "/proc/${wineserver_pid}/environ" 2> /dev/null || echo "")
 
         # Copy the required environment variables found in the
         # existing wineserver process
