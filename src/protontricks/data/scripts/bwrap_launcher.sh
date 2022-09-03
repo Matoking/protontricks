@@ -82,4 +82,4 @@ log_info "Using temporary directory: $PROTONTRICKS_TEMP_PATH"
 
 exec "$STEAM_RUNTIME_PATH"/run --share-pid --launcher \
 "${mount_params[@]}" -- \
---bus-name="com.github.Matoking.protontricks.App${STEAM_APPID}_${PROTONTRICKS_SESSION_ID}"
+--socket="$PROTONTRICKS_TEMP_PATH/launcher.sock"
