@@ -171,7 +171,7 @@ elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
     # It would be nicer to use the PID here, but that would break multiple
     # simultaneous Protontricks sessions inside Flatpak, which doesn't seem to
     # expose the unique host PID.
-    bus_name="com.github.Matoking.protontricks.App$STEAM_APPID-$PROTONTRICKS_SESSION_ID"
+    bus_name="com.github.Matoking.protontricks.App${STEAM_APPID}_${PROTONTRICKS_SESSION_ID}"
 
     # Wait until socket is created
     if ! dbus-send --print-reply --dest=org.freedesktop.DBus  /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep -q "$bus_name"; then
