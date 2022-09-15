@@ -17,7 +17,7 @@ This is a wrapper script that allows you to easily run Winetricks commands for S
 
 # Requirements
 
-* Python 3.5 or newer
+* Python 3.6 or newer
 * Winetricks
 * Steam
 * YAD (recommended) **or** Zenity. Required for GUI.
