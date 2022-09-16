@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [1.9.2] - 2022-09-16
 ### Fixed
  - Fix random crashes when running Wine commands due to race condition in Wine launcher script
 
@@ -230,7 +230,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.9.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.9.2...HEAD
+[1.9.2]: https://github.com/Matoking/protontricks/compare/1.9.1...1.9.2
 [1.9.1]: https://github.com/Matoking/protontricks/compare/1.9.0...1.9.1
 [1.9.0]: https://github.com/Matoking/protontricks/compare/1.8.2...1.9.0
 [1.8.2]: https://github.com/Matoking/protontricks/compare/1.8.1...1.8.2
