@@ -74,7 +74,9 @@ For common issues and solutions, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 # Installation
 
-You can install Protontricks using a community package or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
+You can install Protontricks using a community package, Flatpak or **pipx**. **pip** can also be used, but it is not recommended due to possible problems.
+
+**If you're using a Steam Deck**, Flatpak is the recommended option. Open the **Discover** application store in desktop mode and search for **Protontricks**. 
 
 **If you're using the Flatpak version of Steam**, follow the [Flatpak-specific installation instructions](https://github.com/flathub/com.github.Matoking.protontricks) instead.
 
