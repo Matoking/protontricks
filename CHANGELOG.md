@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
+## [Unreleased]
+### Fixed
+ - Detect XDG user directory permissions in Flatpak environment
+
 ## [1.9.2] - 2022-09-16
 ### Fixed
  - Fix random crashes when running Wine commands due to race condition in Wine launcher script

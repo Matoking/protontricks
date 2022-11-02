@@ -159,6 +159,36 @@ class TestGetInaccessiblePaths:
 
         assert len(inaccessible_paths) == 0
 
+    @pytest.mark.usefixtures("xdg_user_dir_bin")
+    def test_flatpak_xdg_user_dir(self, monkeypatch, tmp_path, home_dir):
+        """
+        Test that XDG filesystem permissions such as 'xdg-pictures' and
+        'xdg-download' are detected correctly
+        """
+        flatpak_info_path = tmp_path / "flatpak-info"
+
+        flatpak_info_path.write_text(
+            "[Application]\n"
+            "name=fake.flatpak.Protontricks\n"
+            "\n"
+            "[Instance]\n"
+            "flatpak-version=1.12.1\n"
+            "\n"
+            "[Context]\n"
+            "filesystems=xdg-pictures;"
+        )
+        monkeypatch.setattr(
+            "protontricks.flatpak.FLATPAK_INFO_PATH", str(flatpak_info_path)
+        )
+
+        inaccessible_paths = get_inaccessible_paths([
+            str(home_dir / "Pictures"),
+            str(home_dir / "Download")
+        ])
+
+        assert len(inaccessible_paths) == 1
+        assert str(inaccessible_paths[0]) == str(home_dir / "Download")
+
     def test_flatpak_unknown_permission(self, monkeypatch, tmp_path, caplog):
         """
         Test that unknown filesystem permissions are ignored

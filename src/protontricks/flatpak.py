@@ -1,8 +1,10 @@
 import configparser
 import json
 import logging
+import os
 import re
 import shlex
+import subprocess
 from pathlib import Path
 
 from .config import get_config
@@ -38,6 +40,37 @@ def _get_flatpak_config():
         return None
 
     return config
+
+
+_XDG_PERMISSIONS = {
+    "xdg-desktop": "DESKTOP",
+    "xdg-documents": "DOCUMENTS",
+    "xdg-download": "DOWNLOAD",
+    "xdg-music": "MUSIC",
+    "xdg-pictures": "PICTURES",
+    "xdg-public-share": "PUBLICSHARE",
+    "xdg-videos": "VIDEOS",
+    "xdg-templates": "TEMPLATES",
+}
+
+
+def _get_xdg_user_dir(permission):
+    """
+    Get the XDG user directory corresponding to the given "xdg-" prefixed
+    Flatpak permission and retrieve its absolute path using the `xdg-user-dir`
+    command.
+    """
+    if permission in _XDG_PERMISSIONS:
+        # This will only be called in a Flatpak environment, and we can assume
+        # 'xdg-user-dir' always exists in that environment.
+        path = subprocess.check_output(
+            ["xdg-user-dir", _XDG_PERMISSIONS[permission]]
+        )
+        path = path.strip()
+        path = os.fsdecode(path)
+        return Path(path)
+
+    return None
 
 
 def get_running_flatpak_version():
@@ -88,6 +121,12 @@ def get_inaccessible_paths(paths):
                 Path("~/.local/share").expanduser()
                 / path.split("xdg-data/")[1]
             )
+
+        if path.startswith("xdg-"):
+            path = _get_xdg_user_dir(path)
+
+            if path:
+                return path
 
         if path == "home":
             return Path.home()

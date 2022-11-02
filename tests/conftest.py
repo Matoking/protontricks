@@ -693,6 +693,25 @@ def steam_library_factory(steam_dir, steam_libraryfolders_path, tmp_path):
     return func
 
 
+@pytest.fixture(scope="function")
+def xdg_user_dir_bin(home_dir):
+    """
+    Mock the 'xdg-user-dir' executable used to determine XDG directory
+    locations
+    """
+    # Only mock PICTURES and DOWNLOAD; mocking everything isn't necessary
+    # for the tests.
+    (home_dir / ".local" / "bin" / "xdg-user-dir").write_text(
+        '#!/bin/bash\n'
+        'if [[ "$1" == "PICTURES" ]]; then\n'
+        '    echo "$HOME/Pictures"\n'
+        'elif [[ "$1" == "DOWNLOAD" ]]; then\n'
+        'echo "$HOME/Downloads"\n'
+        'fi'
+    )
+    (home_dir / ".local" / "bin" / "xdg-user-dir").chmod(0o744)
+
+
 class MockSubprocess:
     def __init__(
             self, args=None, kwargs=None, mock_stdout=None, check=False,
