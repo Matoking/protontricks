@@ -15,9 +15,11 @@ import sys
 from .. import __version__
 from ..flatpak import (FLATPAK_BWRAP_COMPATIBLE_VERSION,
                        get_running_flatpak_version)
-from ..gui import prompt_filesystem_access, select_steam_app_with_gui
+from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
+                   select_steam_installation)
 from ..steam import (find_legacy_steam_runtime_path, find_proton_app,
-                     find_steam_path, get_steam_apps, get_steam_lib_paths)
+                     find_steam_installations, get_steam_apps,
+                     get_steam_lib_paths)
 from ..util import run_command
 from ..winetricks import get_winetricks_path
 from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
@@ -31,7 +33,7 @@ def cli(args=None):
 
 
 @cli_error_handler
-def main(args=None):
+def main(args=None, steam_path=None, steam_root=None):
     """
     'protontricks' script entrypoint
     """
@@ -188,9 +190,19 @@ def main(args=None):
             use_bwrap = False
 
     # 1. Find Steam path
-    steam_path, steam_root = find_steam_path()
+    # We can skip the Steam installation detection if the CLI entrypoint
+    # has already been provided the path as a keyword argument.
+    # This is the case when this entrypoint is being called by
+    # 'protontricks-launch'. This prevents us from asking the user for
+    # the Steam installation twice.
     if not steam_path:
-        exit_("Steam installation directory could not be found.")
+        steam_installations = find_steam_installations()
+        if not steam_installations:
+            exit_("Steam installation directory could not be found.")
+
+        steam_path, steam_root = select_steam_installation(steam_installations)
+        if not steam_path:
+            exit_("No Steam installation was selected.")
 
     # 2. Find the pre-installed legacy Steam Runtime if enabled
     legacy_steam_runtime_path = None

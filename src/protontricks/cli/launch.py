@@ -5,8 +5,10 @@ import sys
 from pathlib import Path
 from subprocess import run
 
-from ..gui import prompt_filesystem_access, select_steam_app_with_gui
-from ..steam import find_steam_path, get_steam_apps, get_steam_lib_paths
+from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
+                   select_steam_installation)
+from ..steam import (find_steam_installations, find_steam_path, get_steam_apps,
+                     get_steam_lib_paths)
 from .main import main as cli_main
 from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
                    exit_with_error)
@@ -109,9 +111,13 @@ def main(args=None):
         executable_path = Path(args.executable).resolve()
 
     # 1. Find Steam path
-    steam_path, steam_root = find_steam_path()
-    if not steam_path:
+    steam_installations = find_steam_installations()
+    if not steam_installations:
         exit_("Steam installation directory could not be found.")
+
+    steam_path, steam_root = select_steam_installation(steam_installations)
+    if not steam_path:
+        exit_("No Steam installation was selected.")
 
     # 2. Find any Steam library folders
     steam_lib_paths = get_steam_lib_paths(steam_path)
@@ -182,7 +188,7 @@ def main(args=None):
     logger.info(
         "Calling `protontricks` with the command: %s", cli_args
     )
-    cli_main(cli_args)
+    cli_main(cli_args, steam_path=steam_path, steam_root=steam_root)
 
 
 if __name__ == "__main__":

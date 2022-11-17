@@ -83,20 +83,49 @@ def home_dir(monkeypatch, tmp_path):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def steam_dir(home_dir):
+def steam_dir_factory():
+    """
+    Factory for creating a fake Steam directory
+    """
+    def func(path):
+        path.mkdir(parents=True)
+
+        (path / "root" / "compatibilitytools.d").mkdir(parents=True)
+
+        (path / "steam" / "appcache" / "librarycache").mkdir(parents=True)
+        (path / "steam" / "config").mkdir(parents=True)
+        (path / "steam" / "steamapps").mkdir(parents=True)
+
+        return path / "steam"
+
+    return func
+
+
+@pytest.fixture(scope="function", autouse=True)
+def steam_dir(steam_dir_factory, home_dir):
     """
     Fake Steam directory
     """
-    steam_path = home_dir / ".steam"
-    steam_path.mkdir()
+    return steam_dir_factory(home_dir / ".steam")
 
-    (steam_path / "root" / "compatibilitytools.d").mkdir(parents=True)
 
-    (steam_path / "steam" / "appcache" / "librarycache").mkdir(parents=True)
-    (steam_path / "steam" / "config").mkdir(parents=True)
-    (steam_path / "steam" / "steamapps").mkdir(parents=True)
+@pytest.fixture(scope="function")
+def flatpak_steam_dir(steam_dir_factory, home_dir):
+    """
+    Fake Flatpak Steam directory
+    """
+    flatpak_steam_dir = \
+        home_dir / ".var/app/com.valvesoftware.Steam/data"
+    steam_dir_factory(flatpak_steam_dir)
 
-    yield steam_path / "steam"
+    # Rename the created directory to match the real directory hierarchy
+    (flatpak_steam_dir / "steam").rename(flatpak_steam_dir / "Steam")
+
+    (flatpak_steam_dir / "root" / "compatibilitytools.d").rmdir()
+    (flatpak_steam_dir / "root").rmdir()
+    (flatpak_steam_dir / "Steam" / "compatibilitytools.d").mkdir()
+
+    return flatpak_steam_dir / "Steam"
 
 
 @pytest.fixture(scope="function")

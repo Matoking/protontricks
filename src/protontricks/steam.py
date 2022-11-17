@@ -4,8 +4,8 @@ import os
 import string
 import struct
 import zlib
-from pathlib import Path
 from collections import OrderedDict
+from pathlib import Path
 
 import vdf
 
@@ -13,11 +13,12 @@ from .flatpak import is_flatpak_sandbox
 from .util import lower_dict
 
 __all__ = (
-    "COMMON_STEAM_DIRS", "SteamApp", "find_steam_path",
-    "find_legacy_steam_runtime_path", "iter_appinfo_sections",
-    "get_appinfo_sections", "get_tool_appid", "find_steam_compat_tool_app",
-    "find_appid_proton_prefix", "find_proton_app", "get_steam_lib_paths",
-    "get_compat_tool_dirs", "get_custom_compat_tool_installations_in_dir",
+    "COMMON_STEAM_DIRS", "SteamApp", "find_steam_installations",
+    "find_steam_path", "find_legacy_steam_runtime_path",
+    "iter_appinfo_sections", "get_appinfo_sections", "get_tool_appid",
+    "find_steam_compat_tool_app", "find_appid_proton_prefix",
+    "find_proton_app", "get_steam_lib_paths", "get_compat_tool_dirs",
+    "get_custom_compat_tool_installations_in_dir",
     "get_custom_compat_tool_installations", "find_current_steamid3",
     "get_appid_from_shortcut", "get_custom_windows_shortcuts",
     "get_steam_apps", "is_steam_deck"
@@ -279,14 +280,10 @@ def _get_required_tool_appid(path):
         return None
 
 
-def find_steam_path():
+def find_steam_installations():
     """
-    Try to discover default Steam dir using common locations and return the
-    first one that matches
-
-    Return (steam_path, steam_root), where steam_path points to
-    "~/.steam/steam" (contains "appcache", "config" and "steamapps")
-    and "~/.steam/root" (contains "ubuntu12_32" and "compatibilitytools.d")
+    Find all Steam installations and return them as a list of (steam_path, steam_root)
+    tuples
     """
     def has_steamapps_dir(path):
         """
@@ -315,14 +312,16 @@ def find_steam_path():
                 "Found a valid Steam installation at %s.", steam_path
             )
 
-            return steam_path, steam_path
+            return [
+                (Path(steam_path), Path(steam_path))
+            ]
 
         logger.error(
             "$STEAM_DIR was provided but didn't point to a valid Steam "
             "installation."
         )
 
-        return None, None
+        return []
 
     # Track the found Steam directory candidates using an ordered dict,
     # ensuring that any duplicates are eliminated and that we pick the first
@@ -355,6 +354,23 @@ def find_steam_path():
     for steam_path, _ in candidates.keys():
         logger.info("Found Steam directory at %s", steam_path)
 
+    return [
+        [Path(steam_path), Path(steam_root)]
+        for steam_path, steam_root in candidates.keys()
+    ]
+
+
+def find_steam_path():
+    """
+    Try to discover default Steam dir using common locations and return the
+    first one that matches
+
+    Return (steam_path, steam_root), where steam_path points to
+    "~/.steam/steam" (contains "appcache", "config" and "steamapps")
+    and "~/.steam/root" (contains "ubuntu12_32" and "compatibilitytools.d")
+    """
+    candidates = find_steam_installations()
+
     if len(candidates) > 1:
         logger.warning(
             "Found multiple Steam directories. If you want to select a "
@@ -363,11 +379,11 @@ def find_steam_path():
         )
         logger.warning("$ STEAM_DIR=<path> protontricks <appid> <command>")
         logger.warning("The following Steam directories were found:")
-        for steam_path, _ in candidates.keys():
+        for steam_path, _ in candidates:
             logger.warning(" %s", str(steam_path))
 
     try:
-        steam_path, steam_root = list(candidates.keys())[0]
+        steam_path, steam_root = candidates[0]
         logger.info(
             "Using Steam directory at %s. You can also define Steam directory "
             "manually using $STEAM_DIR", str(steam_path)

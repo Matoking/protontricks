@@ -674,6 +674,63 @@ class TestCLIRun:
             )
         )
 
+    @pytest.mark.usefixtures("flatpak_sandbox")
+    def test_select_steam_installation(
+            self, cli, steam_dir, flatpak_steam_dir, steam_app_factory,
+            proton_factory, gui_provider):
+        """
+        Test that the user is prompted to select the Steam installation,
+        and that the correct Steam installation is used in both cases
+        """
+        # Only the Flatpak installation has an app
+        steam_app_factory(
+            name="Native Steam app", appid=10
+        )
+
+        proton_factory(
+            name="Flatpak Proton", appid=123450,
+            compat_tool_name="flatpak_proton"
+        )
+        steam_app_factory(
+            name="Flatpak Steam app", appid=10,
+            compat_tool_name="flatpak_proton",
+            library_dir=flatpak_steam_dir,
+        )
+
+        # Mock the user choosing the Flatpak installation.
+        # Only the index is actually checked in the actual function.
+        gui_provider.mock_stdout = "2: Native - /home/fake/.steam"
+
+        result = cli(["-s", "app"])
+
+        assert "Native Steam app (10)" in result
+        assert "Flatpak Steam app (10)" not in result
+
+        # This time mock the Flatpak installation
+        gui_provider.mock_stdout = "1: Flatpak - /home/fake/.var/app/something"
+
+        result = cli(["-s", "app"])
+
+        assert "Flatpak Steam app (10)" in result
+        assert "Native Steam app (10)" not in result
+
+    @pytest.mark.usefixtures(
+        "flatpak_sandbox", "steam_dir", "flatpak_steam_dir"
+    )
+    def test_steam_installation_not_selected(self, cli, gui_provider):
+        """
+        Test that not selecting a Steam installation results in the correct
+        exit message
+        """
+        # Mock the user choosing the Flatpak installation.
+        # Only the index is actually checked in the actual function.
+        gui_provider.mock_stdout = ""
+        gui_provider.mock_returncode = 1
+
+        result = cli(["-s", "app"], expect_returncode=1)
+
+        assert "No Steam installation was selected" in result
+
 
 class TestCLIGUI:
     def test_run_gui(

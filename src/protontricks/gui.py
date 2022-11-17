@@ -16,7 +16,7 @@ from .flatpak import get_inaccessible_paths
 
 __all__ = (
     "LocaleError", "get_gui_provider", "select_steam_app_with_gui",
-    "show_text_dialog", "prompt_filesystem_access"
+    "select_steam_installation", "show_text_dialog", "prompt_filesystem_access"
 )
 
 logger = logging.getLogger("protontricks")
@@ -77,6 +77,42 @@ def _get_appid2icon(steam_apps, steam_path):
     return appid2icon
 
 
+def _run_gui(args, input_=None, strip_nonascii=False):
+    """
+    Run YAD/Zenity with the given args.
+
+    If 'strip_nonascii' is True, strip non-ASCII characters to workaround
+    environments that can't handle all characters
+    """
+    if strip_nonascii:
+        # Convert to bytes and back to strings while stripping
+        # non-ASCII characters
+        args = [
+            arg.encode("ascii", "ignore").decode("ascii") for arg in args
+        ]
+        if input_:
+            input_ = input_.encode("ascii", "ignore").decode("ascii")
+
+    if input_:
+        input_ = input_.encode("utf-8")
+
+    try:
+        return run(
+            args, input=input_, check=True, stdout=PIPE, stderr=PIPE,
+        )
+    except CalledProcessError as exc:
+        if exc.returncode == 255 and not strip_nonascii:
+            # User has weird locale settings. Log a warning and
+            # rerun the command while stripping non-ASCII characters.
+            logger.warning(
+                "Your system locale is incapable of displaying all "
+                "characters. Some app names may not show up correctly. "
+                "Please use an UTF-8 locale to avoid this warning."
+            )
+            return _run_gui(args, strip_nonascii=True)
+
+        raise
+
 def show_text_dialog(
         title,
         text,
@@ -130,6 +166,82 @@ def show_text_dialog(
     return process.returncode == 0
 
 
+def select_steam_installation(steam_installations):
+    """
+    Prompt the user to select a Steam installation if more than one
+    installation is available
+
+    Return the selected (steam_path, steam_root) installation, or None
+    if the user picked nothing
+    """
+    def _get_yad_args():
+        return [
+            "yad", "--list", "--no-headers", "--center",
+            "--window-icon", "wine",
+            # Disabling markup means we won't have to escape special characters
+            "--no-markup",
+            "--width", "600", "--height", "400",
+            "--text", "Select Steam installation",
+            "--title", "Protontricks",
+            "--column", "Path"
+        ]
+
+    def _get_zenity_args():
+        return [
+            "zenity", "--list", "--hide-header",
+            "--width", "600",
+            "--height", "400",
+            "--text", "Select Steam installation",
+            "--title", "Protontricks",
+            "--column", "Path"
+        ]
+
+    if len(steam_installations) == 1:
+        return steam_installations[0]
+
+    gui_provider = get_gui_provider()
+
+    cmd_input = []
+
+    for i, installation in enumerate(steam_installations):
+        steam_path, steam_root = installation
+
+        is_flatpak = (
+            str(steam_path).endswith(
+                "/com.valvesoftware.Steam/.local/share/Steam"
+            )
+        )
+        install_type = "Flatpak" if is_flatpak else "Native"
+
+        cmd_input.append(f"{i+1}: {install_type} - {steam_path}")
+
+    cmd_input = "\n".join(cmd_input)
+
+    if gui_provider == "yad":
+        args = _get_yad_args()
+    elif gui_provider == "zenity":
+        args = _get_zenity_args()
+
+    try:
+        result = _run_gui(args, input_=cmd_input)
+        choice = result.stdout
+    except CalledProcessError as exc:
+        if exc.returncode in (1, 252):
+            # YAD returns 252 when dialog is closed by pressing Esc
+            # No installation was selected
+            choice = b""
+        else:
+            raise RuntimeError("{} returned an error".format(gui_provider))
+
+    if choice in (b"", b" \n"):
+        return None, None
+
+    choice = choice.decode("utf-8").split(":")[0]
+    choice = int(choice) - 1
+
+    return steam_installations[choice]
+
+
 def select_steam_app_with_gui(steam_apps, steam_path, title=None):
     """
     Prompt the user to select a Proton-enabled Steam app from
@@ -162,37 +274,6 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
             "--column", "Steam app"
         ]
 
-    def run_gui(args, input_=None, strip_nonascii=False):
-        """
-        Run YAD/Zenity with the given args.
-
-        If 'strip_nonascii' is True, strip non-ASCII characters to workaround
-        environments that can't handle all characters
-        """
-        if strip_nonascii:
-            # Convert to bytes and back to strings while stripping
-            # non-ASCII characters
-            args = [
-                arg.encode("ascii", "ignore").decode("ascii") for arg in args
-            ]
-            if input_:
-                input_ = input_.encode("ascii", "ignore").decode("ascii")
-
-        if input_:
-            input_ = input_.encode("utf-8")
-
-        try:
-            return run(
-                args, input=input_, check=True, stdout=PIPE, stderr=PIPE,
-            )
-        except CalledProcessError as exc:
-            if exc.returncode == 255:
-                # User locale incapable of handling all characters in the
-                # command
-                raise LocaleError()
-
-            raise
-
     if not title:
         title = "Select Steam app"
 
@@ -223,18 +304,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
     cmd_input = "\n".join(cmd_input)
 
     try:
-        try:
-            result = run_gui(args, input_=cmd_input)
-        except LocaleError:
-            # User has weird locale settings. Log a warning and
-            # run the command while stripping non-ASCII characters.
-            logger.warning(
-                "Your system locale is incapable of displaying all "
-                "characters. Some app names may not show up correctly. "
-                "Please use an UTF-8 locale to avoid this warning."
-            )
-            result = run_gui(args, strip_nonascii=True)
-
+        result = _run_gui(args, input_=cmd_input)
         choice = result.stdout
     except CalledProcessError as exc:
         # TODO: Remove this hack once the bug has been fixed upstream

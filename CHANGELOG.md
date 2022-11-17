@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 ## [Unreleased]
+### Added
+ - Prompt the user for a Steam installation if multiple installations are found
+
 ### Fixed
  - Detect XDG user directory permissions in Flatpak environment
 

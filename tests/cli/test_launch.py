@@ -93,16 +93,21 @@ class TestCLIRun:
 
     def test_run_executable_passthrough_arguments(
             self, default_proton, steam_app_factory, caplog,
-            launch_cli, monkeypatch):
+            steam_dir, launch_cli, monkeypatch):
         """
         Try running an EXE file and apply all arguments; those should
         also be passed to the main entrypoint
         """
         cli_args = []
+        cli_kwargs = {}
+
+        def _set_launch_args(*args, **kwargs):
+            cli_args.extend(*args)
+            cli_kwargs.update(kwargs)
 
         monkeypatch.setattr(
             "protontricks.cli.launch.cli_main",
-            cli_args.extend
+            _set_launch_args
         )
 
         steam_app_factory(name="Fake game", appid=10)
@@ -120,6 +125,9 @@ class TestCLIRun:
         assert cli_args[5].endswith("test.exe'")
         assert cli_args[6] == "10"
 
+        # Steam installation was provided to the main entrypoint
+        assert str(cli_kwargs["steam_path"]) == str(steam_dir)
+
     @pytest.mark.parametrize("argument", [
         None,
         "--background-wineserver",
@@ -135,9 +143,12 @@ class TestCLIRun:
         """
         cli_args = []
 
+        def _set_launch_args(*args, **kwargs):
+            cli_args.extend(*args)
+
         monkeypatch.setattr(
             "protontricks.cli.launch.cli_main",
-            cli_args.extend
+            _set_launch_args
         )
 
         steam_app_factory(name="Fake game", appid=10)
@@ -201,4 +212,22 @@ class TestCLIRun:
         )
         assert record.levelname == "WARNING"
         assert str(path) in record.message
+
+    @pytest.mark.usefixtures(
+        "flatpak_sandbox", "steam_dir", "flatpak_steam_dir"
+    )
+    def test_steam_installation_not_selected(self, launch_cli, gui_provider):
+        """
+        Test that not selecting a Steam installation results in the correct
+        exit message
+        """
+        # Mock the user choosing the Flatpak installation.
+        # Only the index is actually checked in the actual function.
+        gui_provider.mock_stdout = ""
+        gui_provider.mock_returncode = 1
+
+        result = launch_cli(["test.exe"], expect_returncode=1)
+
+        assert "No Steam installation was selected" in result
+
 

@@ -4,7 +4,8 @@ import pytest
 from conftest import MockResult
 
 from protontricks.gui import (prompt_filesystem_access,
-                              select_steam_app_with_gui)
+                              select_steam_app_with_gui,
+                              select_steam_installation)
 
 
 @pytest.fixture(scope="function")
@@ -191,6 +192,34 @@ class TestSelectApp:
         select_steam_app_with_gui(
             steam_apps=steam_apps, steam_path=steam_dir
         )
+
+        # The flags should differ slightly depending on which provider is in
+        # use
+        if gui_cmd == "yad":
+            assert gui_provider.args[0] == "yad"
+            assert gui_provider.args[2] == "--no-headers"
+        elif gui_cmd == "zenity":
+            assert gui_provider.args[0] == "zenity"
+            assert gui_provider.args[2] == "--hide-header"
+
+
+class TestSelectSteamInstallation:
+    @pytest.mark.usefixtures("flatpak_sandbox")
+    @pytest.mark.parametrize("gui_cmd", ["yad", "zenity"])
+    def test_select_steam_gui_provider_env(
+            self, gui_provider, monkeypatch, gui_cmd, steam_dir,
+            flatpak_steam_dir):
+        """
+        Test that the correct GUI provider is selected based on the
+        `PROTONTRICKS_GUI` environment variable
+        """
+        monkeypatch.setenv("PROTONTRICKS_GUI", gui_cmd)
+
+        gui_provider.mock_stdout = "1: Flatpak - /foo/bar"
+        select_steam_installation([
+            (steam_dir, steam_dir),
+            (flatpak_steam_dir, flatpak_steam_dir)
+        ])
 
         # The flags should differ slightly depending on which provider is in
         # use
