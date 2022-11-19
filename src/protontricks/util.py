@@ -108,9 +108,7 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
                 pass
 
         raise RuntimeError(
-            "Could not find Steam Runtime runtime root for {}".format(
-                runtime_app.name
-            )
+            f"Could not find Steam Runtime runtime root for {runtime_app.name}"
         )
 
     if use_bwrap:
@@ -262,9 +260,9 @@ def run_command(
 
     if use_steam_runtime and runtime_install_incomplete:
         raise RuntimeError(
-            "{} is missing the required Steam Runtime. You may need to launch "
-            "a Steam app using this Proton version to finish the "
-            "installation.".format(proton_app.name)
+            f"{proton_app.name} is missing the required Steam Runtime. "
+            "You may need to launch a Steam app using this Proton version "
+            "to finish the installation."
         )
 
     # Make a copy of the environment variables to use for the subprocesses

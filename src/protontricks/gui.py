@@ -69,8 +69,8 @@ def _get_appid2icon(steam_apps, steam_path):
         # Use library icon for Steam apps, fallback to placeholder icon
         # for non-Steam shortcuts and missing icons
         appid2icon[app.appid] = (
-            icon_dir / "{}_icon.jpg".format(app.appid)
-            if "{}_icon.jpg".format(app.appid) in existing_names
+            icon_dir / f"{app.appid}_icon.jpg"
+            if f"{app.appid}_icon.jpg" in existing_names
             else placeholder_path
         )
 
@@ -231,7 +231,7 @@ def select_steam_installation(steam_installations):
             # No installation was selected
             choice = b""
         else:
-            raise RuntimeError("{} returned an error".format(gui_provider))
+            raise RuntimeError(f"{gui_provider} returned an error")
 
     if choice in (b"", b" \n"):
         return None, None
@@ -288,7 +288,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
         cmd_input = [
             [
                 str(appid2icon[app.appid]),
-                "{}: {}".format(app.name, app.appid)
+                f"{app.name}: {app.appid}"
             ]
             for app in steam_apps if app.is_windows_app
         ]
@@ -297,7 +297,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
     else:
         args = _get_zenity_args()
         cmd_input = [
-            '{}: {}'.format(app.name, app.appid) for app in steam_apps
+            f'{app.name}: {app.appid}' for app in steam_apps
             if app.is_windows_app
         ]
 
@@ -329,7 +329,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
             # No game was selected
             choice = b""
         else:
-            raise RuntimeError("{} returned an error".format(gui_provider))
+            raise RuntimeError(f"{gui_provider} returned an error")
 
     if choice in (b"", b" \n"):
         print("No game was selected. Quitting...")
@@ -395,19 +395,16 @@ def prompt_filesystem_access(paths, show_dialog=False):
     message = (
         "Protontricks does not appear to have access to the following "
         "directories:\n"
-        " {paths}\n"
+        f" {' '.join(remaining_paths)}\n"
         "\n"
         "To fix this problem, grant access to the required directories by "
         "copying the following command and running it in a terminal:\n"
         "\n"
-        "flatpak override --user {cmd_filesystem} "
+        f"flatpak override --user {cmd_filesystem} "
         "com.github.Matoking.protontricks\n"
         "\n"
         "You will need to restart Protontricks for the settings to take "
-        "effect.".format(
-            paths=" ".join(remaining_paths),
-            cmd_filesystem=cmd_filesystem
-        )
+        "effect."
     )
 
     if show_dialog:

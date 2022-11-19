@@ -105,10 +105,7 @@ def main(args=None):
 
     enable_logging(args.verbose, record_to_file=args.no_term)
 
-    try:
-        executable_path = Path(args.executable).resolve(strict=True)
-    except TypeError:  # Python 3.5
-        executable_path = Path(args.executable).resolve()
+    executable_path = Path(args.executable).resolve(strict=True)
 
     # 1. Find Steam path
     steam_installations = find_steam_installations()
@@ -146,7 +143,7 @@ def main(args=None):
     if not args.appid:
         appid = select_steam_app_with_gui(
             steam_apps,
-            title="Choose Wine prefix to run {}".format(executable_path.name),
+            title=f"Choose Wine prefix to run {executable_path.name}",
             steam_path=steam_path
         ).appid
     else:
@@ -176,7 +173,7 @@ def main(args=None):
         cli_args += ["--no-term"]
 
     inner_args = " ".join(
-        ["wine", "'{}'".format(str(executable_path))]
+        ["wine", f"'{executable_path}'"]
         + exec_args
     )
 

@@ -142,7 +142,7 @@ class TestCLIRun:
             content = path.read_text()
 
             # Correct binary names used in the scripts
-            assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
+            assert f"\"$PROTON_DIST_PATH\"/bin/{name}" in content
 
     def test_run_winetricks_steam_runtime_v2(
             self, cli, home_dir, steam_app_factory, steam_runtime_dir,
@@ -211,7 +211,7 @@ class TestCLIRun:
             content = path.read_text()
 
             # Correct binary names used in the scripts
-            assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
+            assert f"\"$PROTON_DIST_PATH\"/bin/{name}" in content
 
     def test_run_winetricks_steam_runtime_v2_no_bwrap(
             self, cli, home_dir, steam_app_factory, steam_runtime_dir,
@@ -277,7 +277,7 @@ class TestCLIRun:
 
             content = path.read_text()
 
-            assert "\"$PROTON_DIST_PATH\"/bin/{}".format(name) in content
+            assert f"\"$PROTON_DIST_PATH\"/bin/{name}" in content
 
     @pytest.mark.parametrize(
         "args,wineserver_launched",

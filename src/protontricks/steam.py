@@ -839,9 +839,7 @@ def get_steam_lib_paths(steam_path):
         library_folders = []
     except SyntaxError as exc:
         raise ValueError(
-            "Library folder configuration file {} is corrupted".format(
-                folders_vdf_path
-            )
+            f"Library folder configuration file {folders_vdf_path} is corrupted"
         ) from exc
 
     paths = [steam_path] + library_folders
@@ -1085,7 +1083,7 @@ def get_custom_windows_shortcuts(steam_path):
         steam_apps.append(
             SteamApp(
                 appid=appid,
-                name="Non-Steam shortcut: {}".format(shortcut_data["appname"]),
+                name=f"Non-Steam shortcut: {shortcut_data['appname']}",
                 prefix_path=prefix_path, install_path=install_path
             )
         )

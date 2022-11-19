@@ -17,7 +17,8 @@ def _get_log_file_path():
     """
     temp_dir = tempfile.gettempdir()
 
-    return Path(temp_dir) / "protontricks{}.log".format(os.getpid())
+    pid = os.getpid()
+    return Path(temp_dir) / f"protontricks{pid}.log"
 
 
 def _delete_log_file():
@@ -118,11 +119,11 @@ def exit_with_error(error, desktop=False):
     # Display an error dialog containing the message
     message = "".join([
         "Protontricks was closed due to the following error:\n\n",
-        "{}\n\n".format(error),
+        f"{error}\n\n",
         "=============\n\n",
         "Please include this entire error message when making a bug report.\n",
         "Log messages:\n\n",
-        "{}".format(log_messages)
+        f"{log_messages}"
     ])
 
     show_text_dialog(

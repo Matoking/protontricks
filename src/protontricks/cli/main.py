@@ -133,7 +133,7 @@ def main(args=None, steam_path=None, steam_root=None):
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
         "-V", "--version", action="version",
-        version="%(prog)s ({})".format(__version__)
+        version=f"%(prog)s ({__version__})"
     )
 
     args = parser.parse_args(args)
@@ -304,12 +304,11 @@ def main(args=None, steam_path=None, steam_root=None):
 
         if matching_apps:
             matching_games = "\n".join([
-                "{} ({})".format(app.name, app.appid)
-                for app in matching_apps
+                f"{app.name} ({app.appid})" for app in matching_apps
             ])
             print(
-                "Found the following games:"
-                "\n{}\n".format(matching_games)
+                f"Found the following games:"
+                f"\n{matching_games}\n"
             )
             print(
                 "To run Protontricks for the chosen game, run:\n"

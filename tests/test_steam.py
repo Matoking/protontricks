@@ -128,9 +128,8 @@ class TestSteamApp:
 
         record = caplog.records[-1]
         assert record.getMessage() == (
-            "Skipping appmanifest {} due to insufficient permissions".format(
-                str(appmanifest_path)
-            )
+            f"Skipping appmanifest {appmanifest_path} due "
+            "to insufficient permissions"
         )
 
     def test_steam_app_proton_dist_path(self, default_proton):
@@ -828,10 +827,7 @@ class TestGetSteamApps:
             record for record in caplog.records
             if record.levelname == "WARNING"
         )
-        assert (
-            "directories were found at {}".format(str(steam_dir))
-            in log.getMessage()
-        )
+        assert f"directories were found at {steam_dir}" in log.getMessage()
 
     def test_get_steam_apps_steamapps_case_insensitive_fs(
             self, monkeypatch, steam_root, steam_dir, caplog):
@@ -888,7 +884,7 @@ class TestGetSteamApps:
         assert len(warnings) == 1
 
         warning = warnings[0]
-        assert "{} not found.".format(str(library_dir_b)) in warning.message
+        assert f"{library_dir_b} not found." in warning.message
 
 
 class TestGetWindowsShortcuts:

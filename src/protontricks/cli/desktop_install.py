@@ -53,7 +53,7 @@ def main(args=None):
 
     print("Installing .desktop files for the local user...")
     install_dir = install_desktop_entries()
-    print("\nDone. Files have been installed under {}".format(str(install_dir)))
+    print(f"\nDone. Files have been installed under {install_dir}")
     print("The Protontricks shortcut and desktop integration should now work.")
 
 

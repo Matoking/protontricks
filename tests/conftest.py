@@ -469,7 +469,7 @@ def steam_app_factory(steam_dir, steam_config_path):
                 })
             )
 
-        (steamapps_dir / "appmanifest_{}.acf".format(appid)).write_text(
+        (steamapps_dir / f"appmanifest_{appid}.acf").write_text(
             vdf.dumps({
                 "AppState": {
                     "appid": str(appid),
