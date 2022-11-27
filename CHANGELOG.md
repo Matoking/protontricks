@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [1.10.0] - 2022-11-27
 ### Added
  - Prompt the user for a Steam installation if multiple installations are found
 
@@ -237,7 +237,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.9.2...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.10.0...HEAD
+[1.10.0]: https://github.com/Matoking/protontricks/compare/1.9.2...1.10.0
 [1.9.2]: https://github.com/Matoking/protontricks/compare/1.9.1...1.9.2
 [1.9.1]: https://github.com/Matoking/protontricks/compare/1.9.0...1.9.1
 [1.9.0]: https://github.com/Matoking/protontricks/compare/1.8.2...1.9.0
