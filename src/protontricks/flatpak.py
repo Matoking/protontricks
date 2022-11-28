@@ -123,10 +123,10 @@ def get_inaccessible_paths(paths):
             )
 
         if path.startswith("xdg-"):
-            path = _get_xdg_user_dir(path)
+            path_ = _get_xdg_user_dir(path)
 
-            if path:
-                return path
+            if path_:
+                return path_
 
         if path == "home":
             return Path.home()
