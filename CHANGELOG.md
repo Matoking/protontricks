@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix crash when unknown XDG Flatpak filesystem permissions are enabled
+ - Fix crash when parsing appinfo.vdf V28 version introduced in Steam beta
 
 ## [1.10.0] - 2022-11-27
 ### Added

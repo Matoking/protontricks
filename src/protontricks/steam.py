@@ -425,7 +425,8 @@ def find_legacy_steam_runtime_path(steam_root):
 
 
 APPINFO_STRUCT_HEADER = "<4sL"
-APPINFO_STRUCT_SECTION = "<LLLLQ20sL"
+APPINFO_V27_STRUCT_SECTION = "<LLLLQ20sL"
+APPINFO_V28_STRUCT_SECTION = "<LLLLQ20sL20s"
 
 
 def iter_appinfo_sections(path):
@@ -433,6 +434,62 @@ def iter_appinfo_sections(path):
     Parse an appinfo.vdf file and iterate through all the binary VDF objects
     inside it
     """
+    def _iter_v27_appinfo(data, start):
+        """
+        Parse and iterate appinfo.vdf version 27
+        """
+        i = start
+        section_size = struct.calcsize(APPINFO_V27_STRUCT_SECTION)
+
+        while True:
+            # We don't need any of the fields besides 'entry_size',
+            # which is used to determine the length of the variable-length VDF
+            # field.
+            # Still, here they are for posterity's sake.
+            (appid, entry_size, infostate, last_updated, access_token,
+             sha_hash, change_number) = struct.unpack(
+                APPINFO_V27_STRUCT_SECTION, data[i:i+section_size])
+            vdf_section_size = entry_size - (section_size - 8)
+
+            i += section_size
+
+            vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
+            vdf_d = lower_dict(vdf_d)
+            yield vdf_d
+
+            i += vdf_section_size
+
+            if i == len(data) - 4:
+                return
+
+    def _iter_v28_appinfo(data, start):
+        """
+        Parse and iterate appinfo.vdf version 28.
+        Identical to version 27 except for new VDF SHA1 field.
+        """
+        i = start
+        section_size = struct.calcsize(APPINFO_V28_STRUCT_SECTION)
+        while True:
+            # We don't need any of the fields besides 'entry_size',
+            # which is used to determine the length of the variable-length VDF
+            # field.
+            # Still, here they are for posterity's sake.
+            (appid, entry_size, infostate, last_updated, access_token,
+             sha_hash, change_number, vdf_sha_hash) = struct.unpack(
+                APPINFO_V28_STRUCT_SECTION, data[i:i+section_size])
+            vdf_section_size = entry_size - (section_size - 8)
+
+            i += section_size
+
+            vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
+            vdf_d = lower_dict(vdf_d)
+            yield vdf_d
+
+            i += vdf_section_size
+
+            if i == len(data) - 4:
+                return
+
     # appinfo.vdf is not actually a (binary) VDF file, but a binary file
     # containing multiple binary VDF sections.
     # File structure based on comment from vdf developer:
@@ -448,30 +505,13 @@ def iter_appinfo_sections(path):
 
     i += header_size
 
-    if magic != b"'DV\x07":
+    if magic == b"'DV\x07":
+        # TODO: Remove this once V28 is used in stable version of Steam
+        yield from _iter_v27_appinfo(data, i)
+    elif magic == b'(DV\x07':
+        yield from _iter_v28_appinfo(data, i)
+    else:
         raise SyntaxError("Invalid file magic number")
-
-    section_size = struct.calcsize(APPINFO_STRUCT_SECTION)
-    while True:
-        # We don't need any of the fields besides 'entry_size',
-        # which is used to determine the length of the variable-length VDF
-        # field.
-        # Still, here they are for posterity's sake.
-        (appid, entry_size, infostate, last_updated, access_token,
-         sha_hash, change_number) = struct.unpack(
-            APPINFO_STRUCT_SECTION, data[i:i+section_size])
-        vdf_section_size = entry_size - 40
-
-        i += section_size
-
-        vdf_d = vdf.binary_loads(data[i:i+vdf_section_size])
-        vdf_d = lower_dict(vdf_d)
-        yield vdf_d
-
-        i += vdf_section_size
-
-        if i == len(data) - 4:
-            return
 
 
 def get_appinfo_sections(path):
