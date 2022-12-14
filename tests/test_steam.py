@@ -896,7 +896,9 @@ class TestGetWindowsShortcuts:
         """
         shortcut_factory(install_dir="fake/path/", name="fakegame.exe")
 
-        shortcut_apps = get_custom_windows_shortcuts(steam_dir)
+        shortcut_apps = get_custom_windows_shortcuts(
+            steam_dir, steam_lib_paths=[steam_dir]
+        )
 
         assert len(shortcut_apps) == 1
         assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
@@ -913,7 +915,9 @@ class TestGetWindowsShortcuts:
             appid_in_vdf=True
         )
 
-        shortcut_apps = get_custom_windows_shortcuts(steam_dir)
+        shortcut_apps = get_custom_windows_shortcuts(
+            steam_dir, steam_lib_paths=[steam_dir]
+        )
 
         assert len(shortcut_apps) == 1
         assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
@@ -936,7 +940,9 @@ class TestGetWindowsShortcuts:
             install_dir="fake/path/", name="fakegame.exe", appid_in_vdf=True
         )
 
-        shortcut_apps = get_custom_windows_shortcuts(steam_dir)
+        shortcut_apps = get_custom_windows_shortcuts(
+            steam_dir, steam_lib_paths=[steam_dir]
+        )
 
         assert len(shortcut_apps) == 1
         assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
@@ -951,6 +957,39 @@ class TestGetWindowsShortcuts:
         assert (
             "Skipping unrecognized non-Steam shortcut with "
             "app ID 'lutris-fake-game'" in record.message
+        )
+
+    @pytest.mark.usefixtures("verbose_logging")
+    def test_get_custom_windows_shortcuts_no_prefix(
+            self, steam_dir, shortcut_factory, caplog):
+        """
+        Retrieve list of Windows shortcuts and ensure shortcuts without
+        prefixes are omitted and cause a log message
+        """
+        shortcut_factory(
+            install_dir="fake/path/", name="fakegame.exe",
+            appid_in_vdf=True
+        )
+
+        # Remove the prefix
+        shutil.rmtree(steam_dir / "steamapps" / "compatdata" / "4149337689")
+
+        shortcut_apps = get_custom_windows_shortcuts(
+            steam_dir, steam_lib_paths=[steam_dir]
+        )
+
+        assert not shortcut_apps
+
+        # The non-existent prefix was logged
+        record = next(
+            record for record in caplog.records
+            if "does not have a prefix" in record.message
+        )
+
+        assert record.levelname == "INFO"
+        assert (
+            "Shortcut fakegame.exe (4149337689) does not have a prefix"
+            in record.message
         )
 
 

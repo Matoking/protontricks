@@ -1070,7 +1070,7 @@ def get_appid_from_shortcut(target, name):
     return result >> 32
 
 
-def get_custom_windows_shortcuts(steam_path):
+def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
     """
     Get a list of custom shortcuts for Windows applications as a list
     of SteamApp objects
@@ -1113,8 +1113,17 @@ def get_custom_windows_shortcuts(steam_path):
                 target=shortcut_data["exe"], name=shortcut_data["appname"]
             )
 
-        prefix_path = \
-            steam_path / "steamapps" / "compatdata" / str(appid) / "pfx"
+        prefix_path = find_appid_proton_prefix(
+            appid=appid, steam_lib_paths=steam_lib_paths
+        )
+        if not prefix_path:
+            logger.info(
+                "Shortcut %s (%s) does not have a prefix. "
+                "It's either not a Proton app or it hasn't been launched yet.",
+                shortcut_data["appname"], appid
+            )
+            continue
+
         install_path = Path(shortcut_data["startdir"].strip('"'))
 
         try:
@@ -1233,7 +1242,9 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
 
     # Get the custom compatibility tools and non-Steam shortcuts as well
     steam_apps += get_custom_compat_tool_installations(steam_root=steam_root)
-    steam_apps += get_custom_windows_shortcuts(steam_path=steam_path)
+    steam_apps += get_custom_windows_shortcuts(
+        steam_path=steam_path, steam_lib_paths=steam_lib_paths
+    )
 
     # Exclude games that haven't been launched yet
     steam_apps = [
