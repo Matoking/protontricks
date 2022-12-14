@@ -1117,7 +1117,20 @@ def get_custom_windows_shortcuts(steam_path):
             steam_path / "steamapps" / "compatdata" / str(appid) / "pfx"
         install_path = Path(shortcut_data["startdir"].strip('"'))
 
-        if not prefix_path.is_dir():
+        try:
+            # Check that we have permission to access the installation
+            # directory, whether it exists or not. Any attempts to check
+            # any files will fail later if this isn't done.
+            install_path.is_dir()
+
+            if not prefix_path.is_dir():
+                continue
+        except PermissionError as exc:
+            logger.warning(
+                "Skipping shortcut %s due to insufficient permissions. "
+                "Error: %s",
+                shortcut_data["appname"], str(exc)
+            )
             continue
 
         steam_apps.append(
@@ -1157,10 +1170,17 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
     steam_apps = []
 
     for path in steam_lib_paths:
-        if not path.is_dir():
+        try:
+            if not path.is_dir():
+                logger.warning(
+                    "Steam library folder %s not found. Protontricks "
+                    "might not have access to the directory.",
+                    str(path)
+                )
+                continue
+        except PermissionError:
             logger.warning(
-                "Steam library folder %s not found. Protontricks "
-                "might not have access to the directory.",
+                "Skipping library folder %s due to insufficient permissions",
                 str(path)
             )
             continue
@@ -1196,9 +1216,18 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
                 )
 
         for manifest_path in appmanifest_paths:
-            steam_app = SteamApp.from_appmanifest(
-                manifest_path, steam_lib_paths=steam_lib_paths
-            )
+            try:
+                steam_app = SteamApp.from_appmanifest(
+                    manifest_path, steam_lib_paths=steam_lib_paths
+                )
+            except PermissionError as exc:
+                logger.warning(
+                    "Could not load manifest %s due to insufficient "
+                    "permissions. Error: %s",
+                    str(manifest_path), str(exc)
+                )
+                steam_app = None
+
             if steam_app:
                 steam_apps.append(steam_app)
 
