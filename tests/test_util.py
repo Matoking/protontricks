@@ -1,6 +1,11 @@
+import stat
+import textwrap
 from pathlib import Path
 
-from protontricks.util import create_wine_bin_dir, lower_dict, run_command
+import pytest
+
+from protontricks.util import (create_wine_bin_dir, is_steam_deck, lower_dict,
+                               run_command)
 
 
 def get_files_in_dir(d):
@@ -135,6 +140,69 @@ class TestRunCommand:
         assert warning.getMessage() == \
             "Current Steam Runtime not recognized by Protontricks."
 
+    @pytest.mark.usefixtures("steam_deck")
+    def test_locale_fixed_on_steam_deck(
+            self, proton_factory, default_proton, steam_app_factory, home_dir,
+            commands, caplog):
+        """
+        Test that Protontricks will fix locale settings if nonexistent locale
+        settings are detected and Steam Deck is used to run Protontricks
+        """
+        # Create binary to fake the 'locale' executable
+        locale_script_path = home_dir / ".local" / "bin" / "locale"
+        locale_script_path.write_text("""#!/bin/sh
+            if [ "$1" = "-a" ]; then
+                echo 'C'
+                echo 'C.UTF-8'
+                echo 'en_US'
+                echo 'en_US.utf8'
+            else
+                echo 'LANG=fi_FI.UTF-8'
+                echo 'LC_CTYPE=en_US.utf8'
+                echo 'LC_TIME=en_US.UTF-8'
+                echo 'LC_NUMERIC=D'
+            fi
+        """)
+        locale_script_path.chmod(
+            locale_script_path.stat().st_mode | stat.S_IEXEC
+        )
+
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+        run_command(
+            winetricks_path=Path("/usr/bin/winetricks"),
+            proton_app=default_proton,
+            steam_app=steam_app,
+            command=["/bin/env"],
+            env={
+                # Use same environment variables as in the mocked 'locale'
+                # script
+                "LANG": "fi_FI.UTF-8",
+                "LC_CTYPE": "en_US.utf8",
+                "LC_TIME": "en_US.UTF-8",
+                "LC_NUMERIC": "D"
+            }
+        )
+
+        # Warning will be logged to indicate 'LANG' was changed
+        warning = next(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+            and "locale has been reset" in record.getMessage()
+        )
+        assert warning.getMessage().endswith(
+            "for the following categories: LANG, LC_NUMERIC"
+        )
+
+        # Ensure the incorrect locale settings were changed for the command
+        command = commands[-1]
+        assert command.env["LANG"] == "en_US.UTF-8"
+        # LC_CTYPE was not changed as 'en_US.UTF-8' and 'en_US.utf8'
+        # are identical after normalization.
+        assert command.env["LC_CTYPE"] == "en_US.utf8"
+        assert command.env["LC_TIME"] == "en_US.UTF-8"
+        assert command.env["LC_NUMERIC"] == "en_US.UTF-8"
+
+
 
 class TestLowerDict:
     def test_lower_nested_dict(self):
@@ -162,3 +230,18 @@ class TestLowerDict:
         }
 
         assert lower_dict(before) == after
+
+
+class TestIsSteamDeck:
+    def test_not_steam_deck(self):
+        """
+        Test that non-Steam Deck environment is detected correctly
+        """
+        assert not is_steam_deck()
+
+    @pytest.mark.usefixtures("steam_deck")
+    def test_is_steam_deck(self):
+        """
+        Test that Steam Deck environment is detected correctly
+        """
+        assert is_steam_deck()

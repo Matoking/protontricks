@@ -811,9 +811,16 @@ def commands(monkeypatch):
     commands_ = []
 
     def mock_subprocess_run(*args, **kwargs):
-        # Don't mock "/sbin/ldconfig"
-        if args[0] == "/sbin/ldconfig":
-            return run(args, **kwargs)
+        try:
+            # Command provided as a list
+            executable = args[0][0]
+        except ValueError:
+            # Command provided as a string
+            executable = args[0].split(" ")[0]
+
+        # Don't mock "/sbin/ldconfig" and "locale"
+        if executable in ["/sbin/ldconfig", "locale"]:
+            return run(*args, **kwargs)
 
         mock_command = MockSubprocess(
             *args,
@@ -862,7 +869,7 @@ def steam_deck(monkeypatch, tmp_path):
     ]))
 
     monkeypatch.setattr(
-        "protontricks.steam.OS_RELEASE_PATHS",
+        "protontricks.util.OS_RELEASE_PATHS",
         [str(tmp_path / "etc" / "os-release")]
     )
 

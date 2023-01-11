@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+ - Launch application with fixed locale settings if Steam Deck is used and non-existent locales are configured
+
 ### Fixed
  - Fix crashes caused by missing permissions when checking for Steam apps
 

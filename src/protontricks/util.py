@@ -1,28 +1,34 @@
 import configparser
+import locale
 import logging
 import os
+import re
 import shlex
 import shutil
 import stat
-import shutil
 import tempfile
-import re
 from pathlib import Path
-from subprocess import PIPE, check_output, run, Popen, DEVNULL
+from subprocess import DEVNULL, PIPE, Popen, check_output, run
 
 import pkg_resources
 
 __all__ = (
-    "SUPPORTED_STEAM_RUNTIMES", "lower_dict",
-    "get_legacy_runtime_library_paths", "get_host_library_paths",
-    "RUNTIME_ROOT_GLOB_PATTERNS", "get_runtime_library_paths",
-    "WINE_SCRIPT_TEMPLATE", "create_wine_bin_dir", "run_command"
+    "SUPPORTED_STEAM_RUNTIMES", "OS_RELEASE_PATHS", "lower_dict",
+    "is_steam_deck", "get_legacy_runtime_library_paths",
+    "get_host_library_paths", "RUNTIME_ROOT_GLOB_PATTERNS",
+    "get_runtime_library_paths", "WINE_SCRIPT_TEMPLATE",
+    "create_wine_bin_dir", "run_command"
 )
 
 logger = logging.getLogger("protontricks")
 
 SUPPORTED_STEAM_RUNTIMES = [
     "Steam Linux Runtime - Soldier"
+]
+
+OS_RELEASE_PATHS = [
+    "/run/host/os-release",  # The host file if we're inside a Flatpak sandbox
+    "/etc/os-release"
 ]
 
 
@@ -41,6 +47,23 @@ def lower_dict(d):
         return {k.lower(): _lower_value(v) for k, v in value.items()}
 
     return {k.lower(): _lower_value(v) for k, v in d.items()}
+
+
+def is_steam_deck():
+    """
+    Check if we're running on a Steam Deck
+    """
+    for path in OS_RELEASE_PATHS:
+        try:
+            lines = Path(path).read_text("utf-8").split("\n")
+        except FileNotFoundError:
+            continue
+
+        if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
+            logger.info("The current device is a Steam Deck")
+            return True
+
+    return False
 
 
 def get_legacy_runtime_library_paths(legacy_steam_runtime_path, proton_app):
@@ -216,6 +239,60 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     return bin_path
 
 
+def _get_fixed_locale_env():
+    """Return a dictionary of fixed locale environment variables if Steam Deck
+    is in use and some of the selected locales haven't actually been generated
+    by the system.
+
+    If the locale settings require no changes, an empty dict will be returned
+    instead.
+    """
+    # We can assume the 'en_US.UTF-8' locale always exists on Steam Deck, but
+    # we can't assume the same about other distros. Therefore, only attempt
+    # fixing the locale when running on a Steam Deck.
+    if not is_steam_deck():
+        return {}
+
+    supported_locales = run(
+        ["locale", "-a"], check=True, stdout=PIPE, stderr=DEVNULL
+    ).stdout.decode("utf-8").splitlines()
+    supported_locales = [
+        locale.normalize(locale_) for locale_
+        in supported_locales
+    ]
+
+    locale_output = run(
+        ["locale"], check=True, stdout=PIPE, stderr=DEVNULL
+    ).stdout.decode("utf-8").splitlines()
+    locale_output = [value.split("=") for value in locale_output]
+    locale_settings = {
+        value[0]: value[1].strip('"') for value in locale_output
+    }
+
+    fixed_env = {}
+
+    # Check if any of the locales don't actually exist
+    for category, locale_ in locale_settings.items():
+        if locale_.strip() == "":
+            continue
+
+        # Normalize the locale name
+        locale_ = locale.normalize(locale_)
+        if locale_ not in supported_locales:
+            # Locale does not exist
+            fixed_env[category] = "en_US.UTF-8"
+
+    if fixed_env:
+        logger.warning(
+            "Found locale categories configured with missing locales. "
+            "The locale has been reset to 'en_US.UTF-8' for the "
+            "following categories: %s",
+            ", ".join(fixed_env.keys())
+        )
+
+    return fixed_env
+
+
 def _start_process(args, wait=False, **kwargs):
     """Start a new process and return a Popen instance
     """
@@ -233,6 +310,7 @@ def run_command(
         legacy_steam_runtime_path=None,
         use_bwrap=None,
         start_wineserver=None,
+        env=None,
         **kwargs):
     """Run an arbitrary command with the correct environment variables
     for the given Proton app
@@ -265,8 +343,13 @@ def run_command(
             "to finish the installation."
         )
 
-    # Make a copy of the environment variables to use for the subprocesses
+    # Make a copy of the environment variables to use for the subprocesses.
+    # Include any additional environment variables if provided.
+    if env is None:
+        env = {}
+
     wine_environ = os.environ.copy()
+    wine_environ.update(env)
 
     user_provided_wine = os.environ.get("WINE", False)
     user_provided_wineserver = os.environ.get("WINESERVER", False)
@@ -294,6 +377,9 @@ def run_command(
 
     # Unset WINEARCH, which might be set for another Wine installation
     wine_environ.pop("WINEARCH", "")
+
+    # Fix the locale for Steam Deck, if necessary
+    wine_environ.update(_get_fixed_locale_env())
 
     wine_bin_dir = None
     wine_environ["PROTONTRICKS_STEAM_RUNTIME"] = "off"
@@ -410,8 +496,11 @@ def run_command(
 
         logger.info("Attempting to run command %s", command)
 
+        kwargs = kwargs.copy()
+        kwargs["env"] = wine_environ
+
         process = _start_process(
-            command, wait=True, env=wine_environ, **kwargs
+            command, wait=True, **kwargs
         )
         return process.returncode
     finally:

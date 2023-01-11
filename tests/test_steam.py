@@ -10,7 +10,7 @@ from protontricks.steam import (SteamApp, find_appid_proton_prefix,
                                 find_steam_compat_tool_app, find_steam_path,
                                 get_custom_compat_tool_installations,
                                 get_custom_windows_shortcuts, get_steam_apps,
-                                get_steam_lib_paths, is_steam_deck)
+                                get_steam_lib_paths)
 
 
 class TestSteamApp:
@@ -991,18 +991,3 @@ class TestGetWindowsShortcuts:
             "Shortcut fakegame.exe (4149337689) does not have a prefix"
             in record.message
         )
-
-
-class TestIsSteamDeck:
-    def test_not_steam_deck(self):
-        """
-        Test that non-Steam Deck environment is detected correctly
-        """
-        assert not is_steam_deck()
-
-    @pytest.mark.usefixtures("steam_deck")
-    def test_is_steam_deck(self):
-        """
-        Test that Steam Deck environment is detected correctly
-        """
-        assert is_steam_deck()

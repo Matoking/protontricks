@@ -10,7 +10,7 @@ from pathlib import Path
 import vdf
 
 from .flatpak import is_flatpak_sandbox
-from .util import lower_dict
+from .util import lower_dict, is_steam_deck
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_installations",
@@ -21,7 +21,7 @@ __all__ = (
     "get_custom_compat_tool_installations_in_dir",
     "get_custom_compat_tool_installations", "find_current_steamid3",
     "get_appid_from_shortcut", "get_custom_windows_shortcuts",
-    "get_steam_apps", "is_steam_deck"
+    "get_steam_apps"
 )
 
 COMMON_STEAM_DIRS = [
@@ -1260,20 +1260,3 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
     steam_apps.sort(key=lambda app: app.name)
 
     return steam_apps
-
-
-def is_steam_deck():
-    """
-    Check if we're running on a Steam Deck
-    """
-    for path in OS_RELEASE_PATHS:
-        try:
-            lines = Path(path).read_text("utf-8").split("\n")
-        except FileNotFoundError:
-            continue
-
-        if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
-            logger.info("The current device is a Steam Deck")
-            return True
-
-    return False
