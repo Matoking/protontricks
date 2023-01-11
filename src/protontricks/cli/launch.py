@@ -1,13 +1,11 @@
 import argparse
 import logging
 import shlex
-import sys
 from pathlib import Path
-from subprocess import run
 
 from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
                    select_steam_installation)
-from ..steam import (find_steam_installations, find_steam_path, get_steam_apps,
+from ..steam import (find_steam_installations, get_steam_apps,
                      get_steam_lib_paths)
 from .main import main as cli_main
 from .util import (CustomArgumentParser, cli_error_handler, enable_logging,

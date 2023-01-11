@@ -1,13 +1,9 @@
 import configparser
-import json
 import logging
 import os
 import re
-import shlex
 import subprocess
 from pathlib import Path
-
-from .config import get_config
 
 __all__ = (
     "FLATPAK_BWRAP_COMPATIBLE_VERSION", "FLATPAK_INFO_PATH",
