@@ -80,22 +80,15 @@ You can install Protontricks using a community package, Flatpak or **pipx**. **p
 
 **If you're using the Flatpak version of Steam**, follow the [Flatpak-specific installation instructions](https://github.com/flathub/com.github.Matoking.protontricks) instead.
 
-Unless you're using community packages, **you may need to install Winetricks separately**. See the [installation instructions](https://github.com/Winetricks/winetricks#installing) for further details.
-
 ## Community packages (recommended)
 
 Community packages allow easier installation and updates using distro-specific package managers. They also take care of installing dependencies and desktop features out of the box, making them **the recommended option if available for your distribution**.
 
 Community packages are maintained by community members and might be out-of-date compared to releases on PyPI.
-
-* Arch Linux ([release](https://aur.archlinux.org/packages/protontricks/), [git](https://aur.archlinux.org/packages/protontricks-git/))
-* Fedora ([release](https://src.fedoraproject.org/rpms/protontricks))
-* NixOS ([nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/package-management/protontricks/default.nix))
-* Void Linux ([void-packages](https://github.com/void-linux/void-packages/blob/master/srcpkgs/protontricks/template))
+Note that some distros such as **Debian** / **Ubuntu** often have outdated packages for either Protontricks **or** Winetricks.
+If so, install the Flatpak version instead as outdated releases may fail to work properly.
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/protontricks.svg)](https://repology.org/project/protontricks/versions)
-
-If you maintain a community package for Protontricks, feel free to create a pull request adding an entry to this section!
 
 ## Flatpak (recommended)
 
