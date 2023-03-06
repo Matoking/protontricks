@@ -6,7 +6,8 @@ from pathlib import Path
 import pytest
 import vdf
 
-from protontricks.steam import (SteamApp, find_appid_proton_prefix,
+from protontricks.steam import (SteamApp, _get_steamapps_subdirs,
+                                find_appid_proton_prefix,
                                 find_steam_compat_tool_app, find_steam_path,
                                 get_custom_compat_tool_installations,
                                 get_custom_windows_shortcuts, get_steam_apps,
@@ -881,9 +882,9 @@ class TestGetSteamApps:
             record for record in caplog.records
             if record.levelname == "WARNING"
         ]
-        assert len(warnings) == 1
+        assert len(warnings) == 2
 
-        warning = warnings[0]
+        warning = warnings[-1]
         assert f"{library_dir_b} not found." in warning.message
 
 
@@ -991,3 +992,22 @@ class TestGetWindowsShortcuts:
             "Shortcut fakegame.exe (4149337689) does not have a prefix"
             in record.message
         )
+
+
+def test_get_steamapps_subdirs(steam_dir, steam_library_factory):
+    """
+    Retrieve Steam library directory containing multiple 'steamapps'
+    directories. Ensure the one with the exact 'steamapps' case is picked
+    first.
+    """
+    library = steam_library_factory("TestLibrary")
+
+    (library / "SteamApps").mkdir()
+    (library / "STEAMAPPS").mkdir()
+    (library / "steamapps").mkdir()
+    (library / "SteaMAppS").mkdir()
+
+    steamapps_dirs = _get_steamapps_subdirs(library)
+
+    assert len(steamapps_dirs) == 4
+    assert steamapps_dirs[0].name == "steamapps"

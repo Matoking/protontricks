@@ -280,6 +280,28 @@ def _get_required_tool_appid(path):
         return None
 
 
+def _get_steamapps_subdirs(path):
+    """
+    Get all directories under the given path that match 'steamapps'
+    in a case-insensitive manner
+    """
+    try:
+        dirs = list(
+            entry for entry in path.iterdir()
+            if entry.name.lower() == "steamapps" and entry.is_dir()
+
+        )
+    except FileNotFoundError:
+        # Directory does not exist
+        return []
+
+    # Sort entries so that 'steamapps' is listed first, as it's the default
+    # directory name that Steam uses and should thus be prioritized
+    dirs = list(reversed(sorted(dirs, key=lambda dir_: dir_.name)))
+
+    return dirs
+
+
 def find_steam_installations():
     """
     Find all Steam installations and return them as a list of (steam_path, steam_root)
@@ -287,12 +309,19 @@ def find_steam_installations():
     """
     def has_steamapps_dir(path):
         """
-        Return True if the path either has a 'steamapps' or a 'SteamApps'
-        subdirectory, False otherwise
+        Return True if the path either has a 'steamapps' subdirectory,
+        False otherwise
         """
-        # 'steamapps' is the usual name under Linux Steam installations
-        # 'SteamApps' name appears in installations imported from Windows
-        return (path / "steamapps").is_dir() or (path / "SteamApps").is_dir()
+        # Steam doesn't care about case-insensitivity and considers even
+        # names like 'SteaMAPps' valid
+        try:
+            return any(
+                path.name.lower() == "steamapps" and path.is_dir() for path
+                in path.iterdir()
+            )
+        except FileNotFoundError:
+            # Directory does not exist
+            return False
 
     def has_runtime_dir(path):
         return (path / "ubuntu12_32").is_dir()
@@ -747,10 +776,9 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
     candidates = []
 
     for path in steam_lib_paths:
-        # 'steamapps' portion of the path can also be 'SteamApps'
-        for steamapps_part in ("steamapps", "SteamApps"):
-            prefix_path = \
-                path / steamapps_part / "compatdata" / str(appid) / "pfx"
+        steamapps_dirs = _get_steamapps_subdirs(path)
+        for steamapps_path in steamapps_dirs:
+            prefix_path = steamapps_path / "compatdata" / str(appid) / "pfx"
             if prefix_path.is_dir():
                 candidates.append(prefix_path)
 
@@ -866,10 +894,14 @@ def get_steam_lib_paths(steam_path):
         return library_folders
 
     # Try finding Steam library folders using libraryfolders.vdf in Steam root
-    if (steam_path / "steamapps").is_dir():
-        folders_vdf_path = steam_path / "steamapps" / "libraryfolders.vdf"
-    elif (steam_path / "SteamApps").is_dir():
-        folders_vdf_path = steam_path / "SteamApps" / "libraryfolders.vdf"
+    try:
+        steamapps_path = _get_steamapps_subdirs(steam_path)[0]
+        folders_vdf_path = steamapps_path / "libraryfolders.vdf"
+    except IndexError as exc:
+        raise ValueError(
+            "Steam installation directory does not contain a 'steamapps' "
+            "directory. Installation may be incomplete or broken."
+        ) from exc
 
     try:
         library_folders = parse_library_folders(folders_vdf_path.read_text())
@@ -1195,34 +1227,25 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
             continue
 
         appmanifest_paths = []
-        is_lowercase = (path / "steamapps").is_dir()
-        is_mixedcase = (path / "SteamApps").is_dir()
+        steamapps_dirs = _get_steamapps_subdirs(path)
 
-        if is_lowercase:
-            appmanifest_paths = path.glob("steamapps/appmanifest_*.acf")
-        elif is_mixedcase:
-            appmanifest_paths = path.glob("SteamApps/appmanifest_*.acf")
+        try:
+            appmanifest_paths = steamapps_dirs[0].glob("appmanifest_*.acf")
+        except IndexError:
+            logger.warning(
+                "No 'steamapps' directory was found at %s", str(path)
+            )
 
-        if is_lowercase and is_mixedcase:
-            # 'steamapps' and 'SteamApps' may both map to the same
-            # directory if the file system is case-insensitive.
-            # Check that we're actually dealing with more than one directory
-            # before printing a warning.
-            is_case_sensitive_fs = sum(
-                1 for path in path.glob("*")
-                if path.name.lower() == "steamapps"
-            ) >= 2
-
-            if is_case_sensitive_fs:
-                # Log a warning if both 'steamapps' and 'SteamApps' directories
-                # exist, as both Protontricks and Steam client have problems
-                # dealing with it (see issue #51)
-                logger.warning(
-                    "Both 'steamapps' and 'SteamApps' directories were found "
-                    "at %s. 'SteamApps' directory should be removed to "
-                    "prevent issues with app and Proton discovery.",
-                    str(path)
-                )
+        if len(steamapps_dirs) > 1:
+            # Log a warning if multiple 'steamapps' directories with different
+            # cases exist, as both Protontricks and Steam client have problems
+            # dealing with them (see issue #51)
+            logger.warning(
+                "Multiple 'steamapps' directories were found "
+                "at %s. Only one directory should exist to prevent issues "
+                "with app and Proton discovery.",
+                str(path)
+            )
 
         for manifest_path in appmanifest_paths:
             try:
