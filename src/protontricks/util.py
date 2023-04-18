@@ -21,7 +21,8 @@ __all__ = (
 logger = logging.getLogger("protontricks")
 
 SUPPORTED_STEAM_RUNTIMES = [
-    "Steam Linux Runtime - Soldier"
+    "Steam Linux Runtime - Soldier",
+    "Steam Linux Runtime - Sniper"
 ]
 
 OS_RELEASE_PATHS = [

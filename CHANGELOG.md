@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix detection of Steam library folders using non-standard capitalizations for `steamapps`
+ - _Steam Linux Runtime - Sniper_ is no longer incorrectly reported as an unsupported runtime
 
 ## [1.10.2] - 2023-02-13
 ### Added
