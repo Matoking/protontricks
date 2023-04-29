@@ -8,7 +8,8 @@ import vdf
 
 from protontricks.steam import (SteamApp, _get_steamapps_subdirs,
                                 find_appid_proton_prefix,
-                                find_steam_compat_tool_app, find_steam_path,
+                                find_steam_compat_tool_app,
+                                find_steam_installations, find_steam_path,
                                 get_custom_compat_tool_installations,
                                 get_custom_windows_shortcuts, get_steam_apps,
                                 get_steam_lib_paths)
@@ -580,13 +581,18 @@ class TestFindSteamPath:
         steam_flatpak_dir.parent.mkdir(parents=True)
         shutil.copytree(steam_dir, steam_flatpak_dir)
 
-        # Since Flatpak is enabled, both paths should point to Flatpak
-        steam_path, steam_root = find_steam_path()
+        steam_installations = find_steam_installations()
+        steam_path, steam_root = next(
+            (steam_path, steam_root) for (steam_path, steam_root) in
+            steam_installations
+            if str(steam_path) == str(steam_flatpak_dir)
+        )
 
+        # Since Steam Flatpak installation was found, both of its paths
+        # should point to the same installation directory
         assert str(steam_path) == str(steam_flatpak_dir)
         assert str(steam_root) == str(steam_flatpak_dir)
 
-    @pytest.mark.usefixtures("flatpak_sandbox")
     def test_find_steam_path_multiple_install_warning(
             self, steam_dir, steam_root, home_dir, caplog):
         """
@@ -606,8 +612,8 @@ class TestFindSteamPath:
         assert "STEAM_DIR=<path>" in caplog.records[3].message
         assert "The following Steam directories were found" \
             in caplog.records[4].message
-        assert str(steam_flatpak_dir) in caplog.records[5].message
-        assert str(steam_dir) in caplog.records[6].message
+        assert str(steam_dir) in caplog.records[5].message
+        assert str(steam_flatpak_dir) in caplog.records[6].message
 
 
 class TestGetSteamApps:

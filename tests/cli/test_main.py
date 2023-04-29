@@ -699,7 +699,7 @@ class TestCLIRun:
 
         # Mock the user choosing the Flatpak installation.
         # Only the index is actually checked in the actual function.
-        gui_provider.mock_stdout = "2: Native - /home/fake/.steam"
+        gui_provider.mock_stdout = "1: Native - /home/fake/.steam"
 
         result = cli(["-s", "app"])
 
@@ -707,7 +707,7 @@ class TestCLIRun:
         assert "Flatpak Steam app (10)" not in result
 
         # This time mock the Flatpak installation
-        gui_provider.mock_stdout = "1: Flatpak - /home/fake/.var/app/something"
+        gui_provider.mock_stdout = "2: Flatpak - /home/fake/.var/app/something"
 
         result = cli(["-s", "app"])
 

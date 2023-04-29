@@ -26,7 +26,7 @@ __all__ = (
 
 COMMON_STEAM_DIRS = [
     ".steam/steam",
-    ".local/share/Steam"
+    ".local/share/Steam",
 ]
 
 OS_RELEASE_PATHS = [
@@ -358,17 +358,6 @@ def find_steam_installations():
     # We essentially use this as an ordered set.
     candidates = OrderedDict()
 
-    if is_flatpak_sandbox():
-        # If we're inside a Flatpak sandbox,
-        # prioritize Flatpak installation of Steam.
-        # In this case, ensure we don't mix steam_root and steam_path
-        # from Flatpak and non-Flatpak installations of Steam.
-        steam_path = \
-            Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
-        steam_path = steam_path.resolve()
-        if has_steamapps_dir(steam_path):
-            candidates[(str(steam_path), str(steam_path))] = True
-
     for steam_path in COMMON_STEAM_DIRS:
         # The common Steam directories are found inside the home directory
         steam_path = (Path.home() / steam_path).resolve()
@@ -379,6 +368,14 @@ def find_steam_installations():
                 steam_root_ = steam_root
 
             candidates[(str(steam_path), str(steam_root_))] = True
+
+    # Check for Flatpak Steam separately and ensure we don't mix steam_root
+    # and steam_path from Flatpak and non-Flatpak installations of Steam.
+    steam_path = \
+        Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+    steam_path = steam_path.resolve()
+    if has_steamapps_dir(steam_path):
+        candidates[(str(steam_path), str(steam_path))] = True
 
     for steam_path, _ in candidates.keys():
         logger.info("Found Steam directory at %s", steam_path)
