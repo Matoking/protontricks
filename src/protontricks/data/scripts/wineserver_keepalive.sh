@@ -42,7 +42,7 @@ cd "$PROTONTRICKS_TEMP_PATH" || exit 1
 while [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; do
     log_info "Starting wineserver-keepalive process..."
 
-    wine cmd.exe /c "@@keepalive_bat_path@@" &>/dev/null
+    wine cmd.exe /c "@@keepalive_bat_path@@" 2> /dev/null 2>&1
     if [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; then
         # If 'keepalive' still exists, someone called 'wineserver -w'.
         # To prevent that command from stalling indefinitely, we need to
@@ -59,12 +59,12 @@ while [[ -f "$PROTONTRICKS_TEMP_PATH/keepalive" ]]; do
                     continue
                 fi
 
-                if [[ $(pgrep -a "$pid" | grep -v -E '\/wineserver -w$') ]] &> /dev/null; then
+                if [[ $(pgrep -a "$pid" | grep -v -E '\/wineserver -w$') ]] > /dev/null 2>&1; then
                     # Skip commands that do *not* end with 'wineserver -w'
                     continue
                 fi
 
-                if [[ $(xargs -0 -L1 -a "/proc/${pid}/environ" | grep "^WINEPREFIX=${WINEPREFIX}") ]] &> /dev/null; then
+                if [[ $(xargs -0 -L1 -a "/proc/${pid}/environ" | grep "^WINEPREFIX=${WINEPREFIX}") ]] > /dev/null > 2>&1; then
                     wineserver_finished=false
                 fi
             done < <(pgrep wineserver)
