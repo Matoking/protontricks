@@ -118,12 +118,13 @@ class TestCLIRun:
         ])
 
         # CLI flags are passed through to the main CLI entrypoint
-        assert cli_args[0:5] == [
-            "--verbose", "--no-runtime", "--no-bwrap", "--no-term", "-c"
+        assert cli_args[0:6] == [
+            "--verbose", "--no-runtime", "--no-bwrap",
+            "--no-background-wineserver", "--no-term", "-c"
         ]
-        assert cli_args[5].startswith("wine ")
-        assert cli_args[5].endswith("test.exe'")
-        assert cli_args[6] == "10"
+        assert cli_args[6].startswith("wine ")
+        assert cli_args[6].endswith("test.exe'")
+        assert cli_args[7] == "10"
 
         # Steam installation was provided to the main entrypoint
         assert str(cli_kwargs["steam_path"]) == str(steam_dir)
@@ -161,8 +162,7 @@ class TestCLIRun:
             # entrypoint
             assert argument in cli_args
         else:
-            assert "--background-wineserver" not in cli_args
-            assert "--no-background-wineserver" not in cli_args
+            assert "--no-background-wineserver" in cli_args
 
     def test_cli_error_handler_uncaught_exception(
             self, launch_cli, default_proton, steam_app_factory, monkeypatch,

@@ -89,7 +89,7 @@ def main(args=None):
     )
     parser.add_argument("executable", type=str)
     parser.add_argument("exec_args", nargs=argparse.REMAINDER)
-    parser.set_defaults(background_wineserver=None)
+    parser.set_defaults(background_wineserver=False)
 
     args = parser.parse_args(args)
 

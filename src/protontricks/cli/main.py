@@ -115,7 +115,8 @@ def main(args=None, steam_path=None, steam_root=None):
         action="store_true",
         help=(
             "Launch a background wineserver process to improve Wine command "
-            "startup time. Default if bwrap is enabled."
+            "startup time. Disabled by default, as it can cause problems with "
+            "some graphical applications."
         )
     )
     parser.add_argument(
@@ -124,10 +125,10 @@ def main(args=None, steam_path=None, steam_root=None):
         action="store_false",
         help=(
             "Do not launch a background wineserver process to improve Wine "
-            "command startup time. Default if bwrap is not enabled."
+            "command startup time."
         )
     )
-    parser.set_defaults(background_wineserver=None)
+    parser.set_defaults(background_wineserver=False)
 
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)

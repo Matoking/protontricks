@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Flatpak version of Steam is also detected with non-Flatpak installation of Protontricks
 
+### Changed
+ - `--background-wineserver` is now disabled by default due to problems with crashing graphical applications and broken console output
+
 ### Fixed
  - Fix detection of Steam library folders using non-standard capitalizations for `steamapps`
  - _Steam Linux Runtime - Sniper_ is no longer incorrectly reported as an unsupported runtime

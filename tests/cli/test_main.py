@@ -168,10 +168,6 @@ class TestCLIRun:
         # inside the sandbox
         assert commands[0].args == str(wine_bin_dir / "bwrap-launcher")
 
-        # keepalive wineserver process launched in background to improve
-        # Wine command launch time
-        assert commands[1].args == str(wine_bin_dir / "wineserver-keepalive")
-
         # winecfg was run
         command = commands[-1]
 
@@ -282,10 +278,11 @@ class TestCLIRun:
     @pytest.mark.parametrize(
         "args,wineserver_launched",
         [
-            # background wineserver enabled for bwrap by default
-            (["-c", "'echo nothing'", "20"], True),
+            # background wineserver disabled for bwrap by default
+            (["-c", "'echo nothing'", "20"], False),
 
-            # background wineserver disabled by default for everything else
+            # background wineserver also disabled by default for everything
+            # else
             (["--no-bwrap", "-c", "'echo nothing'", "20"], False),
 
             # Manually disable background wineserver
@@ -626,8 +623,8 @@ class TestCLIRun:
         """
         Perform commands for two Proton apps, one using a Proton version
         using the legacy Steam Runtime and another app using newer Steam
-        Runtime with bwrap. Ensure that the correct defaults for `use_bwrap`
-        and `background_wineserver` are used in both cases.
+        Runtime with bwrap. Ensure that the correct default for `use_bwrap`
+        is used in both cases.
 
         Regression test for #150
         """
@@ -646,32 +643,18 @@ class TestCLIRun:
             name="Fake game 2", appid=20, compat_tool_name="new_proton"
         )
 
-        # bwrap and background wineserver are disabled for the old app by
-        # default
+        # bwrap is disabled for the old app by default
         cli(["-v", "-c", "bash", "10"])
         assert any(
             filter(lambda msg: "Using 'bwrap = False'" in msg, caplog.messages)
         )
-        assert any(
-            filter(
-                lambda msg: "Using 'background-wineserver = False'" in msg,
-                caplog.messages
-            )
-        )
 
         caplog.clear()
 
-        # bwrap and background wineserver is enabled for the new app by
-        # default
+        # bwrap is enabled for the new app by default.
         cli(["-v", "-c", "bash", "20"])
         assert any(
             filter(lambda msg: "Using 'bwrap = True'" in msg, caplog.messages)
-        )
-        assert any(
-            filter(
-                lambda msg: "Using 'background-wineserver = True'" in msg,
-                caplog.messages
-            )
         )
 
     @pytest.mark.usefixtures("flatpak_sandbox")
