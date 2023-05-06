@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.10.3] - 2023-05-06
 ### Added
  - Flatpak version of Steam is also detected with non-Flatpak installation of Protontricks
 
@@ -259,7 +259,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.10.2...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.10.3...HEAD
+[1.10.3]: https://github.com/Matoking/protontricks/compare/1.10.2...1.10.3
 [1.10.2]: https://github.com/Matoking/protontricks/compare/1.10.1...1.10.2
 [1.10.1]: https://github.com/Matoking/protontricks/compare/1.10.0...1.10.1
 [1.10.0]: https://github.com/Matoking/protontricks/compare/1.9.2...1.10.0
