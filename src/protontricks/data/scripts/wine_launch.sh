@@ -173,14 +173,6 @@ elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
     # expose the unique host PID.
     bus_name="com.github.Matoking.protontricks.App${STEAM_APPID}_${PROTONTRICKS_SESSION_ID}"
 
-    # Wait until socket is created
-    if ! dbus-send --print-reply --dest=org.freedesktop.DBus  /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep -q "$bus_name"; then
-        log_info "bwrap-launcher D-Bus object not yet available, waiting..."
-        while ! dbus-send --print-reply --dest=org.freedesktop.DBus  /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep -q "$bus_name"; do
-            sleep 0.25
-        done
-    fi
-
     # Pass all environment variables to 'steam-runtime-launch-client' except
     # for problematic variables that should be determined by the launch command
     # instead.

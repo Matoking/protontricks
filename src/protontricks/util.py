@@ -474,12 +474,26 @@ def run_command(
                 "Starting bwrap launcher process: %s",
                 str(wine_bin_dir / "bwrap-launcher")
             )
+
+            # TODO: Waiting for launcher to start can be simplified once
+            # ValveSoftware/steam-runtime#593 has been fixed and stdout can
+            # be used instead.
+            launcher_read_fd, launcher_write_fd = os.pipe2(os.O_CLOEXEC)
             launcher_process = _start_process(
-                str(wine_bin_dir / "bwrap-launcher"),
+                [str(wine_bin_dir / "bwrap-launcher"), str(launcher_write_fd)],
                 wait=False,
-                env=wine_environ,
-                stdout=DEVNULL,
+                pass_fds=[launcher_write_fd],
+                env=wine_environ
             )
+
+            # The Steam Runtime launcher service will write to the given
+            # file descriptor and then close it to indicate the launcher is
+            # ready.
+            os.close(launcher_write_fd)
+            with open(launcher_read_fd, "rb") as reader:
+                reader.read()
+            # Launcher has finished starting up once output is returned
+            logger.info("bwrap launcher started")
 
         if start_wineserver:
             logger.info(

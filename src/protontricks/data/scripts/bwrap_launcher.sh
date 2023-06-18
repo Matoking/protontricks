@@ -80,6 +80,10 @@ done
 log_info "Following directories will be mounted inside container: ${mount_dirs[*]}"
 log_info "Using temporary directory: $PROTONTRICKS_TEMP_PATH"
 
-exec "$STEAM_RUNTIME_PATH"/run --share-pid --launcher \
+# Protontricks will listen to this file descriptor. Once it's closed,
+# the launcher has finished starting up.
+status_fd="$1"
+
+exec "$STEAM_RUNTIME_PATH"/run --share-pid --launcher --pass-fd "$status_fd" \
 "${mount_params[@]}" -- \
---bus-name="com.github.Matoking.protontricks.App${STEAM_APPID}_${PROTONTRICKS_SESSION_ID}"
+--info-fd "$status_fd" --bus-name="com.github.Matoking.protontricks.App${STEAM_APPID}_${PROTONTRICKS_SESSION_ID}"

@@ -166,7 +166,7 @@ class TestCLIRun:
 
         # Launcher process was launched to handle launching processes
         # inside the sandbox
-        assert commands[0].args == str(wine_bin_dir / "bwrap-launcher")
+        assert commands[0].args[0] == str(wine_bin_dir / "bwrap-launcher")
 
         # winecfg was run
         command = commands[-1]
