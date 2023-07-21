@@ -15,7 +15,7 @@ __all__ = (
     "is_steam_deck", "get_legacy_runtime_library_paths",
     "get_host_library_paths", "RUNTIME_ROOT_GLOB_PATTERNS",
     "get_runtime_library_paths", "WINE_SCRIPT_TEMPLATE",
-    "create_wine_bin_dir", "run_command"
+    "get_cache_dir", "create_wine_bin_dir", "run_command"
 )
 
 logger = logging.getLogger("protontricks")
@@ -171,6 +171,20 @@ BWRAP_LAUNCHER_SH_SCRIPT = Path(
 ).read_text(encoding="utf-8")
 
 
+def get_cache_dir():
+    """
+    Get Protontricks' cache directory, creating it first if it does not
+    exist
+    """
+    xdg_cache_dir = os.environ.get(
+        "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
+    )
+    base_path = Path(xdg_cache_dir) / "protontricks"
+    os.makedirs(str(base_path), exist_ok=True)
+
+    return base_path
+
+
 def create_wine_bin_dir(proton_app, use_bwrap=True):
     """
     Create a directory with "proxy" executables that load shared libraries
@@ -180,10 +194,7 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     binaries = list((proton_app.proton_dist_path / "bin").iterdir())
 
     # Create the base directory containing files for every Proton installation
-    xdg_cache_dir = os.environ.get(
-        "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
-    )
-    base_path = Path(xdg_cache_dir) / "protontricks" / "proton"
+    base_path = get_cache_dir() / "proton"
     os.makedirs(str(base_path), exist_ok=True)
 
     # Create a directory to hold the new executables for the specific
