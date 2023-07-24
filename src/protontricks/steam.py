@@ -1112,7 +1112,11 @@ def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
 
     try:
         content = shortcuts_path.read_bytes()
-        vdf_data = lower_dict(vdf.binary_loads(content))
+        # Tolerate VDF files that have extra data after the binary VDF section.
+        # Steam itself can supposedly create such files in some situations.
+        vdf_data = lower_dict(
+            vdf.binary_loads(content, raise_on_remaining=False)
+        )
     except IOError:
         logger.info(
             "Couldn't find custom shortcuts. Maybe none have been created yet?"
