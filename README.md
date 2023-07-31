@@ -48,6 +48,12 @@ protontricks -c <COMMAND> <APPID>
 # Run the Protontricks GUI
 protontricks --gui
 
+# Launch a Windows executable using Protontricks
+protontricks-launch <EXE>
+
+# Launch a Windows executable for a specific Steam app using Protontricks
+protontricks-launch --appid <APPID> <EXE>
+
 # Print the Protontricks help message
 protontricks --help
 ```
