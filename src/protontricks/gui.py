@@ -10,9 +10,14 @@ from pathlib import Path
 from subprocess import PIPE, CalledProcessError, run
 
 import pkg_resources
+from PIL import Image
 
 from .config import get_config
 from .flatpak import get_inaccessible_paths
+from .util import get_cache_dir
+
+APP_ICON_SIZE = (32, 32)
+
 
 __all__ = (
     "LocaleError", "get_gui_provider", "select_steam_app_with_gui",
@@ -60,19 +65,46 @@ def _get_appid2icon(steam_apps, steam_path):
         )
     )
 
-    icon_dir = steam_path / "appcache" / "librarycache"
-    existing_names = [path.name for path in icon_dir.glob("*")]
+    steam_icon_dir = steam_path / "appcache" / "librarycache"
+    existing_names = [path.name for path in steam_icon_dir.glob("*")]
+
+    protontricks_icon_dir = get_cache_dir() / "app_icons"
+    protontricks_icon_dir.mkdir(exist_ok=True)
 
     appid2icon = {}
 
     for app in steam_apps:
         # Use library icon for Steam apps, fallback to placeholder icon
         # for non-Steam shortcuts and missing icons
-        appid2icon[app.appid] = (
-            icon_dir / f"{app.appid}_icon.jpg"
-            if f"{app.appid}_icon.jpg" in existing_names
-            else placeholder_path
-        )
+        icon_cache_path = protontricks_icon_dir / f"{app.appid}.jpg"
+        original_icon_path = steam_icon_dir / f"{app.appid}_icon.jpg"
+
+        # What path to actually use for the app selector icon
+        final_icon_path = placeholder_path
+
+        icon_exists = f"{app.appid}_icon.jpg" in existing_names
+        resize_icon = False
+
+        # Resize icons that have a non-standard size to ensure they can be
+        # displayed consistently in the app selector
+        if icon_exists:
+            final_icon_path = original_icon_path
+
+            with Image.open(original_icon_path) as img:
+                resize_icon = img.size != APP_ICON_SIZE
+
+                # Resize icons that have a non-standard size to ensure they can
+                # be displayed consistently in the app selector
+                if resize_icon:
+                    logger.info(
+                        "App icon %s has unusual size, resizing",
+                        original_icon_path
+                    )
+                    resized_img = img.resize(APP_ICON_SIZE)
+                    resized_img.save(icon_cache_path)
+                    final_icon_path = icon_cache_path
+
+        appid2icon[app.appid] = final_icon_path
 
     return appid2icon
 

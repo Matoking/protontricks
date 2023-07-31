@@ -2,6 +2,7 @@ from subprocess import CalledProcessError
 
 import pytest
 from conftest import MockResult
+from PIL import Image
 
 from protontricks.gui import (prompt_filesystem_access,
                               select_steam_app_with_gui,
@@ -100,8 +101,9 @@ class TestSelectApp:
         ]
 
         # Create icons for game 1 and 3
-        (steam_dir / "appcache" / "librarycache" / "10_icon.jpg").touch()
-        (steam_dir / "appcache" / "librarycache" / "30_icon.jpg").touch()
+        for appid in (10, 30):
+            Image.new("RGB", (32, 32)).save(
+                steam_dir / "appcache" / "librarycache" / f"{appid}_icon.jpg")
 
         gui_provider.mock_stdout = "Fake game 2: 20"
         select_steam_app_with_gui(steam_apps=steam_apps, steam_path=steam_dir)
@@ -111,6 +113,41 @@ class TestSelectApp:
         assert b"librarycache/10_icon.jpg\nFake game 1" in input_
         assert b"icon_placeholder.png\nFake game 2" in input_
         assert b"librarycache/30_icon.jpg\nFake game 3" in input_
+
+    def test_select_game_icons_ensure_resize(
+            self, gui_provider, steam_app_factory, steam_dir, home_dir):
+        """
+        Select a game using the GUI. Ensure custom icons with sizes other than
+        32x32 are resized.
+        """
+        steam_apps = [
+            steam_app_factory(name="Fake game 1", appid=10)
+        ]
+
+        Image.new("RGB", (64, 64)).save(
+            steam_dir / "appcache" / "librarycache" / "10_icon.jpg"
+        )
+
+        gui_provider.mock_stdout = "Fake game 1: 10"
+        select_steam_app_with_gui(steam_apps=steam_apps, steam_path=steam_dir)
+
+        # Resized icon should have been created with the correct size and used
+        resized_icon_path = \
+            home_dir / ".cache" / "protontricks" / "app_icons" / "10.jpg"
+        assert resized_icon_path.is_file()
+        with Image.open(resized_icon_path) as img:
+            assert img.size == (32, 32)
+
+        input_ = gui_provider.kwargs["input"]
+
+        assert f"{resized_icon_path}\nFake game 1".encode("utf-8") in input_
+
+        # Any existing icon should be overwritten if it already exists
+        resized_icon_path.write_bytes(b"not valid")
+        select_steam_app_with_gui(steam_apps=steam_apps, steam_path=steam_dir)
+
+        with Image.open(resized_icon_path) as img:
+            assert img.size == (32, 32)
 
     def test_select_game_no_choice(
             self, gui_provider, steam_app_factory, steam_dir):

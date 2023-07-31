@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix crash caused by the Steam shortcut configuration file containing extra data after the VDF section
+ - Fix differently sized custom app icons breaking the layout in the app selector
 
 ## [1.10.3] - 2023-05-06
 ### Added
