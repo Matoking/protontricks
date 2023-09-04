@@ -100,9 +100,16 @@ def _get_appid2icon(steam_apps, steam_path):
                         "App icon %s has unusual size, resizing",
                         original_icon_path
                     )
-                    resized_img = img.resize(APP_ICON_SIZE)
-                    resized_img.save(icon_cache_path)
-                    final_icon_path = icon_cache_path
+                    try:
+                        resized_img = img.resize(APP_ICON_SIZE).convert("RGB")
+                        resized_img.save(icon_cache_path)
+                        final_icon_path = icon_cache_path
+                    except Exception:
+                        logger.warning(
+                            "Could not resize %s, ignoring",
+                            original_icon_path,
+                            exc_info=True
+                        )
 
         appid2icon[app.appid] = final_icon_path
 
