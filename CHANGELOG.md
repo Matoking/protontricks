@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.10.5] - 2023-09-05
 ### Fixed
  - Fix crash caused by custom app icons with non-RGB mode
 
@@ -268,7 +268,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.10.4...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.10.5...HEAD
+[1.10.5]: https://github.com/Matoking/protontricks/compare/1.10.4...1.10.5
 [1.10.4]: https://github.com/Matoking/protontricks/compare/1.10.3...1.10.4
 [1.10.3]: https://github.com/Matoking/protontricks/compare/1.10.2...1.10.3
 [1.10.2]: https://github.com/Matoking/protontricks/compare/1.10.1...1.10.2
