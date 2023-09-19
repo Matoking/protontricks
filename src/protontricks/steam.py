@@ -48,19 +48,21 @@ class SteamApp(object):
     Proton prefix)
     """
     __slots__ = (
-        "appid", "name", "prefix_path", "install_path", "required_tool_appid",
-        "required_tool_app"
+        "appid", "name", "prefix_path", "install_path", "icon_path",
+        "required_tool_appid", "required_tool_app"
     )
 
     def __init__(
-            self, name, install_path, prefix_path=None, appid=None,
-            required_tool_appid=None):
+            self, name, install_path, icon_path=None, prefix_path=None,
+            appid=None, required_tool_appid=None):
         """
         :appid: App's appid
         :name: The app's human-readable name
         :prefix_path: Absolute path to where the app's Wine prefix *might*
                       exist.
         :app_path: Absolute path to app's installation directory
+        :icon_path: Absolute path to app's icon, whether Steam's own or custom
+                    one configured by user
         :required_tool_appid: App ID required to run this application.
                               Usually corresponds to a Steam Runtime for
                               Proton installations.
@@ -75,6 +77,11 @@ class SteamApp(object):
             self.prefix_path = Path(prefix_path)
         else:
             self.prefix_path = None
+
+        if icon_path:
+            self.icon_path = Path(icon_path)
+        else:
+            self.icon_path = None
 
         self.install_path = Path(install_path)
 
@@ -181,10 +188,12 @@ class SteamApp(object):
             return None
 
     @classmethod
-    def from_appmanifest(cls, path, steam_lib_paths):
+    def from_appmanifest(cls, path, steam_lib_paths, steam_path=None):
         """
         Parse appmanifest_X.acf file containing Steam app installation metadata
         and return a SteamApp object
+
+        If 'steam_path' is provided, icon path is also populated
         """
         try:
             content = path.read_text(encoding="utf-8")
@@ -240,6 +249,13 @@ class SteamApp(object):
 
         install_path = Path(path).parent / "common" / app_state["installdir"]
 
+        icon_path = None
+
+        # If Steam path was provided, also populate the icon path
+        if steam_path:
+            icon_path = \
+                steam_path / "appcache" / "librarycache" / f"{appid}_icon.jpg"
+
         # Check if the app requires another app. This is the case with
         # newer versions of Proton, which use Steam Runtimes installed as
         # normal Steam apps
@@ -255,7 +271,8 @@ class SteamApp(object):
 
         return cls(
             appid=appid, name=name, prefix_path=prefix_path,
-            install_path=install_path, required_tool_appid=required_tool_appid
+            install_path=install_path, icon_path=icon_path,
+            required_tool_appid=required_tool_appid
         )
 
 
@@ -1175,11 +1192,19 @@ def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
             )
             continue
 
+        icon_path = None
+
+        if shortcut_data.get("icon", None):
+            icon_path = Path(shortcut_data["icon"])
+
         steam_apps.append(
             SteamApp(
                 appid=appid,
                 name=f"Non-Steam shortcut: {shortcut_data['appname']}",
-                prefix_path=prefix_path, install_path=install_path
+                prefix_path=prefix_path,
+                install_path=install_path,
+                icon_path=icon_path
+
             )
         )
 
@@ -1251,7 +1276,8 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
         for manifest_path in appmanifest_paths:
             try:
                 steam_app = SteamApp.from_appmanifest(
-                    manifest_path, steam_lib_paths=steam_lib_paths
+                    manifest_path, steam_lib_paths=steam_lib_paths,
+                    steam_path=steam_path
                 )
             except PermissionError as exc:
                 logger.warning(

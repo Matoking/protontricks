@@ -225,7 +225,8 @@ def shortcut_factory(steam_dir, steam_user):
     shortcuts_by_user = defaultdict(list)
 
     def func(
-            install_dir, name, steamid64=None, appid_in_vdf=False, appid=None):
+            install_dir, name, steamid64=None, appid_in_vdf=False, appid=None,
+            icon_path=None):
         if not steamid64:
             steamid64 = steam_user
 
@@ -269,6 +270,9 @@ def shortcut_factory(steam_dir, steam_user):
                     # For pre-determined app IDs, such as those created by
                     # Lutris, use them as-is
                     entry["appid"] = appid_
+
+            if icon_path:
+                entry["icon"] = icon_path
 
             data["shortcuts"][str(shortcut_id)] = entry
 
@@ -508,6 +512,9 @@ def steam_app_factory(steam_dir, steam_config_path):
             prefix_path=str(
                 steamapps_dir / "compatdata" / str(appid)
                 / "pfx"
+            ),
+            icon_path=(
+                steam_dir / "appcache" / "librarycache" / f"{appid}_icon.jpg"
             )
         )
         if required_tool_app:

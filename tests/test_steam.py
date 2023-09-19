@@ -32,6 +32,28 @@ class TestSteamApp:
 
         assert steam_app.name == "Fake game"
         assert steam_app.appid == 10
+        assert not steam_app.icon_path
+
+    def test_steam_app_from_appmanifest_and_steam_path(
+            self, steam_app_factory, steam_dir):
+        """
+        Create a SteamApp from an appmanifest file and Steam path
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        appmanifest_path = \
+            Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
+
+        steam_app = SteamApp.from_appmanifest(
+            path=appmanifest_path,
+            steam_lib_paths=[steam_dir / "steam" / "steamapps"],
+            steam_path=steam_dir
+        )
+
+        assert steam_app.name == "Fake game"
+        assert steam_app.appid == 10
+        assert steam_app.icon_path \
+            == steam_dir / "appcache" / "librarycache" / "10_icon.jpg"
 
     @pytest.mark.parametrize(
         "content",
@@ -929,6 +951,26 @@ class TestGetWindowsShortcuts:
         assert len(shortcut_apps) == 1
         assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
         assert shortcut_apps[0].appid == 4149337689
+
+    def test_get_custom_windows_shortcuts_populate_icon_path(
+            self, steam_dir, shortcut_factory):
+        """
+        Retrieve custom Windows shortcut. The 'icon_path' property is populated
+        if the icon path is found in `shortcuts.vdf`.
+        """
+        shortcut_factory(
+            install_dir="fake/path/", name="fakegame.exe",
+            icon_path="/fake/icon/path.png"
+        )
+
+        shortcut_apps = get_custom_windows_shortcuts(
+            steam_dir, steam_lib_paths=[steam_dir]
+        )
+
+        assert len(shortcut_apps) == 1
+        assert shortcut_apps[0].name == "Non-Steam shortcut: fakegame.exe"
+        assert shortcut_apps[0].appid == 4149337689
+        assert shortcut_apps[0].icon_path == Path("/fake/icon/path.png")
 
     @pytest.mark.usefixtures("verbose_logging")
     def test_get_custom_windows_shortcuts_non_numeric_appid(
