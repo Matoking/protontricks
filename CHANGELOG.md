@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Added
+ - Show app icons for custom shortcuts in the app selector
+
 ## [1.10.5] - 2023-09-05
 ### Fixed
  - Fix crash caused by custom app icons with non-RGB mode

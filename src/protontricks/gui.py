@@ -77,39 +77,41 @@ def _get_appid2icon(steam_apps, steam_path):
         # Use library icon for Steam apps, fallback to placeholder icon
         # for non-Steam shortcuts and missing icons
         icon_cache_path = protontricks_icon_dir / f"{app.appid}.jpg"
-        original_icon_path = steam_icon_dir / f"{app.appid}_icon.jpg"
 
         # What path to actually use for the app selector icon
         final_icon_path = placeholder_path
 
-        icon_exists = f"{app.appid}_icon.jpg" in existing_names
-        resize_icon = False
+        if app.icon_path:
+            # Resize icons that have a non-standard size to ensure they can be
+            # displayed consistently in the app selector
+            try:
+                with Image.open(app.icon_path) as img:
+                    # Icon exists, so use the current icon instead of the
+                    # default placeholder.
+                    final_icon_path = app.icon_path
 
-        # Resize icons that have a non-standard size to ensure they can be
-        # displayed consistently in the app selector
-        if icon_exists:
-            final_icon_path = original_icon_path
+                    resize_icon = img.size != APP_ICON_SIZE
 
-            with Image.open(original_icon_path) as img:
-                resize_icon = img.size != APP_ICON_SIZE
-
-                # Resize icons that have a non-standard size to ensure they can
-                # be displayed consistently in the app selector
-                if resize_icon:
-                    logger.info(
-                        "App icon %s has unusual size, resizing",
-                        original_icon_path
-                    )
-                    try:
-                        resized_img = img.resize(APP_ICON_SIZE).convert("RGB")
-                        resized_img.save(icon_cache_path)
-                        final_icon_path = icon_cache_path
-                    except Exception:
-                        logger.warning(
-                            "Could not resize %s, ignoring",
-                            original_icon_path,
-                            exc_info=True
+                    # Resize icons that have a non-standard size to ensure they can
+                    # be displayed consistently in the app selector
+                    if resize_icon:
+                        logger.info(
+                            "App icon %s has unusual size, resizing",
+                            app.icon_path
                         )
+                        try:
+                            resized_img = img.resize(APP_ICON_SIZE).convert("RGB")
+                            resized_img.save(icon_cache_path)
+                            final_icon_path = icon_cache_path
+                        except Exception:
+                            logger.warning(
+                                "Could not resize %s, ignoring",
+                                app.icon_path,
+                                exc_info=True
+                            )
+            except FileNotFoundError:
+                # Icon does not exist, the placeholder will be used
+                pass
 
         appid2icon[app.appid] = final_icon_path
 
