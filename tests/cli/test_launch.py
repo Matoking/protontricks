@@ -119,7 +119,7 @@ class TestCLIRun:
 
         # CLI flags are passed through to the main CLI entrypoint
         assert cli_args[0:6] == [
-            "--verbose", "--no-runtime", "--no-bwrap",
+            "-v", "--no-runtime", "--no-bwrap",
             "--no-background-wineserver", "--no-term", "-c"
         ]
         assert cli_args[6].startswith("wine ")

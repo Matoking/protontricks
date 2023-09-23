@@ -75,8 +75,11 @@ def main(args=None, steam_path=None, steam_root=None):
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Print debug information"
+        "--verbose", "-v", action="count", default=0,
+        help=(
+            "Increase log verbosity. Can be supplied twice for "
+            "maximum verbosity."
+        )
     )
     parser.add_argument(
         "--no-term", action="store_true",

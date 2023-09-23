@@ -57,8 +57,12 @@ def main(args=None):
         )
     )
     parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Print debug information")
+        "--verbose", "-v", action="count", default=0,
+        help=(
+            "Increase log verbosity. Can be supplied twice for "
+            "maximum verbosity."
+        )
+    )
     parser.add_argument(
         "--no-runtime", action="store_true", default=False,
         help="Disable Steam Runtime")
@@ -155,7 +159,7 @@ def main(args=None):
     exec_args = [shlex.quote(arg) for arg in args.exec_args]
 
     if args.verbose:
-        cli_args += ["--verbose"]
+        cli_args += ["-" + ("v" * args.verbose)]
 
     if args.no_runtime:
         cli_args += ["--no-runtime"]

@@ -34,23 +34,29 @@ def _delete_log_file():
         pass
 
 
-def enable_logging(info=False, record_to_file=True):
+def enable_logging(level=0, record_to_file=True):
     """
     Enables logging.
-    If info is True, print INFO messages in addition to WARNING and ERROR
-    messages
 
+    :param int level: Level of logging. 0 = WARNING, 1 = INFO, 2 = DEBUG.
     :param bool record_to_file: Whether to log the generated log messages
                                 to a temporary file.
                                 This is used for the error dialog containing
                                 log records.
     """
-    level = logging.INFO if info else logging.WARNING
+    if level >= 2:
+        level = logging.DEBUG
+        label = "DEBUG"
+    elif level >= 1:
+        level = logging.INFO
+        label = "INFO"
+    else:
+        level = logging.WARNING
+        label = "WARNING"
 
     # 'PROTONTRICKS_LOG_LEVEL' env var allows separate Bash scripts
     # to detect when logging is enabled.
-    os.environ["PROTONTRICKS_LOG_LEVEL"] = \
-        "INFO" if level == logging.INFO else "WARNING"
+    os.environ["PROTONTRICKS_LOG_LEVEL"] = label
 
     logger = logging.getLogger("protontricks")
 
@@ -69,8 +75,10 @@ def enable_logging(info=False, record_to_file=True):
             logging.Formatter("%(name)s (%(levelname)s): %(message)s")
         )
 
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         logger.addHandler(stream_handler)
+
+        logger.debug("Stream log handler added")
 
     if not record_to_file:
         return
@@ -82,8 +90,8 @@ def enable_logging(info=False, record_to_file=True):
     if not file_handler_added:
         # Record log files to temporary file. This means log messages can be
         # printed at the end of the session in an error dialog.
-        # *All* log messages are written into this file whether `--verbose`
-        # is enabled or not.
+        # INFO and WARNING log messages are written into this file whether
+        # `--verbose` is enabled or not.
         log_file_path = _get_log_file_path()
         try:
             log_file_path.unlink()
@@ -97,6 +105,8 @@ def enable_logging(info=False, record_to_file=True):
 
         # Ensure the log file is removed before the process exits
         atexit.register(_delete_log_file)
+
+        logger.debug("File log handler added")
 
 
 def exit_with_error(error, desktop=False):

@@ -929,3 +929,36 @@ def test_cli_error_help(cli):
     assert "[-h] [--verbose]" in stderr
     # Help message
     assert "positional arguments:" in stderr
+
+
+@pytest.mark.parametrize(
+    "parameter,log_levels",
+    [
+        (None, []),
+        ("-v", ["INFO"]),
+        ("-vv", ["INFO", "DEBUG"])
+    ]
+)
+def test_cli_enable_logging(cli, parameter, log_levels):
+    """
+    Run the CLI interface with different logging levels and ensure
+    that log messages with corresponding log levels are printed
+    """
+    if parameter:
+        _, stderr = cli(
+            [parameter, "-s", "nothing"],
+            expect_returncode=1,  # We don't care whether the command succeeds
+            include_stderr=True
+        )
+
+        for log_level in log_levels:
+            assert log_level in stderr
+    elif not parameter:
+        _, stderr = cli(
+            ["-s", "nothing"],
+            expect_returncode=1,
+            include_stderr=True
+        )
+
+        assert "DEBUG" not in stderr
+        assert "INFO" not in stderr

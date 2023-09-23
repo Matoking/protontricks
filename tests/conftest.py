@@ -45,12 +45,12 @@ def cleanup():
 
 
 @pytest.fixture(scope="function")
-def verbose_logging():
+def info_logging():
     """
-    Enable verbose logging to ensure INFO messages are captured by
-    the caplog fixture as well
+    Enable logging to ensure INFO messages are captured by the caplog fixture
+    as well
     """
-    enable_logging(info=True)
+    enable_logging(level=1)
 
 
 @pytest.fixture(scope="function", autouse=True)

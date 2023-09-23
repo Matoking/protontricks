@@ -2,8 +2,16 @@
 # Helper script
 set -o errexit
 
+function log_debug () {
+    if [[ "$PROTONTRICKS_LOG_LEVEL" != "DEBUG" ]]; then
+        return
+    fi
+
+    log "$@"
+}
+
 function log_info () {
-    if [[ "$PROTONTRICKS_LOG_LEVEL" != "INFO" ]]; then
+    if [[ "$PROTONTRICKS_LOG_LEVEL" = "WARNING" ]]; then
         return
     fi
 

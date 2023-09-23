@@ -234,7 +234,7 @@ class TestFindSteamCompatToolApp:
         # version for this game
         assert proton_app.name == "Proton 6.66"
 
-    @pytest.mark.usefixtures("verbose_logging")
+    @pytest.mark.usefixtures("info_logging")
     def test_find_legacy_tool_mapping_global(
             self, steam_dir, steam_config_path, proton_factory,
             steam_app_factory):
@@ -287,7 +287,7 @@ class TestFindSteamCompatToolApp:
 
 
 
-    @pytest.mark.usefixtures("steam_deck", "verbose_logging")
+    @pytest.mark.usefixtures("steam_deck", "info_logging")
     def test_find_steam_deck_profile(
             self, steam_app_factory, proton_factory, appinfo_factory,
             default_proton, steam_config_path, steam_dir):
@@ -336,7 +336,7 @@ class TestFindSteamCompatToolApp:
 
         assert proton_app.name == "Proton 7.77"
 
-    @pytest.mark.usefixtures("verbose_logging")
+    @pytest.mark.usefixtures("info_logging")
     def test_find_steam_default_proton(
             self, steam_app_factory, steam_dir, default_proton,
             proton_factory, steam_config_path, caplog):
@@ -972,7 +972,7 @@ class TestGetWindowsShortcuts:
         assert shortcut_apps[0].appid == 4149337689
         assert shortcut_apps[0].icon_path == Path("/fake/icon/path.png")
 
-    @pytest.mark.usefixtures("verbose_logging")
+    @pytest.mark.usefixtures("info_logging")
     def test_get_custom_windows_shortcuts_non_numeric_appid(
             self, steam_dir, shortcut_factory, caplog):
         """
@@ -1008,7 +1008,7 @@ class TestGetWindowsShortcuts:
             "app ID 'lutris-fake-game'" in record.message
         )
 
-    @pytest.mark.usefixtures("verbose_logging")
+    @pytest.mark.usefixtures("info_logging")
     def test_get_custom_windows_shortcuts_no_prefix(
             self, steam_dir, shortcut_factory, caplog):
         """
