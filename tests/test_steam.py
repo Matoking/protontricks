@@ -369,8 +369,10 @@ class TestFindSteamCompatToolApp:
 
         assert proton_app.name == "Proton 4.20"
 
-        record = caplog.records[-2]
-        assert "Using stable version of Proton" in record.message
+        assert any(
+            record for record in caplog.records
+            if "Using stable version of Proton" in record.message
+        )
 
 
 class TestFindLibraryPaths:

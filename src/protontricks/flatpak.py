@@ -64,6 +64,7 @@ def _get_xdg_user_dir(permission):
         )
         path = path.strip()
         path = os.fsdecode(path)
+        logger.debug("XDG path for %s is %s", permission, path)
         return Path(path)
 
     return None

@@ -386,6 +386,8 @@ def main(args=None, steam_path=None, steam_root=None):
             shell=True
         )
 
+    logger.info("Command returned %d", returncode)
+
     sys.exit(returncode)
 
 

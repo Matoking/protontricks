@@ -195,6 +195,10 @@ class SteamApp(object):
 
         If 'steam_path' is provided, icon path is also populated
         """
+        logger.debug(
+            "Creating SteamApp from manifest file in %s", path
+        )
+
         try:
             content = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
@@ -533,6 +537,8 @@ def iter_appinfo_sections(path):
             if i == len(data) - 4:
                 return
 
+    logger.debug("Loading appinfo.vdf in %s", path)
+
     # appinfo.vdf is not actually a (binary) VDF file, but a binary file
     # containing multiple binary VDF sections.
     # File structure based on comment from vdf developer:
@@ -547,6 +553,8 @@ def iter_appinfo_sections(path):
     )
 
     i += header_size
+
+    logger.debug("appinfo.vdf has magic number %s", magic)
 
     if magic == b"'DV\x07":
         # TODO: Remove this once V28 is used in stable version of Steam
@@ -582,6 +590,8 @@ def get_tool_appid(compat_tool_name, steam_play_manifest):
         if "aliases" in entry:
             aliases += entry["aliases"].split(",")
 
+        logger.debug("%s has compat tool aliases %s", default_name, aliases)
+
         if compat_tool_name in aliases:
             return entry["appid"]
 
@@ -612,6 +622,8 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
             return app
         except StopIteration:
             return None
+
+    logger.debug("Finding Steam compat tool name for appid %s", appid)
 
     # Determine which Proton version to use (either globally or for
     # a specific app if `appid` was provided) by checking
@@ -648,6 +660,7 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
             vdf_data["installconfigstore"]["software"]["valve"]["steam"]
                     ["toolmapping"]
         )
+        logger.debug("Found ToolMapping entry")
     except KeyError:
         tool_mapping = {}
 
@@ -658,6 +671,7 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
             vdf_data["installconfigstore"]["software"]["valve"]["steam"]
                     ["compattoolmapping"]
         )
+        logger.debug("Found CompatToolMapping entry")
     except KeyError:
         compat_tool_mapping = {}
 
@@ -796,6 +810,10 @@ def find_appid_proton_prefix(appid, steam_lib_paths):
             if prefix_path.is_dir():
                 candidates.append(prefix_path)
 
+    logger.debug(
+        "Found compatdata directories for app %s: %s", appid, candidates
+    )
+
     if len(candidates) > 1:
         # If we have more than one possible prefix path, use the one
         # with the most recent modification date
@@ -900,6 +918,12 @@ def get_steam_lib_paths(steam_path):
             if is_library_folder_xdg_steam and is_flatpak_steam:
                 path = flatpak_steam_path
 
+            logger.debug(
+                "Found Steam library folder %s. Is Flatpak path: %s, "
+                "Is XDG Steam path: %s.",
+                path, is_flatpak_steam, is_library_folder_xdg_steam
+            )
+
             library_folders.append(path)
 
         logger.info(
@@ -951,6 +975,10 @@ def get_compat_tool_dirs(steam_root):
     ]
     extra_ct_paths_env = os.getenv("STEAM_EXTRA_COMPAT_TOOLS_PATHS")
     if extra_ct_paths_env:
+        logger.debug(
+            "Including extra compat tool paths provided via env var: %s",
+            extra_ct_paths_env
+        )
         paths += [Path(path) for path in extra_ct_paths_env.split(os.pathsep)]
     paths += [steam_root / "compatibilitytools.d"]
 
@@ -1026,6 +1054,11 @@ def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
             )
             continue
 
+        logger.debug(
+            "Found custom compatibility tool %s at %s",
+            internal_name, install_path
+        )
+
         custom_tool_apps.append(
             SteamApp(
                 name=internal_name, install_path=install_path,
@@ -1085,6 +1118,8 @@ def find_current_steamid3(steam_path):
         }
         for user_id, user_data in user_datas
     ]
+
+    logger.debug("Found Steam user entries: %s", users)
 
     # Return the user with the highest timestamp, as that's likely to be the
     # currently logged-in user
@@ -1196,6 +1231,10 @@ def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
 
         if shortcut_data.get("icon", None):
             icon_path = Path(shortcut_data["icon"])
+
+        logger.debug(
+            "Creating SteamApp from non-Steam shortcut in %s", install_path
+        )
 
         steam_apps.append(
             SteamApp(

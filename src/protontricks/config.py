@@ -1,8 +1,9 @@
 import configparser
-
+import logging
 import os
-
 from pathlib import Path
+
+logger = logging.getLogger("protontricks")
 
 
 class Config:
@@ -30,6 +31,10 @@ class Config:
         Set the configuration value in the given section and its field, and
         save the configuration file
         """
+        logger.debug(
+            "Setting configuration field [%s][%s] = %s",
+            section, option, value
+        )
         self._parser.setdefault(section, {})
         self._parser[section][option] = value
 

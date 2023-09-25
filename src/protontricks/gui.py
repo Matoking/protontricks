@@ -413,10 +413,16 @@ def prompt_filesystem_access(paths, show_dialog=False):
     inaccessible_paths = get_inaccessible_paths(paths)
     inaccessible_paths = set(map(str, inaccessible_paths))
 
+    logger.debug(
+        "Following inaccessible paths were found: %s", inaccessible_paths
+    )
+
     # Check what paths the user has ignored previously
     ignored_paths = set(
         json.loads(config.get("Dialog", "DismissedPaths", "[]"))
     )
+
+    logger.debug("Following paths have been ignored: %s", ignored_paths)
 
     # Remaining paths that are inaccessible and that haven't been dismissed
     # by the user
