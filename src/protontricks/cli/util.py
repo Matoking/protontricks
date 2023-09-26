@@ -8,7 +8,7 @@ import tempfile
 import traceback
 from pathlib import Path
 
-from ..gui import get_gui_provider, show_text_dialog
+from ..gui import show_text_dialog
 
 
 def _get_log_file_path():

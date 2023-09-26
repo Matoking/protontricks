@@ -1,4 +1,3 @@
-import functools
 import logging
 import os
 import string
@@ -9,7 +8,6 @@ from pathlib import Path
 
 import vdf
 
-from .flatpak import is_flatpak_sandbox
 from .util import lower_dict, is_steam_deck
 
 __all__ = (

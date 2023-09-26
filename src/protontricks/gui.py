@@ -54,7 +54,7 @@ def get_gui_provider():
         ) from exc
 
 
-def _get_appid2icon(steam_apps, steam_path):
+def _get_appid2icon(steam_apps):
     """
     Get icons for Steam apps to show in the app selection dialog.
     Return a {appid: icon_path} dict.
@@ -64,9 +64,6 @@ def _get_appid2icon(steam_apps, steam_path):
             "protontricks", "data/data/icon_placeholder.png"
         )
     )
-
-    steam_icon_dir = steam_path / "appcache" / "librarycache"
-    existing_names = [path.name for path in steam_icon_dir.glob("*")]
 
     protontricks_icon_dir = get_cache_dir() / "app_icons"
     protontricks_icon_dir.mkdir(exist_ok=True)
@@ -324,7 +321,7 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
         args = _get_yad_args()
 
         # YAD implementation has icons for app selection
-        appid2icon = _get_appid2icon(steam_apps, steam_path=steam_path)
+        appid2icon = _get_appid2icon(steam_apps)
 
         cmd_input = [
             [
