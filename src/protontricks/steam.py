@@ -528,7 +528,11 @@ def iter_appinfo_sections(path):
     if magic == b'(DV\x07':
         yield from _iter_v28_appinfo(data, i)
     else:
-        raise SyntaxError("Invalid file magic number")
+        raise SyntaxError(
+            "Invalid file magic number. The appinfo.vdf version might not be "
+            "supported by the current version of Protontricks - please "
+            "check for updates."
+        )
 
 
 def get_appinfo_sections(path):
