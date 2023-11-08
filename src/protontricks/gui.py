@@ -269,7 +269,9 @@ def select_steam_installation(steam_installations):
             # No installation was selected
             choice = b""
         else:
-            raise RuntimeError(f"{gui_provider} returned an error")
+            raise RuntimeError(
+                f"{gui_provider} returned an error. Stderr: {exc.stderr}"
+            )
 
     if choice in (b"", b" \n"):
         return None, None
@@ -367,7 +369,9 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
             # No game was selected
             choice = b""
         else:
-            raise RuntimeError(f"{gui_provider} returned an error")
+            raise RuntimeError(
+                f"{gui_provider} returned an error. Stderr: {exc.stderr}"
+            )
 
     if choice in (b"", b" \n"):
         print("No game was selected. Quitting...")
