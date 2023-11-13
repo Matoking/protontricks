@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  - Show app icons for custom shortcuts in the app selector
  - Verbose flag can be enabled with `-vv` for additional debug logging
 
+### Fixed
+ - Fix Protontricks not recognizing supported Steam Runtime installation due to changed name
+
 ## [1.10.5] - 2023-09-05
 ### Fixed
  - Fix crash caused by custom app icons with non-RGB mode
