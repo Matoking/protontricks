@@ -1,1 +1,2 @@
 vdf==3.4
+Pillow
