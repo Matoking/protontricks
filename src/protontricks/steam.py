@@ -971,6 +971,10 @@ def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
     for vdf_path in comptool_files:
         content = vdf_path.read_text()
 
+        logger.debug(
+            "Parsing custom compatibility tool manifest at %s", vdf_path
+        )
+
         try:
             vdf_data = vdf.loads(content)
         except SyntaxError:
