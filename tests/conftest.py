@@ -19,6 +19,7 @@ from protontricks.gui import get_gui_provider
 from protontricks.steam import (APPINFO_STRUCT_HEADER,
                                 APPINFO_V28_STRUCT_SECTION, SteamApp,
                                 get_appid_from_shortcut)
+from protontricks.steam import iter_appinfo_sections
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -319,41 +320,33 @@ def steam_config_path(steam_dir):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def appinfo_compat_tool_factory(appinfo_factory):
+def appinfo_compat_tool_factory(appinfo_factory, steam_dir):
     """
     Factory function to add compat tool entries to the appinfo.vdf binary file
     """
-    compat_tools = []
-
     def func(proton_app, compat_tool_name, aliases=None):
+        manifest_appinfo = next(
+            section["appinfo"] for section
+            in iter_appinfo_sections(steam_dir / "appcache" / "appinfo.vdf")
+            if section["appinfo"]["appid"] == 891390
+        )
+
         if not aliases:
             aliases = []
 
         aliases.append(compat_tool_name)
 
-        compat_tools.append({
+        manifest_appinfo["extended"]["compat_tools"][compat_tool_name] = {
             "appid": proton_app.appid,
             "compat_tool_name": compat_tool_name,
-            "aliases": [compat_tool_name] + aliases
-        })
-
-        compat_tool_entries = {}
-
-        for compat_tool in compat_tools:
-            compat_tool_entries[compat_tool["compat_tool_name"]] = {
-                "aliases": ",".join(compat_tool["aliases"]),
-                "appid": compat_tool["appid"]
-            }
+            "aliases": ",".join(aliases)
+        }
 
         # Update the appinfo.vdf with the compat tools that have been
         # added so far.
         appinfo_factory(
             appid=891390,  # Steam Play 2.0 Manifests app ID,
-            appinfo={
-                "extended": {
-                    "compat_tools": compat_tool_entries
-                }
-            }
+            appinfo=manifest_appinfo
         )
 
     return func
