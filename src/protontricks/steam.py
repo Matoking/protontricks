@@ -624,6 +624,16 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
         # App ID was most likely not provided
         app_section = None
 
+    try:
+        manifest_app_compat_section = next(
+            entry for mapping_appid, entry in
+            steam_play_manifest["appinfo"]["extended"]["app_mappings"].items()
+            if int(mapping_appid) == appid
+        )
+    except StopIteration:
+        # App doesn't have a default compatibility tool mapping
+        manifest_app_compat_section = None
+
     # ToolMapping seems to be used in older Steam beta releases
     try:
         tool_mapping = (
@@ -679,7 +689,19 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
             )
             potential_names.append(recommended_runtime)
 
-    # Global user settings have the 3rd highest priority
+    # Game specific default compatibility tool mapping in Steam Play 2.0
+    # manifest has the 3rd highest priority
+    if manifest_app_compat_section:
+        if "tool" in manifest_app_compat_section:
+            tool = manifest_app_compat_section["tool"]
+            logger.info(
+                "App has default compatibility tool mapping in the Steam Play "
+                "manifest: %s",
+                tool
+            )
+            potential_names.append(tool)
+
+    # Global user settings have the 4th highest priority
     if compat_tool_mapping.get("0", {}).get("name"):
         tool_name = compat_tool_mapping["0"]["name"]
         logger.info(
@@ -689,7 +711,7 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
         )
         potential_names.append(tool_name)
 
-    # Legacy user settings (ToolMapping) have the 4th highest priority
+    # Legacy user settings (ToolMapping) have the 5th highest priority
     if tool_mapping.get(str(appid), {}).get("name", {}):
         tool_name = tool_mapping[str(appid)]["name"]
         logger.info(

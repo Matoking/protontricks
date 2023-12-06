@@ -352,6 +352,34 @@ def appinfo_compat_tool_factory(appinfo_factory, steam_dir):
     return func
 
 
+@pytest.fixture(scope="function")
+def appinfo_app_mapping_factory(appinfo_factory, steam_dir):
+    """
+    Factory function to add Steam app specific compat tool app mappings
+    to the appinfo.vdf binary file
+    """
+    def func(steam_app, compat_tool_name):
+        manifest_appinfo = next(
+            section["appinfo"] for section
+            in iter_appinfo_sections(steam_dir / "appcache" / "appinfo.vdf")
+            if section["appinfo"]["appid"] == 891390
+        )
+
+        manifest_appinfo["extended"]["app_mappings"][str(steam_app.appid)] = {
+            "appid": steam_app.appid,
+            "tool": compat_tool_name
+        }
+
+        # Update the appinfo.vdf with the compat tools that have been
+        # added so far.
+        appinfo_factory(
+            appid=891390,  # Steam Play 2.0 Manifests app ID,
+            appinfo=manifest_appinfo
+        )
+
+    return func
+
+
 @pytest.fixture(scope="function", autouse=True)
 def appinfo_factory(steam_dir):
     """
@@ -364,7 +392,8 @@ def appinfo_factory(steam_dir):
             "appinfo": {
                 "appid": 891390,
                 "extended": {
-                    "compat_tools": {}
+                    "compat_tools": {},
+                    "app_mappings": {}
                 }
             }
         }

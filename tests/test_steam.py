@@ -285,8 +285,6 @@ class TestFindSteamCompatToolApp:
         )
         assert proton_app.name == "Proton B"
 
-
-
     @pytest.mark.usefixtures("steam_deck", "info_logging")
     def test_find_steam_deck_profile(
             self, steam_app_factory, proton_factory, appinfo_factory,
@@ -372,6 +370,49 @@ class TestFindSteamCompatToolApp:
         assert any(
             record for record in caplog.records
             if "Using stable version of Proton" in record.message
+        )
+
+    @pytest.mark.usefixtures("info_logging")
+    def test_find_steam_steamplay_manifest_app_mapping(
+            self, steam_app_factory, steam_dir, proton_factory,
+            appinfo_app_mapping_factory, steam_config_path, caplog):
+        """
+        Ensure the function returns the Proton version defined in the
+        Steam Play manifest if one is defined
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+        proton_app = proton_factory(
+            name="Test Proton", appid=123450, compat_tool_name="test-proton"
+        )
+
+        appinfo_app_mapping_factory(
+            steam_app=steam_app, compat_tool_name="test-proton"
+        )
+
+        steam_config_path.write_text(
+            vdf.dumps({
+                "InstallConfigStore": {
+                    "Software": {
+                        "Valve": {
+                            "Steam": {}
+                        }
+                    }
+                }
+            })
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[steam_app, proton_app],
+            appid=10
+        )
+
+        assert proton_app.appid == 123450
+
+        assert any(
+            record for record in caplog.records
+            if "App has default compatibility tool mapping in the Steam Play"
+            in record.message
         )
 
 
