@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Fix Protontricks not recognizing supported Steam Runtime installation due to changed name
  - Fix Protontricks not recognizing default Proton installation for games with different Proton preselected by Valve testing
+ - Fix Protontricks crash when app has an unidentifiable app icon
 
 ## [1.10.5] - 2023-09-05
 ### Fixed

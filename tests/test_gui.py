@@ -149,6 +149,30 @@ class TestSelectApp:
         with Image.open(resized_icon_path) as img:
             assert img.size == (32, 32)
 
+    def test_select_game_unidentifiable_icon_skipped(
+            self, gui_provider, steam_app_factory, steam_dir, home_dir, caplog):
+        """
+        Select a game using the GUI. Ensure a custom icon that's not
+        identifiable by Pillow is skipped.
+        """
+        steam_apps = [
+            steam_app_factory(name="Fake game 1", appid=10)
+        ]
+
+        icon_path = steam_dir / "appcache" / "librarycache" / "10_icon.jpg"
+        icon_path.write_bytes(b"")
+
+        gui_provider.mock_stdout = "Fake game 1: 10"
+        selected_app = select_steam_app_with_gui(
+            steam_apps=steam_apps, steam_path=steam_dir
+        )
+
+        # Warning about icon was logged, but the app was selected successfully
+        record = caplog.records[-1]
+        assert record.message.startswith(f"Could not resize {icon_path}")
+
+        assert selected_app.appid == 10
+
     def test_select_game_no_choice(
             self, gui_provider, steam_app_factory, steam_dir):
         """

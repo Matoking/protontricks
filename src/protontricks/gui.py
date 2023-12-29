@@ -96,19 +96,21 @@ def _get_appid2icon(steam_apps):
                             "App icon %s has unusual size, resizing",
                             app.icon_path
                         )
-                        try:
-                            resized_img = img.resize(APP_ICON_SIZE).convert("RGB")
-                            resized_img.save(icon_cache_path)
-                            final_icon_path = icon_cache_path
-                        except Exception:
-                            logger.warning(
-                                "Could not resize %s, ignoring",
-                                app.icon_path,
-                                exc_info=True
-                            )
+                        resized_img = img.resize(APP_ICON_SIZE).convert("RGB")
+                        resized_img.save(icon_cache_path)
+                        final_icon_path = icon_cache_path
             except FileNotFoundError:
                 # Icon does not exist, the placeholder will be used
                 pass
+            except Exception:
+                # Multitude of reasons can cause image parsing or resizing
+                # to fail. Instead of trying to catch everything, log the error
+                # and move on.
+                logger.warning(
+                    "Could not resize %s, ignoring",
+                    app.icon_path,
+                    exc_info=True
+                )
 
         appid2icon[app.appid] = final_icon_path
 
