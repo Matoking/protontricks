@@ -1007,6 +1007,14 @@ def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
             )
             continue
 
+        if not vdf_data:
+            logger.warning(
+                "Compatibility tool declaration at %s is empty. You may need "
+                "to reinstall the application.",
+                vdf_path
+            )
+            continue
+
         # Traverse to 'compatibilitytools/compat_tools' in a case-insensitive
         # way. This is done because we can't turn all keys recursively to
         # lowercase from the get-go; the app name is stored as a key.

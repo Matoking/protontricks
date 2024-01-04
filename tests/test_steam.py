@@ -741,16 +741,24 @@ class TestGetSteamApps:
             "Tool manifest for Custom Proton is empty"
         )
 
+    @pytest.mark.parametrize(
+        "content,error",
+        [
+            (b"corrupted", " is corrupted. "),
+            (b"", " is empty. ")  # Regression test for #241
+        ]
+    )
     def test_get_steam_apps_custom_proton_corrupted_compatibilitytool(
-            self, custom_proton_factory, steam_dir, steam_root, caplog):
+            self, custom_proton_factory, steam_dir, steam_root, caplog,
+            content, error):
         """
         Create a custom Proton installation with a corrupted
         compatibilitytool.vdf and ensure a warning is printed and the app
         is ignored
         """
         custom_proton = custom_proton_factory(name="Custom Proton")
-        (custom_proton.install_path / "compatibilitytool.vdf").write_text(
-            "corrupted"
+        (custom_proton.install_path / "compatibilitytool.vdf").write_bytes(
+            content
         )
 
         steam_apps = get_steam_apps(
@@ -774,9 +782,7 @@ class TestGetSteamApps:
             if record.levelname == "WARNING"
         )
 
-        assert record.getMessage().startswith(
-            "Compatibility tool declaration at"
-        )
+        assert error in record.getMessage()
 
     def test_get_steam_apps_in_library_folder(
             self, default_proton, steam_library_factory, steam_app_factory,
