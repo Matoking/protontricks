@@ -26,6 +26,8 @@ A clear and concise description of what you expected to happen.
 
 **Additional context**
 
-**If the error happens when trying to run a Protontricks command, run the command again using the `-v` flag and copy the output!**
+**If the error happens when trying to run a Protontricks command, run the command again using the `-vv` flag and copy the output!**
 
-For example, if the command that causes the error is `protontricks 42 faudio`, run `protontricks -v 42 faudio` instead and copy the output here.
+For example, if the command that causes the error is `protontricks 42 faudio`, run `protontricks -vv 42 faudio` instead and copy the output here.
+
+If the output is very long, consider creating a gist using [gist.github.com](https://gist.github.com/).
