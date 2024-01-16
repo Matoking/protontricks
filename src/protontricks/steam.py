@@ -241,8 +241,16 @@ class SteamApp(object):
         try:
             name = app_state["name"]
         except KeyError:
-            # Older app installations also use `userconfig/name`
-            name = app_state["userconfig"]["name"]
+            try:
+                # Older app installations also use `userconfig/name`
+                name = app_state["userconfig"]["name"]
+            except KeyError:
+                logger.warning(
+                    "Incomplete appmanifest found at %s. This might be a "
+                    "leftover file from an old installation. Skipping...",
+                    path
+                )
+                return None
 
         # Proton prefix may exist on a different library
         prefix_path = find_appid_proton_prefix(

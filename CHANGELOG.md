@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix Protontricks crash when custom Proton has an empty `compatibilitytool.vdf` manifest
+ - Fix Protontricks crash when an incomplete appmanifest file is parsed
 
 ## [1.11.0] - 2023-12-30
 ### Added

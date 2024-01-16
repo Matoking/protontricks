@@ -86,6 +86,40 @@ class TestSteamApp:
 
         appmanifest_path = \
             Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
+        appmanifest_path.write_text(
+            vdf.dumps({
+                "AppState": {
+                    "appid": "10",
+                    "Universe": "1",
+                    "installdir": "Fake game",
+                    # Use the same StateFlags mentioned in the #273 issue.
+                    # Two flags set here are `StateUpdateRequired` and
+                    # `StateUpdateStarted`, which might indicate the file
+                    # is not properly tracked by Steam itself, since the
+                    # installation directory was gone at this point.
+                    "StateFlags": "1026"
+                }
+            })
+        )
+
+        # Incomplete appmanifest file is ignored
+        assert not SteamApp.from_appmanifest(
+            path=appmanifest_path,
+            steam_lib_paths=[]
+        )
+
+    def test_steam_app_from_appmanifest_incomplete(self, steam_app_factory):
+        """
+        Try to deserialize from an incomplete appmanifest and check that no
+        SteamApp is returned.
+
+        Incomplete appmanifests can supposedly be created when moving app
+        installations
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        appmanifest_path = \
+            Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
         appmanifest_path.write_text("")
 
         # Empty appmanifest file is ignored
