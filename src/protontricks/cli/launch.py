@@ -176,7 +176,7 @@ def main(args=None):
         cli_args += ["--no-term"]
 
     inner_args = " ".join(
-        ["wine", f"'{executable_path}'"]
+        ["wine", shlex.quote(str(executable_path))]
         + exec_args
     )
 

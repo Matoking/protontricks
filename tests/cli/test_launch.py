@@ -29,7 +29,7 @@ class TestCLIRun:
         # 'test.exe' was executed
         command = commands[-1]
         assert command.args.startswith("wine ")
-        assert command.args.endswith("/test.exe'")
+        assert command.args.endswith("/test.exe")
 
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
 
@@ -45,7 +45,7 @@ class TestCLIRun:
         # 'test.exe' was executed
         command = commands[-1]
         assert command.args.startswith("wine ")
-        assert command.args.endswith("/test.exe'")
+        assert command.args.endswith("/test.exe")
 
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
 
@@ -123,7 +123,7 @@ class TestCLIRun:
             "--no-background-wineserver", "--no-term", "-c"
         ]
         assert cli_args[6].startswith("wine ")
-        assert cli_args[6].endswith("test.exe'")
+        assert cli_args[6].endswith("test.exe")
         assert cli_args[7] == "10"
 
         # Steam installation was provided to the main entrypoint
