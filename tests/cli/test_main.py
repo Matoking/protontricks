@@ -760,6 +760,25 @@ class TestCLIGUI:
 
         assert "Found no games" in result
 
+    def test_run_gui_proton_incomplete(
+            self, cli, steam_app_factory, default_proton, gui_provider):
+        """
+        Try running Protontricks GUI using a Proton installation that
+        is incomplete because it hasn't been launched yet.
+        """
+        # Remove the 'dist' directory to make the Proton installation
+        # incomplete
+        shutil.rmtree(str(default_proton.install_path / "dist"))
+
+        steam_app_factory(name="Fake game", appid=10)
+
+        # Fake the user selecting the game
+        gui_provider.mock_stdout = "Fake game 1: 10"
+
+        result = cli(["--gui"], expect_returncode=1)
+
+        assert "Proton installation is incomplete" in result
+
 
 class TestCLICommand:
     def test_run_command(

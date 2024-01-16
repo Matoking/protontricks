@@ -280,6 +280,13 @@ def main(args=None, steam_path=None, steam_root=None):
         if not proton_app:
             exit_("Proton installation could not be found!")
 
+        if not proton_app.is_proton_ready:
+            exit_(
+                "Proton installation is incomplete. Have you launched a Steam "
+                "app using this Proton version at least once to finish the "
+                "installation?"
+            )
+
         run_command(
             winetricks_path=winetricks_path,
             proton_app=proton_app,
