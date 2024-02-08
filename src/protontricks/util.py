@@ -6,7 +6,7 @@ import shutil
 import stat
 import tempfile
 from pathlib import Path
-from subprocess import DEVNULL, PIPE, Popen, check_output, run
+from subprocess import DEVNULL, PIPE, Popen, TimeoutExpired, check_output, run
 
 import pkg_resources
 
@@ -504,11 +504,23 @@ def run_command(
 
             # The Steam Runtime launcher service will write to the given
             # file descriptor and then close it to indicate the launcher is
-            # ready.
+            # ready or about to exit (i.e. due to wrong CLI parameters).
             os.close(launcher_write_fd)
             with open(launcher_read_fd, "rb") as reader:
                 reader.read()
-            # Launcher has finished starting up once output is returned
+
+            # Check if the launcher actually started up and is still running.
+            try:
+                launcher_process.wait(timeout=0.1)
+                # Launcher process crashed, bail out
+                raise RuntimeError(
+                    f"bwrap launcher crashed, "
+                    f"returncode: {launcher_process.returncode}"
+                )
+            except TimeoutExpired:
+                # Launcher is running as expected
+                pass
+
             logger.info("bwrap launcher started")
 
         if start_wineserver:
@@ -535,14 +547,14 @@ def run_command(
     finally:
         shutil.rmtree(str(temp_dir), ignore_errors=True)
 
-        if start_wineserver:
+        if keepalive_process:
             logger.info(
                 "Terminating wineserver keepalive process %d",
                 keepalive_process.pid
             )
             keepalive_process.terminate()
 
-        if use_bwrap:
+        if launcher_process:
             logger.info(
                 "Terminating launcher process %d",
                 launcher_process.pid

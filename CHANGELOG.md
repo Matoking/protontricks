@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Fix Protontricks crash when custom Proton has an empty `compatibilitytool.vdf` manifest
  - Fix Protontricks GUI crash when Proton installation is incomplete
+ - Check if Steam Runtime launcher service launched correctly instead of always assuming successful launch
 
 ## [1.11.0] - 2023-12-30
 ### Added

@@ -203,6 +203,28 @@ class TestRunCommand:
         assert command.env["LC_TIME"] == "en_US.UTF-8"
         assert command.env["LC_NUMERIC"] == "en_US.UTF-8"
 
+    def test_bwrap_launcher_crash_detected(
+            self, default_new_proton, steam_app_factory, command_mock):
+        """
+        Test that Protontricks will raise an exception if `bwrap-launcher`
+        crashes unexpectedly
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        # Mock a crashing 'bwrap-launcher'
+        command_mock.launcher_working = False
+
+        with pytest.raises(RuntimeError) as exc:
+            run_command(
+                winetricks_path=Path("/usr/bin/winetricks"),
+                proton_app=default_new_proton,
+                steam_app=steam_app,
+                command=["echo", "nothing"],
+                shell=True,
+                use_steam_runtime=True
+            )
+
+        assert str(exc.value) == "bwrap launcher crashed, returncode: 1"
 
 
 class TestLowerDict:

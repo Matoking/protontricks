@@ -5,7 +5,7 @@ import struct
 import zlib
 from collections import defaultdict
 from pathlib import Path
-from subprocess import run
+from subprocess import run, TimeoutExpired
 
 import pytest
 import vdf
@@ -781,8 +781,9 @@ def xdg_user_dir_bin(home_dir):
 
 class MockSubprocess:
     def __init__(
-            self, args=None, kwargs=None, mock_stdout=None, check=False,
-            cwd=None, shell=False, env=None, **_):
+            self, args=None, kwargs=None, mock_stdout=None,
+            launcher_alive=True, check=False, cwd=None, shell=False, env=None,
+            **_):
         self.args = args
         self.kwargs = kwargs
         self.check = check
@@ -796,13 +797,26 @@ class MockSubprocess:
         else:
             self.mock_stdout = mock_stdout
 
+        # The state of the mocked 'bwrap-launcher'. This will be set to False
+        # once 'terminate()' is called on the corresponding Popen object to
+        # mock the launcher stopping.
+        self.launcher_alive = launcher_alive
+
         self.env = env
 
-    def wait(self):
-        pass
+    def wait(self, timeout=None):
+        name = self.args[0]
+        if name.endswith("bwrap-launcher"):
+            if self.launcher_alive:
+                raise TimeoutExpired(name, timeout=timeout)
+            else:
+                # Fake launcher crashing
+                self.returncode = 1
 
     def terminate(self):
-        pass
+        name = self.args[0]
+        if name.endswith("bwrap-launcher"):
+            self.launcher_alive = False
 
 
 class MockResult:
@@ -839,6 +853,7 @@ def gui_provider(monkeypatch):
 class CommandMock:
     def __init__(self):
         self.commands = []
+        self.launcher_working = True
 
 
 @pytest.fixture(scope="function")
@@ -863,7 +878,7 @@ def command_mock(monkeypatch):
 
         mock_command = MockSubprocess(
             *args,
-            **kwargs
+            **{**kwargs, **{"launcher_alive": command_mock.launcher_working}}
         )
 
         command_mock.commands.append(mock_command)
@@ -871,7 +886,10 @@ def command_mock(monkeypatch):
         return MockResult(stdout=b"")
 
     def mock_Popen(*args, **kwargs):
-        mock_command = MockSubprocess(*args, **kwargs)
+        mock_command = MockSubprocess(
+            *args,
+            **{**kwargs, **{"launcher_alive": command_mock.launcher_working}}
+        )
 
         command_mock.commands.append(mock_command)
 
