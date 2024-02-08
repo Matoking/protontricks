@@ -836,13 +836,18 @@ def gui_provider(monkeypatch):
     yield mock_gui_provider
 
 
+class CommandMock:
+    def __init__(self):
+        self.commands = []
+
+
 @pytest.fixture(scope="function")
-def commands(monkeypatch):
+def command_mock(monkeypatch):
     """
-    Fixture containing all the commands called using subprocess during
-    the test run
+    Fixture to mock all subprocess calls. Returns instance containing
+    command history.
     """
-    commands_ = []
+    command_mock = CommandMock()
 
     def mock_subprocess_run(*args, **kwargs):
         try:
@@ -861,14 +866,14 @@ def commands(monkeypatch):
             **kwargs
         )
 
-        commands_.append(mock_command)
+        command_mock.commands.append(mock_command)
 
         return MockResult(stdout=b"")
 
     def mock_Popen(*args, **kwargs):
         mock_command = MockSubprocess(*args, **kwargs)
 
-        commands_.append(mock_command)
+        command_mock.commands.append(mock_command)
 
         return mock_command
 
@@ -885,7 +890,7 @@ def commands(monkeypatch):
         mock_subprocess_run
     )
 
-    return commands_
+    return command_mock
 
 
 @pytest.fixture(scope="function")

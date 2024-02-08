@@ -7,7 +7,7 @@ import pytest
 
 class TestCLIRun:
     def test_run_winetricks(
-            self, cli, steam_app_factory, default_proton, commands,
+            self, cli, steam_app_factory, default_proton, command_mock,
             home_dir):
         """
         Perform a Protontricks command directly for a certain game
@@ -19,7 +19,7 @@ class TestCLIRun:
         cli(["10", "winecfg"], env={"STEAM_RUNTIME": "0"})
 
         # winecfg was actually run
-        command = commands[-1]
+        command = command_mock.commands[-1]
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
 
@@ -38,7 +38,7 @@ class TestCLIRun:
         )
 
     def test_run_winetricks_shortcut(
-            self, cli, shortcut_factory, default_proton, commands,
+            self, cli, shortcut_factory, default_proton, command_mock,
             steam_dir):
         """
         Perform a Protontricks command for a non-Steam shortcut
@@ -49,14 +49,14 @@ class TestCLIRun:
         cli(["4149337689", "winecfg"])
 
         # Default Proton is used
-        command = commands[-1]
+        command = command_mock.commands[-1]
         assert command.env["PROTON_PATH"] == str(proton_install_path)
         assert command.env["WINEPREFIX"] == str(
             steam_dir / "steamapps" / "compatdata" / "4149337689" / "pfx")
 
     def test_run_winetricks_select_proton(
             self, cli, steam_app_factory, default_proton,
-            custom_proton_factory, commands, home_dir):
+            custom_proton_factory, command_mock, home_dir):
         """
         Perform a Protontricks command while selecting a specific
         Proton version using PROTON_VERSION env var
@@ -65,11 +65,11 @@ class TestCLIRun:
         custom_proton = custom_proton_factory(name="Custom Proton")
         cli(["10", "winecfg"], env={"PROTON_VERSION": "Custom Proton"})
 
-        assert commands[-1].env["PROTON_PATH"] \
+        assert command_mock.commands[-1].env["PROTON_PATH"] \
             == str(custom_proton.install_path)
 
     def test_run_winetricks_select_steam(
-            self, cli, steam_app_factory, default_proton, commands,
+            self, cli, steam_app_factory, default_proton, command_mock,
             home_dir):
         """
         Perform a Protontricks command while selecting a specific
@@ -90,7 +90,7 @@ class TestCLIRun:
             env={"STEAM_DIR": str(home_dir / ".steam_new")}
         )
 
-        command = commands[-1]
+        command = command_mock.commands[-1]
         assert command.env["WINE"] == str(
             home_dir / ".cache" / "protontricks" / "proton"
             / "Proton 4.20" / "bin" / "wine"
@@ -102,7 +102,7 @@ class TestCLIRun:
 
     def test_run_winetricks_steam_runtime_v1(
             self, cli, steam_app_factory, steam_runtime_dir, default_proton,
-            commands, home_dir):
+            command_mock, home_dir):
         """
         Perform a Protontricks command using the older Steam Runtime
         bundled with Steam
@@ -117,7 +117,7 @@ class TestCLIRun:
         )
 
         # winecfg was actually run
-        command = commands[-1]
+        command = command_mock.commands[-1]
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
         assert command.env["PATH"].startswith(str(wine_bin_dir))
@@ -146,7 +146,7 @@ class TestCLIRun:
 
     def test_run_winetricks_steam_runtime_v2(
             self, cli, home_dir, steam_app_factory, steam_runtime_dir,
-            steam_runtime_soldier, commands, proton_factory, caplog):
+            steam_runtime_soldier, command_mock, proton_factory, caplog):
         """
         Perform a Protontricks command using a newer Steam Runtime that is
         installed as its own application
@@ -166,10 +166,11 @@ class TestCLIRun:
 
         # Launcher process was launched to handle launching processes
         # inside the sandbox
-        assert commands[0].args[0] == str(wine_bin_dir / "bwrap-launcher")
+        assert command_mock.commands[0].args[0] \
+            == str(wine_bin_dir / "bwrap-launcher")
 
         # winecfg was run
-        command = commands[-1]
+        command = command_mock.commands[-1]
 
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
@@ -211,7 +212,7 @@ class TestCLIRun:
 
     def test_run_winetricks_steam_runtime_v2_no_bwrap(
             self, cli, home_dir, steam_app_factory, steam_runtime_dir,
-            steam_runtime_soldier, commands, proton_factory, caplog):
+            steam_runtime_soldier, command_mock, proton_factory, caplog):
         """
         Perform a Protontricks command using a newer Steam Runtime
         *without* bwrap that is installed as its own application
@@ -229,7 +230,7 @@ class TestCLIRun:
             / "bin"
         )
 
-        command = commands[-1]
+        command = command_mock.commands[-1]
         # winecfg was run
         assert str(command.args[0]).endswith(".local/bin/winetricks")
         assert command.args[1] == "winecfg"
@@ -302,7 +303,7 @@ class TestCLIRun:
         ]
     )
     def test_run_background_wineserver_toggle(
-            self, cli, steam_app_factory, default_new_proton, commands,
+            self, cli, steam_app_factory, default_new_proton, command_mock,
             args, wineserver_launched, home_dir):
         """
         Try running a Protontricks command with different arguments
@@ -314,7 +315,7 @@ class TestCLIRun:
         cli(args)
 
         wineserver_found = any(
-            True for command in commands
+            True for command in command_mock.commands
             if isinstance(command.args, str)
             and command.args == str(
                 home_dir / ".cache/protontricks/proton/Proton 7.0/bin"
@@ -351,9 +352,9 @@ class TestCLIRun:
         steam_app_factory(name="Fake game", appid=10)
         cli(["-c", "exit 5", "10"], expect_returncode=5)
 
-    def test_run_multiple_commands(self, cli):
+    def test_run_multiple_command_mock(self, cli):
         """
-        Try performing multiple commands at once
+        Try performing multiple command_mock at once
         """
         result = cli(["--gui", "-s", "game"])
 
@@ -616,12 +617,12 @@ class TestCLIRun:
         assert record.levelname == "WARNING"
         assert str(path) in record.message
 
-    @pytest.mark.usefixtures("commands")
+    @pytest.mark.usefixtures("command_mock")
     def test_run_bwrap_default(
             self, cli, steam_app_factory, steam_runtime_soldier,
-            proton_factory, commands, caplog):
+            proton_factory, command_mock, caplog):
         """
-        Perform commands for two Proton apps, one using a Proton version
+        Perform command_mock for two Proton apps, one using a Proton version
         using the legacy Steam Runtime and another app using newer Steam
         Runtime with bwrap. Ensure that the correct default for `use_bwrap`
         is used in both cases.
@@ -718,7 +719,7 @@ class TestCLIRun:
 class TestCLIGUI:
     def test_run_gui(
             self, cli, default_proton, steam_app_factory, gui_provider,
-            commands, home_dir):
+            command_mock, home_dir):
         """
         Start the GUI and fake selecting a game
         """
@@ -730,7 +731,7 @@ class TestCLIGUI:
 
         cli(["--gui"])
 
-        command = commands[-1]
+        command = command_mock.commands[-1]
         # 'winetricks --gui' was run for the game selected by user
         assert str(command.args[0]) == \
             str(home_dir / ".local" / "bin" / "winetricks")
@@ -783,7 +784,7 @@ class TestCLIGUI:
 class TestCLICommand:
     def test_run_command(
             self, cli, default_proton, steam_app_factory, gui_provider,
-            commands, home_dir):
+            command_mock, home_dir):
         """
         Run a shell command for a given game
         """
@@ -792,7 +793,7 @@ class TestCLICommand:
 
         cli(["-c", "bash", "10"])
 
-        command = commands[-1]
+        command = command_mock.commands[-1]
 
         # The command is just 'bash'
         assert command.args == "bash"

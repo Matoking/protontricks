@@ -55,7 +55,7 @@ class TestCreateWineBinDir:
 class TestRunCommand:
     def test_user_environment_variables_used(
             self, default_proton, steam_runtime_dir, steam_app_factory,
-            home_dir, commands, monkeypatch):
+            home_dir, command_mock, monkeypatch):
         """
         Test that user-provided environment variables are used even when
         Steam Runtime is enabled
@@ -78,7 +78,7 @@ class TestRunCommand:
             / "bin"
         )
 
-        command = commands[-1]
+        command = command_mock.commands[-1]
         assert command.args == ["echo", "nothing"]
         assert command.env["WINE"] == str(wine_bin_dir / "wine")
         assert command.env["WINELOADER"] == str(wine_bin_dir / "wine")
@@ -97,12 +97,13 @@ class TestRunCommand:
         )
 
         # User provided Wine paths are used even when Steam Runtime is enabled
-        command = commands[-1]
+        command = command_mock.commands[-1]
         assert command.args == ["echo", "nothing"]
         assert command.env["WINE"] == "/fake/wine"
         assert command.env["WINELOADER"] == "/fake/wine"
         assert command.env["WINESERVER"] == "/fake/wineserver"
 
+    @pytest.mark.usefixtures("command_mock")
     def test_unknown_steam_runtime_detected(
             self, home_dir, proton_factory, runtime_app_factory,
             steam_app_factory, caplog):
@@ -143,7 +144,7 @@ class TestRunCommand:
     @pytest.mark.usefixtures("steam_deck")
     def test_locale_fixed_on_steam_deck(
             self, proton_factory, default_proton, steam_app_factory, home_dir,
-            commands, caplog):
+            command_mock, caplog):
         """
         Test that Protontricks will fix locale settings if nonexistent locale
         settings are detected and Steam Deck is used to run Protontricks
@@ -194,7 +195,7 @@ class TestRunCommand:
         )
 
         # Ensure the incorrect locale settings were changed for the command
-        command = commands[-1]
+        command = command_mock.commands[-1]
         assert command.env["LANG"] == "en_US.UTF-8"
         # LC_CTYPE was not changed as 'en_US.UTF-8' and 'en_US.utf8'
         # are identical after normalization.
