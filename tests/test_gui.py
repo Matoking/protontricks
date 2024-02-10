@@ -231,7 +231,7 @@ class TestSelectApp:
         assert steam_app == steam_apps[1]
         assert (
             "Your system locale is incapable of displaying all characters"
-            in caplog.records[0].message
+            in caplog.records[-1].message
         )
 
     @pytest.mark.parametrize("gui_cmd", ["yad", "zenity"])

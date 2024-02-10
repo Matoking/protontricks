@@ -45,6 +45,11 @@ def cleanup():
     logging.getLogger("protontricks").handlers.clear()
 
 
+@pytest.fixture(scope="function", autouse=True)
+def default_caplog(caplog):
+    caplog.set_level(logging.INFO)
+
+
 @pytest.fixture(scope="function")
 def info_logging():
     """
