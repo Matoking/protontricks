@@ -1018,21 +1018,29 @@ def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
         # Traverse to 'compatibilitytools/compat_tools' in a case-insensitive
         # way. This is done because we can't turn all keys recursively to
         # lowercase from the get-go; the app name is stored as a key.
-        compat_tools = {k.lower(): v for k, v in vdf_data.items()}
-        compat_tools = compat_tools["compatibilitytools"]
-        compat_tools = {
-            k.lower(): v for k, v in compat_tools.items()
-        }
-        compat_tools = compat_tools["compat_tools"]
-        internal_name = list(compat_tools.keys())[0]
-        tool_info = compat_tools[internal_name]
+        try:
+            compat_tools = {k.lower(): v for k, v in vdf_data.items()}
+            compat_tools = compat_tools["compatibilitytools"]
+            compat_tools = {
+                k.lower(): v for k, v in compat_tools.items()
+            }
+            compat_tools = compat_tools["compat_tools"]
+            internal_name = list(compat_tools.keys())[0]
+            tool_info = compat_tools[internal_name]
 
-        # We can now convert the remainder into lowercase
-        tool_info = lower_dict(tool_info)
+            # We can now convert the remainder into lowercase
+            tool_info = lower_dict(tool_info)
 
-        install_path_name = tool_info["install_path"]
-        from_oslist = tool_info["from_oslist"]
-        to_oslist = tool_info["to_oslist"]
+            install_path_name = tool_info["install_path"]
+            from_oslist = tool_info["from_oslist"]
+            to_oslist = tool_info["to_oslist"]
+        except KeyError:
+            logger.warning(
+                "Compatibility tool declaration at %s is incomplete. You may "
+                "need to reinstall the application",
+                vdf_path
+            )
+            continue
 
         if from_oslist != "windows" or to_oslist != "linux":
             continue

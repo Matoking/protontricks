@@ -745,7 +745,8 @@ class TestGetSteamApps:
         "content,error",
         [
             (b"corrupted", " is corrupted. "),
-            (b"", " is empty. ")  # Regression test for #241
+            (b"", " is empty. "),  # Regression test for #241
+            (b"\"incompatibilitytools\"\n{\n}", " is incomplete. ")
         ]
     )
     def test_get_steam_apps_custom_proton_corrupted_compatibilitytool(
