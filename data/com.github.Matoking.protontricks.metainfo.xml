@@ -11,7 +11,9 @@
     <binary>protontricks-launch</binary>
   </provides>
   <launchable type="desktop-id">protontricks.desktop</launchable>
-  <recommends>com.valvesoftware.Steam</recommends>
+  <recommends>
+    <id>com.valvesoftware.Steam</id>
+  </recommends>
   <screenshots>
     <screenshot type="default">
       <image type="source">https://raw.githubusercontent.com/Matoking/protontricks/master/data/screenshot.png</image>
@@ -29,6 +31,12 @@
        such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications
        that are not included with Proton.</p>
   </description>
+  <categories>
+    <category>Utility</category>
+  </categories>
+  <developer id="matoking.com">
+    <name>Janne Pulkkinen</name>
+  </developer>
   <url type="homepage">https://github.com/Matoking/protontricks</url>
   <url type="help">https://github.com/Matoking/protontricks#readme</url>
   <url type="bugtracker">https://github.com/Matoking/protontricks/issues</url>
