@@ -1,0 +1,19 @@
+---
+name: Validate AppStream
+
+on: [push, pull_request]
+
+permissions: read-all
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install appstreamcli
+        run: sudo apt install appstream
+
+      - name: Validate AppStream metadata
+        run: appstreamcli validate data/com.github.Matoking.protontricks.metainfo.xml
