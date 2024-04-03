@@ -70,7 +70,12 @@ def main(args=None, steam_path=None, steam_root=None):
             "Runtime, valid path = custom Steam Runtime path, "
             "empty = enable automatically (default)\n"
             "PROTONTRICKS_GUI: GUI provider to use, accepts either 'yad' "
-            "or 'zenity'"
+            "or 'zenity'\n"
+            "\n"
+            "Environment variables set automatically by Protontricks:\n"
+            "STEAM_APP_PATH: path to the current game's installation directory\n"
+            "STEAM_APPID: app ID of the current game\n"
+            "PROTON_PATH: path to the currently used Proton installation"
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
