@@ -99,8 +99,7 @@ def main(args=None, steam_path=None, steam_root=None):
     parser.add_argument(
         "-c", "--command", type=str, dest="command",
         required=False,
-        help="Run a command in the game's installation directory with "
-             "Wine-related environment variables set. "
+        help="Run a command with Wine-related environment variables set. "
              "The command is passed to the shell as-is without being escaped.")
     parser.add_argument(
         "--gui", action="store_true",
@@ -389,7 +388,6 @@ def main(args=None, steam_path=None, steam_root=None):
             start_wineserver=start_background_wineserver,
             # Pass the command directly into the shell *without*
             # escaping it
-            cwd=str(steam_app.install_path),
             shell=True
         )
 

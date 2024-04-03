@@ -42,7 +42,7 @@ protontricks -l
 # Parameters specific to Protontricks need to be placed *before* <APPID>.
 protontricks <APPID> <ACTIONS>
 
-# Run a custom command within game's installation directory
+# Run a custom command for selected game
 protontricks -c <COMMAND> <APPID>
 
 # Run the Protontricks GUI

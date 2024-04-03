@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Changed
+ - `protontricks -c` and `protontricks-launch` now use the current working directory instead of the game's installation directory.
+
 ## [1.11.1] - 2024-02-20
 ### Fixed
  - Fix Protontricks crash when custom Proton has an invalid or empty `compatibilitytool.vdf` manifest
