@@ -92,6 +92,16 @@ def main(args=None):
     parser.add_argument(
         "--appid", type=int, nargs="?", default=None
     )
+    parser.add_argument(
+        "--cwd-app",
+        dest="cwd_app",
+        default=False,
+        action="store_true",
+        help=(
+            "Set the working directory of launched executable to the Steam "
+            "app's installation directory."
+        )
+    )
     parser.add_argument("executable", type=str)
     parser.add_argument("exec_args", nargs=argparse.REMAINDER)
     parser.set_defaults(background_wineserver=False)
@@ -179,6 +189,9 @@ def main(args=None):
         ["wine", shlex.quote(str(executable_path))]
         + exec_args
     )
+
+    if args.cwd_app:
+        cli_args += ["--cwd-app"]
 
     cli_args += [
         "-c", inner_args, str(appid)

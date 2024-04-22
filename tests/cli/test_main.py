@@ -797,7 +797,7 @@ class TestCLICommand:
 
         # The command is just 'bash'
         assert command.args == "bash"
-
+        assert command.cwd is None
         assert command.shell is True
 
         # Correct environment vars were set
@@ -815,6 +815,22 @@ class TestCLICommand:
             os.pathsep,
             str(proton_install_path / "dist" / "lib" / "wine")
         )
+
+    @pytest.mark.usefixtures("default_proton")
+    def test_run_command_cwd_app(self, cli, steam_app_factory, command_mock):
+        """
+        Run a shell command for a given game using `--cwd-app` flag and
+        ensure the working directory was set to the game's installation
+        directory
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        cli(["--cwd-app", "-c", "bash", "10"])
+
+        command = command_mock.commands[-1]
+
+        assert command.args == "bash"
+        assert command.cwd == str(steam_app.install_path)
 
 
 class TestCLISearch:

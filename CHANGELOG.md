@@ -5,8 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+ - `--cwd-app` flag to set working directory to the game's installation directory
+
 ### Changed
- - `protontricks -c` and `protontricks-launch` now use the current working directory instead of the game's installation directory.
+ - `protontricks -c` and `protontricks-launch` now use the current working directory instead of the game's installation directory. `--cwd-app` can be used to restore old behavior. Scripts can also `$STEAM_APP_PATH` environment variable to determine the game's installation directory; this has been supported (albeit undocumented) since 1.8.0.
 
 ## [1.11.1] - 2024-02-20
 ### Fixed

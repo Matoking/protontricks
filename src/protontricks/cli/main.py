@@ -135,6 +135,16 @@ def main(args=None, steam_path=None, steam_root=None):
             "command startup time."
         )
     )
+    parser.add_argument(
+        "--cwd-app",
+        dest="cwd_app",
+        default=False,
+        action="store_true",
+        help=(
+            "Set the working directory of launched command to the Steam app's "
+            "installation directory."
+        )
+    )
     parser.set_defaults(background_wineserver=False)
 
     parser.add_argument("appid", type=int, nargs="?", default=None)
@@ -277,6 +287,8 @@ def main(args=None, steam_path=None, steam_root=None):
                 "Protontricks GUI."
             )
 
+        cwd = str(steam_app.install_path) if args.cwd_app else None
+
         # 6. Find Proton version of selected app
         proton_app = find_proton_app(
             steam_path=steam_path, steam_apps=steam_apps, appid=steam_app.appid
@@ -291,6 +303,7 @@ def main(args=None, steam_path=None, steam_root=None):
                 "installation?"
             )
 
+
         run_command(
             winetricks_path=winetricks_path,
             proton_app=proton_app,
@@ -299,7 +312,8 @@ def main(args=None, steam_path=None, steam_root=None):
             legacy_steam_runtime_path=legacy_steam_runtime_path,
             command=[str(winetricks_path), "--gui"],
             use_bwrap=use_bwrap,
-            start_wineserver=start_background_wineserver
+            start_wineserver=start_background_wineserver,
+            cwd=cwd
         )
 
         return
@@ -370,6 +384,8 @@ def main(args=None, steam_path=None, steam_root=None):
             "$ protontricks -s <GAME NAME>"
         )
 
+    cwd = str(steam_app.install_path) if args.cwd_app else None
+
     if args.winetricks_command:
         returncode = run_command(
             winetricks_path=winetricks_path,
@@ -379,7 +395,8 @@ def main(args=None, steam_path=None, steam_root=None):
             legacy_steam_runtime_path=legacy_steam_runtime_path,
             use_bwrap=use_bwrap,
             start_wineserver=start_background_wineserver,
-            command=[str(winetricks_path)] + args.winetricks_command
+            command=[str(winetricks_path)] + args.winetricks_command,
+            cwd=cwd
         )
     elif args.command:
         returncode = run_command(
@@ -393,7 +410,8 @@ def main(args=None, steam_path=None, steam_root=None):
             start_wineserver=start_background_wineserver,
             # Pass the command directly into the shell *without*
             # escaping it
-            shell=True
+            shell=True,
+            cwd=cwd,
         )
 
     logger.info("Command returned %d", returncode)

@@ -113,18 +113,18 @@ class TestCLIRun:
         steam_app_factory(name="Fake game", appid=10)
 
         launch_cli([
-            "--verbose", "--no-bwrap", "--no-runtime", "--no-term", "--appid",
-            "10", "test.exe"
+            "--verbose", "--no-bwrap", "--no-runtime", "--no-term",
+            "--cwd-app", "--appid", "10", "test.exe"
         ])
 
         # CLI flags are passed through to the main CLI entrypoint
-        assert cli_args[0:6] == [
+        assert cli_args[0:7] == [
             "-v", "--no-runtime", "--no-bwrap",
-            "--no-background-wineserver", "--no-term", "-c"
+            "--no-background-wineserver", "--no-term", "--cwd-app", "-c"
         ]
-        assert cli_args[6].startswith("wine ")
-        assert cli_args[6].endswith("test.exe")
-        assert cli_args[7] == "10"
+        assert cli_args[7].startswith("wine ")
+        assert cli_args[7].endswith("test.exe")
+        assert cli_args[8] == "10"
 
         # Steam installation was provided to the main entrypoint
         assert str(cli_kwargs["steam_path"]) == str(steam_dir)
@@ -231,5 +231,3 @@ class TestCLIRun:
         result = launch_cli(["test.exe"], expect_returncode=1)
 
         assert "No Steam installation was selected" in result
-
-
