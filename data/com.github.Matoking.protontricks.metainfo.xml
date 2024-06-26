@@ -2,9 +2,7 @@
 <component type="desktop-application">
   <id>com.github.Matoking.protontricks</id>
   <name>Protontricks</name>
-  <summary>A simple wrapper that does winetricks things for Proton enabled games</summary>
-  <summary xml:lang="pt_BR">Um invólucro simples que executa truques de winetricks para jogos habilitados para usar o Proton</summary>
-  <summary xml:lang="es">Un contenedor simple que realiza trucos de winetricks para juegos habilitados para usar Proton</summary>
+  <summary>Apps and fixes for Proton games</summary>
   <icon type="stock">wine</icon>
   <provides>
     <binary>protontricks</binary>
@@ -27,7 +25,7 @@
   </supports>
   <content_rating type="oars-1.1"/>
   <description>
-    <p>This is a wrapper script that allows you to easily run Winetricks commands for Steam Play/Proton games among other common Wine features,
+    <p>Run Winetricks commands for Steam Play/Proton games among other common Wine features,
        such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications
        that are not included with Proton.</p>
   </description>

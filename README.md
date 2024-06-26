@@ -7,7 +7,7 @@ Protontricks
 
 [<img width="240" src="https://flathub.org/assets/badges/flathub-badge-en.png">](https://flathub.org/apps/details/com.github.Matoking.protontricks)
 
-A wrapper that runs Winetricks commands for Proton enabled games among other useful features, requires Winetricks.
+Run Winetricks commands for Steam Play/Proton games among other common Wine features, such as launching external Windows executables.
 
 This is a fork of the original project created by sirmentio. The original repository is available at [Sirmentio/protontricks](https://github.com/Sirmentio/protontricks).
 
