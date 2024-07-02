@@ -30,6 +30,7 @@ def env_vars(monkeypatch):
     """
     monkeypatch.setenv("STEAM_RUNTIME", "")
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
 
 
 @pytest.fixture(scope="function", autouse=True)

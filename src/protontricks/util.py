@@ -15,7 +15,7 @@ __all__ = (
     "is_steam_deck", "get_legacy_runtime_library_paths",
     "get_host_library_paths", "RUNTIME_ROOT_GLOB_PATTERNS",
     "get_runtime_library_paths", "WINE_SCRIPT_TEMPLATE",
-    "get_cache_dir", "create_wine_bin_dir", "run_command"
+    "get_cache_dir", "get_script_dir", "create_wine_bin_dir", "run_command"
 )
 
 logger = logging.getLogger("protontricks")
@@ -176,51 +176,66 @@ BWRAP_LAUNCHER_SH_SCRIPT = Path(
 ).read_text(encoding="utf-8")
 
 
+def is_dir_exec(path):
+    """
+    Check if the directory is under a mount that allows execute permission.
+
+    Checking for execute permission on the file itself does not suffice as
+    the file system can forbid executables using 'noexec' mount flag.
+    """
+    path_ = path
+    while not path_.is_mount():
+        path_ = path_.parent
+
+        if str(path_) == "/":
+            raise OSError("Did not find mount point!")
+
+    # Parse mount point information
+    mount_data = Path("/proc/mounts").read_text()
+
+    for line in mount_data.split("\n"):
+        _, mount_path, _, mount_flags, *_ = line.split(" ")
+
+        if mount_path == str(path_):
+            mount_flags = mount_flags.split(",")
+
+            # If mount has 'noexec' flag, the shell executables won't work
+            return "noexec" not in mount_flags
+
+    logger.warning(
+        f"Could not find mount point for {path}. Assuming directory "
+        "has execute permissions."
+    )
+    return True
+
+
 def get_cache_dir():
     """
     Get Protontricks' cache directory, creating it first if it does not
     exist
     """
-    def is_dir_exec(path):
-        """
-        Check if the directory is under a mount that allows execute permission
-        """
-        path_ = path
-        try:
-            while not path_.is_mount():
-                path_ = path_.parent
+    xdg_cache_dir = os.environ.get(
+        "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
+    )
+    base_path = Path(xdg_cache_dir) / "protontricks"
+    os.makedirs(str(base_path), exist_ok=True)
 
-                if str(path_) == "/":
-                    raise OSError("Did not find mount point!")
+    return base_path
 
-            # Parse mount point information
-            mount_data = Path("/proc/mounts").read_text()
 
-            for line in mount_data.split("\n"):
-                _, mount_path, _, mount_flags, *_ = line.split(" ")
-
-                if mount_path == str(path_):
-                    mount_flags = mount_flags.split(",")
-
-                    # If mount has 'noexec' flag, the shell executables won't work
-                    return "noexec" not in mount_flags
-
-            logger.warning(f"Could not find mount point for {path}")
-            return True
-        except OSError as exc:
-            print(f"shit {exc}")
-
+def get_script_dir():
+    """
+    Get Protontricks' Wine wrapper script directory, creating it first
+    if it does not exist
+    """
     candidates = []
 
     if os.environ.get("XDG_RUNTIME_DIR"):
         candidates.append(
-            Path(os.environ["XDG_RUNTIME_DIR"]) / "protontricks"
+            Path(os.environ["XDG_RUNTIME_DIR"]) / "protontricks" / "proton"
         )
 
-    xdg_cache_dir = os.environ.get(
-        "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
-    )
-    candidates.append(Path(xdg_cache_dir) / "protontricks")
+    candidates.append(get_cache_dir() / "proton")
 
     logger.debug(
         f"Candidates for Wine wrapper script directories: {candidates}"
@@ -228,6 +243,8 @@ def get_cache_dir():
 
     for candidate in candidates:
         if is_dir_exec(candidate):
+            candidate.mkdir(exist_ok=True, parents=True)
+
             logger.info(f"Using {candidate} as Wine wrapper directory")
             return candidate
 
@@ -246,7 +263,7 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     binaries = list((proton_app.proton_dist_path / "bin").iterdir())
 
     # Create the base directory containing files for every Proton installation
-    base_path = get_cache_dir() / "proton"
+    base_path = get_script_dir()
     os.makedirs(str(base_path), exist_ok=True)
 
     # Create a directory to hold the new executables for the specific
@@ -277,8 +294,18 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
         proxy_script_path.write_text(content, encoding="utf-8")
 
         script_stat = proxy_script_path.stat()
-        # Make the helper script executable
-        proxy_script_path.chmod(script_stat.st_mode | stat.S_IEXEC)
+
+        # Make the helper script executable.
+        #
+        # Also set the sticky bit in case the file resides under
+        # `XDG_RUNTIME_DIR`, as automatic cleanup might take place otherwise.
+        # No distro seems to implement this at the moment, though. Sticky bit
+        # on files doesn't seem to have any other effect on modern systems,
+        # so it's no problem even if the proxy script resides under
+        # `XDG_CACHE_DIR` instead.
+        proxy_script_path.chmod(
+            script_stat.st_mode | stat.S_IEXEC | stat.S_ISVTX
+        )
 
     # Create the wineserver keepalive batch script
     (bin_path / "wineserver-keepalive.bat").write_text(
@@ -292,11 +319,18 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
         )
     )
     keepalive_shell_script.chmod(
-        keepalive_shell_script.stat().st_mode | stat.S_IEXEC
+        keepalive_shell_script.stat().st_mode | stat.S_IEXEC | stat.S_ISVTX
     )
+
     launcher_script = bin_path / "bwrap-launcher"
-    launcher_script.write_text(BWRAP_LAUNCHER_SH_SCRIPT)
-    launcher_script.chmod(launcher_script.stat().st_mode | stat.S_IEXEC)
+    launcher_script_data = BWRAP_LAUNCHER_SH_SCRIPT
+    launcher_script_data = launcher_script_data.replace(
+        "@@script_path@@", str(proxy_script_path)
+    )
+    launcher_script.write_text(launcher_script_data)
+    launcher_script.chmod(
+        launcher_script.stat().st_mode | stat.S_IEXEC | stat.S_ISVTX
+    )
 
     return bin_path
 
@@ -501,6 +535,7 @@ def run_command(
     # configuring the environment and Wine before launching the underlying
     # Wine binaries.
     wine_bin_dir = create_wine_bin_dir(proton_app)
+    wine_environ["PROTONTRICKS_PROXY_DIR"] = str(wine_bin_dir)
     wine_environ["LEGACY_STEAM_RUNTIME_PATH"] = str(legacy_steam_runtime_path)
     wine_environ["PATH"] = os.pathsep.join(
         [str(wine_bin_dir), wine_environ["PATH"]]
