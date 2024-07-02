@@ -181,13 +181,60 @@ def get_cache_dir():
     Get Protontricks' cache directory, creating it first if it does not
     exist
     """
+    def is_dir_exec(path):
+        """
+        Check if the directory is under a mount that allows execute permission
+        """
+        path_ = path
+        try:
+            while not path_.is_mount():
+                path_ = path_.parent
+
+                if str(path_) == "/":
+                    raise OSError("Did not find mount point!")
+
+            # Parse mount point information
+            mount_data = Path("/proc/mounts").read_text()
+
+            for line in mount_data.split("\n"):
+                _, mount_path, _, mount_flags, *_ = line.split(" ")
+
+                if mount_path == str(path_):
+                    mount_flags = mount_flags.split(",")
+
+                    # If mount has 'noexec' flag, the shell executables won't work
+                    return "noexec" not in mount_flags
+
+            logger.warning(f"Could not find mount point for {path}")
+            return True
+        except OSError as exc:
+            print(f"shit {exc}")
+
+    candidates = []
+
+    if os.environ.get("XDG_RUNTIME_DIR"):
+        candidates.append(
+            Path(os.environ["XDG_RUNTIME_DIR"]) / "protontricks"
+        )
+
     xdg_cache_dir = os.environ.get(
         "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
     )
-    base_path = Path(xdg_cache_dir) / "protontricks"
-    os.makedirs(str(base_path), exist_ok=True)
+    candidates.append(Path(xdg_cache_dir) / "protontricks")
 
-    return base_path
+    logger.debug(
+        f"Candidates for Wine wrapper script directories: {candidates}"
+    )
+
+    for candidate in candidates:
+        if is_dir_exec(candidate):
+            logger.info(f"Using {candidate} as Wine wrapper directory")
+            return candidate
+
+    raise OSError(
+        "Could not find a location for Wine wrapper scripts with "
+        "execute permissions!"
+    )
 
 
 def create_wine_bin_dir(proton_app, use_bwrap=True):
