@@ -7,6 +7,9 @@ Protontricks
 
 [<img width="240" src="https://flathub.org/assets/badges/flathub-badge-en.png">](https://flathub.org/apps/details/com.github.Matoking.protontricks)
 
+> [!IMPORTANT]
+> **Steam beta currently needs a beta version of Protontricks** to be installed and will otherwise fail with "Invalid file magic number" error. See [here](https://github.com/Matoking/protontricks/issues/304#issuecomment-2220599470) for installation instructions.
+
 Run Winetricks commands for Steam Play/Proton games among other common Wine features, such as launching external Windows executables.
 
 This is a fork of the original project created by sirmentio. The original repository is available at [Sirmentio/protontricks](https://github.com/Sirmentio/protontricks).
