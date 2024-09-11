@@ -782,13 +782,15 @@ def xdg_user_dir_bin(home_dir):
 class MockSubprocess:
     def __init__(
             self, args=None, kwargs=None, mock_stdout=None,
-            launcher_alive=True, check=False, cwd=None, shell=False, env=None,
+            launcher_alive=True, check=False, cwd=None, input=None,
+            shell=False, env=None,
             **_):
         self.args = args
         self.kwargs = kwargs
         self.check = check
         self.shell = shell
         self.cwd = cwd
+        self.input = input
         self.pid = 5
         self.returncode = 0
 

@@ -628,35 +628,37 @@ class TestFindSteamPath:
         assert str(steam_paths[0]) == str(custom_path)
         assert str(steam_paths[1]) == str(custom_path)
 
-    @pytest.mark.usefixtures("flatpak_sandbox")
-    def test_find_steam_path_flatpak(self, steam_dir, steam_root, home_dir):
+    @pytest.mark.parametrize(
+        "new_path",
+        [
+            ".var/app/com.valvesoftware.Steam/data/Steam",
+            "snap/steam/common/.local/share/Steam"
+        ]
+    )
+    def test_find_steam_path_non_native(
+            self, steam_dir, steam_root, home_dir, new_path):
         """
-        Ensure that `steam_path` and `steam_root` both point to the Flatpak
-        installation of Steam if Flatpak installation is found.
+        Ensure that `steam_path` and `steam_root` both point to the Flatpak/Snap
+        installation of Steam if either installation is found.
 
         Regression test for flathub/com.github.Matoking.protontricks#10
         """
-        # Create a symlink to act as the Flatpak installation to keep the test
-        # simple.
         # Copy the existing Steam directory
-        steam_flatpak_dir = (
-            home_dir / ".var" / "app" / "com.valvesoftware.Steam" / "data"
-            / "Steam"
-        )
-        steam_flatpak_dir.parent.mkdir(parents=True)
-        shutil.copytree(steam_dir, steam_flatpak_dir)
+        steam_non_native_dir = home_dir / new_path
+        steam_non_native_dir.parent.mkdir(parents=True)
+        shutil.copytree(steam_dir, steam_non_native_dir)
 
         steam_installations = find_steam_installations()
         steam_path, steam_root = next(
             (steam_path, steam_root) for (steam_path, steam_root) in
             steam_installations
-            if str(steam_path) == str(steam_flatpak_dir)
+            if str(steam_path) == str(steam_non_native_dir)
         )
 
         # Since Steam Flatpak installation was found, both of its paths
         # should point to the same installation directory
-        assert str(steam_path) == str(steam_flatpak_dir)
-        assert str(steam_root) == str(steam_flatpak_dir)
+        assert str(steam_path) == str(steam_non_native_dir)
+        assert str(steam_root) == str(steam_non_native_dir)
 
     def test_find_steam_path_multiple_install_warning(
             self, steam_dir, steam_root, home_dir, caplog):

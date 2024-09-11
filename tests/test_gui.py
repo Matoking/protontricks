@@ -1,3 +1,5 @@
+import contextlib
+import shutil
 from subprocess import CalledProcessError
 
 import pytest
@@ -290,6 +292,38 @@ class TestSelectSteamInstallation:
         elif gui_cmd == "zenity":
             assert gui_provider.args[0] == "zenity"
             assert gui_provider.args[2] == "--hide-header"
+
+    @pytest.mark.parametrize(
+        "path,label",
+        [
+            (".steam", "Native"),
+            (".local/share/Steam", "Native"),
+            (".var/app/com.valvesoftware.Steam/.local/share/Steam", "Flatpak"),
+            ("snap/steam/common/.local/share/Steam", "Snap")
+        ]
+    )
+    def test_correct_labels_detected(
+            self, gui_provider, steam_dir, home_dir, path, label):
+        """
+        Test that the Steam installation selection dialog uses the correct
+        label for each Steam installation depending on its type
+        """
+        steam_new_dir = home_dir / path
+        with contextlib.suppress(FileExistsError):
+            # First test cases try copying against existing dirs, this can be
+            # ignored
+            shutil.copytree(steam_dir, steam_new_dir)
+
+        select_steam_installation([
+            (steam_new_dir, steam_new_dir),
+            # Use an additional nonsense path; there need to be at least
+            # two paths or user won't be prompted as there is no need
+            ("/mock-steam", "/mock-steam")
+        ])
+
+        prompt_input = gui_provider.kwargs["input"].decode("utf-8")
+
+        assert f"{label} - {steam_new_dir}" in prompt_input
 
 
 @pytest.mark.usefixtures("flatpak_sandbox")
