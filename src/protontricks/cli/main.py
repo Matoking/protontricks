@@ -156,6 +156,10 @@ def main(args=None, steam_path=None, steam_root=None):
 
     args = parser.parse_args(args)
 
+    if len(sys.argv) < 2:
+        # No arguments were provided, default to GUI
+        args.gui = True
+
     # 'cli_error_handler' relies on this to know whether to use error dialog or
     # not
     main.no_term = args.no_term

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
  - `protontricks -c` and `protontricks-launch` now use the current working directory instead of the game's installation directory. `--cwd-app` can be used to restore old behavior. Scripts can also `$STEAM_APP_PATH` environment variable to determine the game's installation directory; this has been supported (albeit undocumented) since 1.8.0.
+ - `protontricks` will now launch GUI if no arguments were provided
 
 ## [1.11.1] - 2024-02-20
 ### Fixed

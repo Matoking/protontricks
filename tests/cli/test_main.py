@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from pathlib import Path
 
@@ -333,15 +334,6 @@ class TestCLIRun:
         result = cli(["100", "winecfg"], expect_returncode=1)
 
         assert "Steam app with the given app ID could not be found" in result
-
-    def test_run_no_command(self, cli):
-        """
-        Run only the 'protontricks' command.
-        """
-        result = cli([])
-
-        # Help will be printed if no specific command is given
-        assert result.startswith("usage: ")
 
     @pytest.mark.usefixtures("default_proton")
     def test_run_returncode_passed(self, cli, steam_app_factory):
@@ -779,6 +771,23 @@ class TestCLIGUI:
         result = cli(["--gui"], expect_returncode=1)
 
         assert "Proton installation is incomplete" in result
+
+    @pytest.mark.usefixtures("default_proton", "gui_provider")
+    def test_run_no_args(
+            self, cli, steam_app_factory, command_mock, gui_provider,
+            monkeypatch):
+        """
+        Run only the 'protontricks' command. This will default to GUI.
+        """
+        # Monkeypatch 'sys.argv', as that seems to be the only way to determine
+        # whether no arguments were provided
+        monkeypatch.setattr(sys, "argv", ["protontricks"])
+        steam_app_factory(name="Fake game", appid=10)
+
+        result = cli([], expect_returncode=1)
+
+        # Help will be printed if no specific command is given
+        assert "No game was selected" in result
 
 
 class TestCLICommand:
