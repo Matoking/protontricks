@@ -15,6 +15,7 @@ from PIL import Image
 from .config import get_config
 from .flatpak import get_inaccessible_paths
 from .util import get_cache_dir
+from .steam import SNAP_STEAM_DIRS
 
 APP_ICON_SIZE = (32, 32)
 
@@ -251,7 +252,17 @@ def select_steam_installation(steam_installations):
                 "/com.valvesoftware.Steam/.local/share/Steam"
             )
         )
-        install_type = "Flatpak" if is_flatpak else "Native"
+        is_snap = any(
+            str(steam_path).endswith(snap_dir)
+            for snap_dir in SNAP_STEAM_DIRS
+        )
+
+        if is_flatpak:
+            install_type = "Flatpak"
+        elif is_snap:
+            install_type = "Snap"
+        else:
+            install_type = "Native"
 
         cmd_input.append(f"{i+1}: {install_type} - {steam_path}")
 

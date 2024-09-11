@@ -27,6 +27,13 @@ COMMON_STEAM_DIRS = [
     ".local/share/Steam",
 ]
 
+SNAP_STEAM_DIRS = [
+    "snap/steam/common/.local/share/Steam",
+
+    # Location if 'experimental.hidden-snap-folder' Snap feature flag is set
+    ".snap/data/steam/common/.local/share/Steam",
+]
+
 OS_RELEASE_PATHS = [
     "/run/host/os-release",  # The host file if we're inside a Flatpak sandbox
     "/etc/os-release"
@@ -388,13 +395,18 @@ def find_steam_installations():
 
             candidates[(str(steam_path), str(steam_root_))] = True
 
-    # Check for Flatpak Steam separately and ensure we don't mix steam_root
-    # and steam_path from Flatpak and non-Flatpak installations of Steam.
+    # Check for Flatpak and Snap Steam separately and ensure we don't mix steam_root
+    # and steam_path from Flatpak/Snap and native installations of Steam.
     steam_path = \
         Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
     steam_path = steam_path.resolve()
     if has_steamapps_dir(steam_path):
         candidates[(str(steam_path), str(steam_path))] = True
+
+    for steam_dir in SNAP_STEAM_DIRS:
+        steam_path = (Path.home() / steam_dir).resolve()
+        if has_steamapps_dir(steam_path):
+            candidates[(str(steam_path), str(steam_path))] = True
 
     for steam_path, _ in candidates.keys():
         logger.info("Found Steam directory at %s", steam_path)
