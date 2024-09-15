@@ -175,7 +175,7 @@ def steam_runtime_dir(steam_dir):
     """
     (steam_dir.parent / "root" / "ubuntu12_32" / "steam-runtime").mkdir(parents=True)
     (steam_dir.parent / "root" / "ubuntu12_32" / "steam-runtime" / "run.sh").write_text(
-        "#!/bin/bash\n"
+        "#!/bin/sh\n"
         """if [ "$1" = "--print-steam-runtime-library-paths" ]; then\n"""
         "    echo 'fake_steam_runtime/lib:fake_steam_runtime/lib64'\n"
         "fi"
@@ -769,11 +769,11 @@ def xdg_user_dir_bin(home_dir):
     # Only mock PICTURES and DOWNLOAD; mocking everything isn't necessary
     # for the tests.
     (home_dir / ".local" / "bin" / "xdg-user-dir").write_text(
-        '#!/bin/bash\n'
-        'if [[ "$1" == "PICTURES" ]]; then\n'
+        '#!/bin/sh\n'
+        'if [ "$1" = "PICTURES" ]; then\n'
         '    echo "$HOME/Pictures"\n'
-        'elif [[ "$1" == "DOWNLOAD" ]]; then\n'
-        'echo "$HOME/Downloads"\n'
+        'elif [ "$1" = "DOWNLOAD" ]; then\n'
+        '    echo "$HOME/Downloads"\n'
         'fi'
     )
     (home_dir / ".local" / "bin" / "xdg-user-dir").chmod(0o744)

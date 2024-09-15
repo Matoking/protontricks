@@ -99,7 +99,7 @@ def get_host_library_paths():
     # Since that command is unavailable with newer Steam Runtime releases,
     # do it ourselves here.
     result = run(
-        ["/sbin/ldconfig", "-XNv"],
+        ["ldconfig", "-XNv"],
         check=True, stdout=PIPE, stderr=PIPE
     )
     lines = result.stdout.decode("utf-8").split("\n")
