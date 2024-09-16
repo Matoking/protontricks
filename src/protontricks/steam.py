@@ -483,6 +483,7 @@ def find_legacy_steam_runtime_path(steam_root):
 
 APPINFO_STRUCT_HEADER = "<4sL"
 APPINFO_V28_STRUCT_SECTION = "<LLLLQ20sL20s"
+APPINFO_V29_STRUCT_SECTION = "<LLLLQ20sL20s"
 
 
 def iter_appinfo_sections(path):
@@ -518,6 +519,59 @@ def iter_appinfo_sections(path):
             if i == len(data) - 4:
                 return
 
+    def _iter_v29_appinfo(data, start):
+        """
+        Parse and iterate appinfo.vdf version 29.
+        """
+        i = start
+
+        # The header contains the offset to the key table
+        key_table_offset = struct.unpack("<q", data[i:i+8])[0]
+        key_table = []
+
+        key_count = struct.unpack(
+            "<i", data[key_table_offset:key_table_offset+4]
+        )[0]
+
+        table_i = key_table_offset + 4
+        for _ in range(0, key_count):
+            key = bytearray()
+            while True:
+                key.append(data[table_i])
+                table_i += 1
+
+                if key[-1] == 0:
+                    key_table.append(
+                        key[0:-1].decode("utf-8", errors="replace")
+                    )
+                    break
+
+        i += 8
+
+        section_size = struct.calcsize(APPINFO_V29_STRUCT_SECTION)
+        while True:
+            # We don't need any of the fields besides 'entry_size',
+            # which is used to determine the length of the variable-length VDF
+            # field.
+            # Still, here they are for posterity's sake.
+            (appid, entry_size, infostate, last_updated, access_token,
+             sha_hash, change_number, vdf_sha_hash) = struct.unpack(
+                APPINFO_V29_STRUCT_SECTION, data[i:i+section_size])
+            vdf_section_size = entry_size - (section_size - 8)
+
+            i += section_size
+
+            vdf_d = vdf.binary_loads(
+                data[i:i+vdf_section_size], key_table=key_table
+            )
+            vdf_d = lower_dict(vdf_d)
+            yield vdf_d
+
+            i += vdf_section_size
+
+            if i == key_table_offset - 4:
+                return
+
     logger.debug("Loading appinfo.vdf in %s", path)
 
     # appinfo.vdf is not actually a (binary) VDF file, but a binary file
@@ -539,6 +593,8 @@ def iter_appinfo_sections(path):
 
     if magic == b'(DV\x07':
         yield from _iter_v28_appinfo(data, i)
+    elif magic == b')DV\x07':
+        yield from _iter_v29_appinfo(data, i)
     else:
         raise SyntaxError(
             "Invalid file magic number. The appinfo.vdf version might not be "
