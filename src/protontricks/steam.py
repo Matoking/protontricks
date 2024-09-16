@@ -680,7 +680,10 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
     # Multiple configuration values might be found. In such case, select the
     # one with the highest priority.
     config_vdf_path = steam_path / "config" / "config.vdf"
-    content = config_vdf_path.read_text()
+    # config.vdf might contain invalid UTF-8 characters in the
+    # `SDL_GamepadBind` field. We don't use that in any way, so we can deal
+    # with the invalid characters by just ignoring them.
+    content = config_vdf_path.read_text(errors="replace")
 
     vdf_data = lower_dict(vdf.loads(content))
 

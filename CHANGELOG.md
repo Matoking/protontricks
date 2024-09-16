@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
  - Fix crash when parsing appinfo.vdf V29 in new Steam client version
+ - Fix Protontricks crash when `config.vdf` contains invalid Unicode characters
 
 > [!IMPORTANT]
 > This release bundles a patched version of `vdf` in case the system Python package doesn't have the required `appinfo.vdf` V29 support.
