@@ -12,7 +12,7 @@ from protontricks.steam import (SteamApp, _get_steamapps_subdirs,
                                 find_steam_installations, find_steam_path,
                                 get_custom_compat_tool_installations,
                                 get_custom_windows_shortcuts, get_steam_apps,
-                                get_steam_lib_paths)
+                                get_steam_lib_paths, iter_appinfo_sections)
 
 
 class TestSteamApp:
@@ -1092,6 +1092,25 @@ class TestGetWindowsShortcuts:
             "Shortcut fakegame.exe (4149337689) does not have a prefix"
             in record.message
         )
+
+
+def test_parse_appinfo_v29():
+    """
+    Test parsing an appinfo.vdf V29 file and retrieving the app sections
+    correctly.
+
+    Creating proper appinfo.vdf V29 files on demand for test fixtures
+    involves plenty of work and is probably a rare use case for the library
+    to support, so just use a hardcoded test file for the time being.
+    """
+    app_sections = list(
+        iter_appinfo_sections(Path("./tests/data/appinfo_v29.vdf").resolve())
+    )
+
+    assert len(app_sections) == 2
+
+    assert app_sections[0]["appinfo"]["appid"] == 5
+    assert app_sections[1]["appinfo"]["appid"] == 10
 
 
 def test_get_steamapps_subdirs(steam_dir, steam_library_factory):
