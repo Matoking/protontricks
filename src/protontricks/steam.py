@@ -8,7 +8,8 @@ from pathlib import Path
 
 import vdf
 
-from .util import lower_dict, is_steam_deck
+from ._vdf import binary_loads as vendored_binary_loads
+from .util import is_steam_deck, lower_dict
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_installations",
@@ -561,9 +562,19 @@ def iter_appinfo_sections(path):
 
             i += section_size
 
-            vdf_d = vdf.binary_loads(
-                data[i:i+vdf_section_size], key_table=key_table
-            )
+            try:
+                vdf_d = vdf.binary_loads(
+                    data[i:i+vdf_section_size], key_table=key_table
+                )
+            except TypeError:
+                # System 'vdf' is too old and does not support 'key_table',
+                # use the bundled one instead. This is cursed, but it's
+                # so far the only reasonable option without a proper maintained
+                # release on PyPI.
+                vdf_d = vendored_binary_loads(
+                    data[i:i+vdf_section_size], key_table=key_table
+                )
+
             vdf_d = lower_dict(vdf_d)
             yield vdf_d
 

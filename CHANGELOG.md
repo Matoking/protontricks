@@ -16,6 +16,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - Fix crash when parsing appinfo.vdf V29 in new Steam client version
 
+> [!IMPORTANT]
+> This release bundles a patched version of `vdf` in case the system Python package doesn't have the required `appinfo.vdf` V29 support.
+> If you're a package maintainer, you will probably want to remove the corresponding
+> commit if the distro you're using already ships a version of `vdf` with the
+> required support.
+
 ## [1.11.1] - 2024-02-20
 ### Fixed
  - Fix Protontricks crash when custom Proton has an invalid or empty `compatibilitytool.vdf` manifest
