@@ -1,6 +1,7 @@
 import argparse
 import logging
 import shlex
+import sys
 from pathlib import Path
 
 from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
@@ -23,6 +24,9 @@ def main(args=None):
     """
     'protontricks-launch' script entrypoint
     """
+    if args is None:
+        args = sys.argv[1:]
+
     parser = CustomArgumentParser(
         description=(
             "Utility for launching Windows executables using Protontricks\n"

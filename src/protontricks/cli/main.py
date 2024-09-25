@@ -37,6 +37,9 @@ def main(args=None, steam_path=None, steam_root=None):
     """
     'protontricks' script entrypoint
     """
+    if args is None:
+        args = sys.argv[1:]
+
     parser = CustomArgumentParser(
         description=(
             "Wrapper for running Winetricks commands for "
@@ -154,11 +157,11 @@ def main(args=None, steam_path=None, steam_root=None):
         version=f"%(prog)s ({__version__})"
     )
 
-    args = parser.parse_args(args)
-
-    if len(sys.argv) < 2:
+    if len(args) == 0:
         # No arguments were provided, default to GUI
-        args.gui = True
+        args = ["--gui"]
+
+    args = parser.parse_args(args)
 
     # 'cli_error_handler' relies on this to know whether to use error dialog or
     # not

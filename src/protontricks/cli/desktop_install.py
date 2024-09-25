@@ -1,4 +1,5 @@
 import argparse
+import sys
 from pathlib import Path
 from subprocess import run
 
@@ -41,6 +42,9 @@ def main(args=None):
     """
     'protontricks-desktop-install' script entrypoint
     """
+    if args is None:
+        args = sys.argv[1:]
+
     parser = CustomArgumentParser(
         description=(
             "Install Protontricks application shortcuts for the local user\n"

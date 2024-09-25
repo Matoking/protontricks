@@ -774,14 +774,10 @@ class TestCLIGUI:
 
     @pytest.mark.usefixtures("default_proton", "gui_provider")
     def test_run_no_args(
-            self, cli, steam_app_factory, command_mock, gui_provider,
-            monkeypatch):
+            self, cli, steam_app_factory, command_mock, gui_provider):
         """
         Run only the 'protontricks' command. This will default to GUI.
         """
-        # Monkeypatch 'sys.argv', as that seems to be the only way to determine
-        # whether no arguments were provided
-        monkeypatch.setattr(sys, "argv", ["protontricks"])
         steam_app_factory(name="Fake game", appid=10)
 
         result = cli([], expect_returncode=1)
