@@ -37,6 +37,39 @@ def main(args=None, steam_path=None, steam_root=None):
     """
     'protontricks' script entrypoint
     """
+    def _find_proton_app_or_exit(steam_path, steam_apps, appid):
+        """
+        Attempt to find a Proton app. Fail with an appropriate CLI error
+        message if one cannot be found.
+        """
+        proton_app = find_proton_app(
+            steam_path=steam_path, steam_apps=steam_apps, appid=appid
+        )
+
+        if not proton_app:
+            if os.environ.get("PROTON_VERSION"):
+                # Print an error listing accepted values if PROTON_VERSION was
+                # set, as the user is trying to use a certain Proton version
+                proton_names = sorted(set([
+                    app.name for app in steam_apps if app.is_proton
+                ]))
+                exit_(
+                    "Protontricks installation could not be found with given "
+                    "$PROTON_VERSION!\n\n"
+                    f"Valid values include: {', '.join(proton_names)}"
+                )
+            else:
+                exit_("Proton installation could not be found!")
+
+        if not proton_app.is_proton_ready:
+            exit_(
+                "Proton installation is incomplete. Have you launched a Steam "
+                "app using this Proton version at least once to finish the "
+                "installation?"
+            )
+
+        return proton_app
+
     if args is None:
         args = sys.argv[1:]
 
@@ -297,19 +330,9 @@ def main(args=None, steam_path=None, steam_root=None):
         cwd = str(steam_app.install_path) if args.cwd_app else None
 
         # 6. Find Proton version of selected app
-        proton_app = find_proton_app(
+        proton_app = _find_proton_app_or_exit(
             steam_path=steam_path, steam_apps=steam_apps, appid=steam_app.appid
         )
-        if not proton_app:
-            exit_("Proton installation could not be found!")
-
-        if not proton_app.is_proton_ready:
-            exit_(
-                "Proton installation is incomplete. Have you launched a Steam "
-                "app using this Proton version at least once to finish the "
-                "installation?"
-            )
-
 
         run_command(
             winetricks_path=winetricks_path,
@@ -361,18 +384,8 @@ def main(args=None, steam_path=None, steam_root=None):
         return
 
     # 6. Find globally active Proton version now
-    proton_app = find_proton_app(
+    proton_app = _find_proton_app_or_exit(
         steam_path=steam_path, steam_apps=steam_apps, appid=args.appid)
-
-    if not proton_app:
-        exit_("Proton installation could not be found!")
-
-    if not proton_app.is_proton_ready:
-        exit_(
-            "Proton installation is incomplete. Have you launched a Steam app "
-            "using this Proton version at least once to finish the "
-            "installation?"
-        )
 
     # If neither search or GUI are set, do a normal Winetricks command
     # Find game by appid

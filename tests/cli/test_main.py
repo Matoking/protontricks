@@ -69,6 +69,27 @@ class TestCLIRun:
         assert command_mock.commands[-1].env["PROTON_PATH"] \
             == str(custom_proton.install_path)
 
+    def test_run_winetricks_select_proton_accepted_values(
+            self, cli, steam_app_factory, custom_proton_factory, command_mock):
+        """
+        Perform a Protonrticks command while selecting a non-existent Proton
+        version using PROTON_VERSION env var. Ensure list of allowed values
+        is printed in the error message
+        """
+        steam_app_factory(name="Fake game", appid=10)
+        custom_proton_factory(name="Custom Proton C")
+        custom_proton_factory(name="Custom Proton A")
+
+        result = cli(
+            ["10", "winecfg"],
+            env={"PROTON_VERSION": "Nonexistent Proton"},
+            expect_returncode=1
+        )
+
+        assert "Protontricks installation could not be found" in result
+        assert \
+            "Valid values include: Custom Proton A, Custom Proton C" in result
+
     def test_run_winetricks_select_steam(
             self, cli, steam_app_factory, default_proton, command_mock,
             home_dir):
