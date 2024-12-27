@@ -9,6 +9,7 @@ from PIL import Image
 from protontricks.gui import (prompt_filesystem_access,
                               select_steam_app_with_gui,
                               select_steam_installation)
+from protontricks.steam import SteamApp
 
 
 @pytest.fixture(scope="function")
@@ -96,16 +97,33 @@ class TestSelectApp:
         Select a game using the GUI. Ensure that icons are used in the dialog
         whenever available.
         """
-        steam_apps = [
-            steam_app_factory(name="Fake game 1", appid=10),
-            steam_app_factory(name="Fake game 2", appid=20),
-            steam_app_factory(name="Fake game 3", appid=30),
-        ]
+        steam_app_factory(name="Fake game 1", appid=10)
+        steam_app_factory(name="Fake game 2", appid=20)
+        steam_app_factory(name="Fake game 3", appid=30)
 
         # Create icons for game 1 and 3
-        for appid in (10, 30):
-            Image.new("RGB", (32, 32)).save(
-                steam_dir / "appcache" / "librarycache" / f"{appid}_icon.jpg")
+        # Old location for 10
+        Image.new("RGB", (32, 32)).save(
+            steam_dir / "appcache" / "librarycache" / "10_icon.jpg"
+        )
+
+        # New location for 30
+        (steam_dir / "appcache" / "librarycache" / "30").mkdir()
+        Image.new("RGB", (32, 32)).save(
+            steam_dir / "appcache" / "librarycache" / "30"
+            / "ffffffffffffffffffffffffffffffffffffffff.jpg"
+        )
+
+        # Read Steam apps using `SteamApp.from_appmanifest` to ensure
+        # icon paths are detected correctly
+        steam_apps = [
+            SteamApp.from_appmanifest(
+                steam_dir / "steamapps" / f"appmanifest_{appid}.acf",
+                steam_path=steam_dir,
+                steam_lib_paths=[steam_dir]
+            )
+            for appid in (10, 20, 30)
+        ]
 
         gui_provider.mock_stdout = "Fake game 2: 20"
         select_steam_app_with_gui(steam_apps=steam_apps, steam_path=steam_dir)
@@ -114,7 +132,8 @@ class TestSelectApp:
 
         assert b"librarycache/10_icon.jpg\nFake game 1" in input_
         assert b"icon_placeholder.png\nFake game 2" in input_
-        assert b"librarycache/30_icon.jpg\nFake game 3" in input_
+        assert b"librarycache/30/ffffffffffffffffffffffffffffffffffffffff.jpg\nFake game 3" \
+            in input_
 
     def test_select_game_icons_ensure_resize(
             self, gui_provider, steam_app_factory, steam_dir, home_dir):

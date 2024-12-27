@@ -52,8 +52,6 @@ class TestSteamApp:
 
         assert steam_app.name == "Fake game"
         assert steam_app.appid == 10
-        assert steam_app.icon_path \
-            == steam_dir / "appcache" / "librarycache" / "10_icon.jpg"
 
     @pytest.mark.parametrize(
         "content",

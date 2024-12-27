@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Fixed
+ - Fix missing app icons for games installed using newer Steam client
+
 ## [1.12.0] - 2024-09-16
 ### Added
  - `--cwd-app` flag to set working directory to the game's installation directory

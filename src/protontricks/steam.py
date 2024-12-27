@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import string
 import struct
 import zlib
@@ -263,8 +264,31 @@ class SteamApp(object):
 
         # If Steam path was provided, also populate the icon path
         if steam_path:
-            icon_path = \
-                steam_path / "appcache" / "librarycache" / f"{appid}_icon.jpg"
+            # The icon path might be located in one of the two locations:
+            # 1. `<steam_path>/appcache/librarycache/<appid>/<40 hex chars>.jpg
+            # 2. `<steam_path>/appcache/librarycache/<appid>_icon.jpg`
+            #
+            # There doesn't appear to be any other way to determine which is
+            # used other than by checking. This incurs some I/O for each app.
+            icon_path = None
+            library_cache_path = steam_path / "appcache" / "librarycache"
+            try:
+                # Try 1st location. This appears to be the newest, so this
+                # should hopefully be the first match, at least on newer Steam
+                # installations.
+                app_lib_cache_path = library_cache_path / str(appid)
+
+                icon_path = next(
+                    path for path in app_lib_cache_path.iterdir()
+                    if re.match(r"[a-f0-9]{40}\.jpg", path.name)
+                )
+            except (StopIteration, FileNotFoundError):
+                # Try 2nd location
+                icon_path = library_cache_path / f"{appid}_icon.jpg"
+
+                if not icon_path.is_file():
+                    # No icon was found
+                    icon_path = None
 
         # Check if the app requires another app. This is the case with
         # newer versions of Proton, which use Steam Runtimes installed as
