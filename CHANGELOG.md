@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix missing app icons for games installed using newer Steam client
+ - Fix spurious "unknown file arch" Winetricks warnings (newer Winetricks required)
 
 ## [1.12.0] - 2024-09-16
 ### Added

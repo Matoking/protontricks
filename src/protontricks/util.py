@@ -465,6 +465,9 @@ def run_command(
             "Setting WINE environment variable to Proton bundled version."
         )
         wine_environ["WINE"] = str(wine_bin_dir / "wine")
+        wine_environ["WINE_BIN"] = str(
+            proton_app.proton_dist_path / "bin" / "wine"
+        )
 
     wine_environ["WINELOADER"] = wine_environ["WINE"]
 
@@ -474,6 +477,9 @@ def run_command(
             "Setting WINESERVER environment variable to Proton bundled version"
         )
         wine_environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
+        wine_environ["WINESERVER_BIN"] = str(
+            proton_app.proton_dist_path / "bin" / "wineserver"
+        )
 
     temp_dir = Path(tempfile.mkdtemp(prefix="protontricks-"))
     wine_environ["PROTONTRICKS_TEMP_PATH"] = str(temp_dir)

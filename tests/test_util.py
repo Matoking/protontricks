@@ -84,6 +84,13 @@ class TestRunCommand:
         assert command.env["WINELOADER"] == str(wine_bin_dir / "wine")
         assert command.env["WINESERVER"] == str(wine_bin_dir / "wineserver")
 
+        assert command.env["WINE_BIN"] == str(
+            default_proton.proton_dist_path / "bin" / "wine"
+        )
+        assert command.env["WINESERVER_BIN"] == str(
+            default_proton.proton_dist_path / "bin" / "wineserver"
+        )
+
         monkeypatch.setenv("WINE", "/fake/wine")
         monkeypatch.setenv("WINESERVER", "/fake/wineserver")
 
