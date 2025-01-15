@@ -13,3 +13,6 @@ write_to = "src/protontricks/_version.py"
 omit = [
   "*/protontricks/_vdf/*"
 ]
+
+[project]
+dynamic = ["version"]
