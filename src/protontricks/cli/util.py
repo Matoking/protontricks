@@ -6,9 +6,13 @@ import os
 import sys
 import tempfile
 import traceback
+import contextlib
 from pathlib import Path
 
 from ..gui import show_text_dialog
+from ..flatpak import is_flatpak_sandbox
+from ..util import is_steam_deck
+from .. import __version__
 
 
 def _get_log_file_path():
@@ -126,12 +130,24 @@ def exit_with_error(error, desktop=False):
     except FileNotFoundError:
         log_messages = "!! LOG FILE NOT FOUND !!"
 
+    is_flatpak_sandbox_ = None
+    with contextlib.suppress(Exception):
+        is_flatpak_sandbox_ = is_flatpak_sandbox()
+
+    is_steam_deck_ = None
+    with contextlib.suppress(Exception):
+        is_steam_deck_ = is_steam_deck()
+
     # Display an error dialog containing the message
     message = "".join([
         "Protontricks was closed due to the following error:\n\n",
         f"{error}\n\n",
         "=============\n\n",
         "Please include this entire error message when making a bug report.\n",
+        "Environment:\n\n",
+        f"Protontricks version: {__version__}\n",
+        f"Is Flatpak sandbox: {is_flatpak_sandbox_}\n",
+        f"Is Steam Deck: {is_steam_deck_}\n\n",
         "Log messages:\n\n",
         f"{log_messages}"
     ])
