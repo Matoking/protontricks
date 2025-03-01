@@ -17,7 +17,7 @@ This is a wrapper script that allows you to easily run Winetricks commands for S
 
 # Requirements
 
-* Python 3.6 or newer
+* Python 3.7 or newer
 * Winetricks
 * Steam
 * YAD (recommended) **or** Zenity. Required for GUI.
@@ -124,7 +124,7 @@ You can use pipx to install the latest version on PyPI or the git repository for
 
 **pipx does not install Winetricks and other dependencies out of the box.** You can install Winetricks using the [installation instructions](https://github.com/Winetricks/winetricks#installing) provided by the Winetricks project. 
 
-**pipx requires Python 3.6 or newer.**
+**pipx requires Python 3.7 or newer.**
 
 **You will need to install pip, setuptools and virtualenv first.** Install the correct packages depending on your distribution:
 

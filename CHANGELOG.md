@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  - Fix missing app icons for games installed using newer Steam client
  - Fix spurious "unknown file arch" Winetricks warnings (newer Winetricks required)
 
+### Removed
+ - Drop Python 3.6 support
+
 ## [1.12.0] - 2024-09-16
 ### Added
  - `--cwd-app` flag to set working directory to the game's installation directory
