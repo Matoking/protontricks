@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.12.1] - 2025-03-08
 ### Fixed
  - Fix missing app icons for games installed using newer Steam client
  - Fix spurious "unknown file arch" Winetricks warnings (newer Winetricks required)
@@ -311,7 +311,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.12.0...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.12.1...HEAD
+[1.12.1]: https://github.com/Matoking/protontricks/compare/1.12.0...1.12.1
 [1.12.0]: https://github.com/Matoking/protontricks/compare/1.11.1...1.12.0
 [1.11.1]: https://github.com/Matoking/protontricks/compare/1.11.0...1.11.1
 [1.11.0]: https://github.com/Matoking/protontricks/compare/1.10.5...1.11.0

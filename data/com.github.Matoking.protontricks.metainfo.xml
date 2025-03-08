@@ -42,6 +42,7 @@
   <metadata_license>CC0-1.0</metadata_license>
   <update_contact>janne.pulkkinen@protonmail.com</update_contact>
   <releases>
+      <release version="1.12.1" date="2025-03-08"/>
       <release version="1.12.0" date="2024-09-16"/>
       <release version="1.11.1" date="2024-02-20"/>
       <release version="1.11.0" date="2023-12-30"/>
