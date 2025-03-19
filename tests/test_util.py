@@ -210,6 +210,98 @@ class TestRunCommand:
         assert command.env["LC_TIME"] == "en_US.UTF-8"
         assert command.env["LC_NUMERIC"] == "en_US.UTF-8"
 
+    def test_winedlloverrides_defaults_are_set(
+            self, steam_app_factory, default_proton, command_mock, caplog):
+        """
+        Test that Protontricks will automatically set WINEDLLOVERRIDES
+        while skipping any DLLs that user has already configured
+        """
+        dxvk_lib_path = \
+            default_proton.proton_dist_path / "lib" / "wine" / "dxvk"
+        dxvk_lib_path.mkdir(parents=True)
+
+        (dxvk_lib_path / "dxgi.dll").touch()
+        (dxvk_lib_path / "d3d9.dll").touch()
+        (dxvk_lib_path / "d3d11.dll").touch()
+
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+        run_command(
+            winetricks_path=Path("/usr/bin/winetricks"),
+            proton_app=default_proton,
+            steam_app=steam_app,
+            command=["/bin/env"],
+            env={
+                "WINEDLLOVERRIDES": "fakelibrary=b;dxgi=b"
+            }
+        )
+
+        command = command_mock.commands[-1]
+
+        # User-provided environment variables are not overridden
+        assert "dxgi=b" in command.env["WINEDLLOVERRIDES"]
+        assert "fakelibrary=b" in command.env["WINEDLLOVERRIDES"]
+
+        # DXVK overrides are set if the corresponding DLL files exist in the
+        # Proton installation
+        assert "d3d9=n" in command.env["WINEDLLOVERRIDES"]
+        assert "d3d11=n" in command.env["WINEDLLOVERRIDES"]
+
+        assert "d3d10core" not in command.env["WINEDLLOVERRIDES"]
+
+    def test_gstreamer_env_is_set(
+            self, steam_app_factory, default_proton, command_mock):
+        """
+        Test that Protontricks will automatically set GStreamer related
+        environment variables if GStreamer appears to be installed for Proton
+        """
+        (default_proton.proton_dist_path / "lib/gstreamer-1.0").mkdir(
+            parents=True
+        )
+
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        run_command(
+            winetricks_path=Path("/usr/bin/winetricks"),
+            proton_app=default_proton,
+            steam_app=steam_app,
+            command=["/bin/env"],
+        )
+
+        command = command_mock.commands[-1]
+
+        assert str(default_proton.proton_dist_path / "lib/gstreamer-1.0") \
+            in command.env["GST_PLUGIN_SYSTEM_PATH_1_0"]
+        assert str(steam_app.prefix_path.parent / "gstreamer-1.0") \
+            in command.env["WINE_GST_REGISTRY_DIR"]
+
+    def test_default_proton_env_vars_set(
+            self, steam_app_factory, default_proton, command_mock):
+        """
+        Test that Protontricks will automatically set various Proton related
+        environment variables, unless they're already set by the user
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        run_command(
+            winetricks_path=Path("/usr/bin/winetricks"),
+            proton_app=default_proton,
+            steam_app=steam_app,
+            command=["/bin/env"],
+            env={
+                "WINE_LARGE_ADDRESS_AWARE": "2"
+            }
+        )
+
+        command = command_mock.commands[-1]
+
+        # Default env var is set
+        assert command.env["DXVK_ENABLE_NVAPI"] == "1"
+
+        # User-set env var is not overridden
+        assert command.env["WINE_LARGE_ADDRESS_AWARE"] == "2"
+
+
+
     def test_bwrap_launcher_crash_detected(
             self, default_new_proton, steam_app_factory, command_mock):
         """

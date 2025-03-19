@@ -1,3 +1,4 @@
+import itertools
 import locale
 import logging
 import os
@@ -308,6 +309,109 @@ def _get_fixed_locale_env():
     return fixed_env
 
 
+_DLL_OVERRIDES = {
+    "beclient": "b,n",
+    "beclient_x64": "b,n",
+
+    # DXVK
+    "dxgi": "n",
+    "d3d9": "n",
+    "d3d10core": "n",
+    "d3d11": "n",
+
+    # vkd3d-proton
+    "d3d12": "n",
+    "d3d12core": "n",
+
+    # nvapi
+    "nvapi": "n",
+    "nvapi64": "n",
+    "nvofapi64": "n",
+    "nvcuda": "b"
+}
+
+_WINE_DEFAULT_ENV_VARS = {
+    "WINE_LARGE_ADDRESS_AWARE": "1",
+    "DXVK_ENABLE_NVAPI": "1",
+}
+
+def _get_proton_env(proton_app, steam_app, orig_env):
+    """
+    Return a dict of various Proton related environment variables.
+    These are mainly required to configure DXVK, vkd3d-proton and GStreamer
+    properly.
+
+    When using Proton proper, these are usually set by the `proton` launcher
+    script. The script is not designed for programmatic usage, so we'll have to
+    set them manually instead.
+
+    Some environment variables are not supported depending on the Python
+    version. We will err on the side of caution and check if preconditions are
+    met before attempting to set any environment variables; for example, Proton
+    installation must contain GStreamer directory in order to set GStreamer env
+    vars.
+    """
+    new_env = {}
+
+    dist_path = proton_app.proton_dist_path
+
+    # 1.Configure WINEDLLOVERRIDES
+    available_dlls = set([
+        file_.stem for file_
+        in itertools.chain(
+            (dist_path / "lib64").glob("**/*.dll"),
+            (dist_path / "lib").glob("**/*.dll")
+        )
+    ])
+
+    dll_overrides = {
+        value.split("=")[0]: value.split("=")[1]
+        for value in orig_env.get("WINEDLLOVERRIDES", "").split(";")
+        if "=" in value
+    }
+
+    logger.debug(
+        "Following Wine DLL overrides already set: %s",
+        dll_overrides
+    )
+
+    # Set DLL overrides if the corresponding DLL file exists *and* if the user
+    # hasn't declared something else
+    for name, setting in _DLL_OVERRIDES.items():
+        is_available = name in available_dlls
+        is_set = name in dll_overrides
+
+        if is_available and not is_set:
+            logger.debug("Setting Wine DLL override: %s=%s", name, setting)
+            dll_overrides[name] = setting
+
+    new_env["WINEDLLOVERRIDES"] = ";".join(
+        f"{name}={setting}" for name, setting in dll_overrides.items()
+    )
+
+    # 2. Configure GStreamer
+    is_gstreamer_available = (dist_path / "lib/gstreamer-1.0").is_dir()
+
+    if is_gstreamer_available:
+        logger.debug("Setting GStreamer environment variables")
+
+        new_env["GST_PLUGIN_SYSTEM_PATH_1_0"] = (
+            f"{dist_path / 'lib64/gstreamer-1.0'}"
+            f":{dist_path / 'lib/gstreamer-1.0'}"
+        )
+        new_env["WINE_GST_REGISTRY_DIR"] = str(
+            steam_app.prefix_path.parent / "gstreamer-1.0"
+        )
+
+    # 3. Enable various env vars unless already set by user
+    for name, value in _WINE_DEFAULT_ENV_VARS.items():
+        if name not in orig_env:
+            logger.debug("Setting default env var: %s=%s", name, value)
+            new_env[name] = value
+
+    return new_env
+
+
 def _start_process(args, wait=False, **kwargs):
     """Start a new process and return a Popen instance
     """
@@ -395,6 +499,14 @@ def run_command(
 
     # Fix the locale for Steam Deck, if necessary
     wine_environ.update(_get_fixed_locale_env())
+
+    # Set various Proton related environment variables
+    wine_environ.update(
+        _get_proton_env(
+            proton_app=proton_app, steam_app=steam_app,
+            orig_env=wine_environ
+        )
+    )
 
     wine_bin_dir = None
     wine_environ["PROTONTRICKS_STEAM_RUNTIME"] = "off"
