@@ -364,11 +364,20 @@ def _get_proton_env(proton_app, steam_app, orig_env):
         )
     ])
 
-    dll_overrides = {
-        value.split("=")[0]: value.split("=")[1]
-        for value in orig_env.get("WINEDLLOVERRIDES", "").split(";")
-        if "=" in value
-    }
+    dll_overrides = {}
+
+    # Get existing DLL overrides. Note that multiple DLLs might be specified
+    # at once using ',' and the value might be empty. For example, the following
+    # is a valid WINEDLLOVERRIDES: dxgi,d3d9=n;d3d10core=b;d3d11=
+    for dll_override in orig_env.get("WINEDLLOVERRIDES", "").split(";"):
+        if "=" not in dll_override:
+            continue
+
+        settings, value = dll_override.split("=")
+        settings = settings.split(",")
+
+        for setting in settings:
+            dll_overrides[setting] = value
 
     logger.debug(
         "Following Wine DLL overrides already set: %s",

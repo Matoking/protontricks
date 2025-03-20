@@ -231,7 +231,7 @@ class TestRunCommand:
             steam_app=steam_app,
             command=["/bin/env"],
             env={
-                "WINEDLLOVERRIDES": "fakelibrary=b;dxgi=b"
+                "WINEDLLOVERRIDES": "fakelibrary,anotherfakelibrary=b,n;dxgi=b"
             }
         )
 
@@ -239,7 +239,8 @@ class TestRunCommand:
 
         # User-provided environment variables are not overridden
         assert "dxgi=b" in command.env["WINEDLLOVERRIDES"]
-        assert "fakelibrary=b" in command.env["WINEDLLOVERRIDES"]
+        assert "fakelibrary=b,n" in command.env["WINEDLLOVERRIDES"]
+        assert "anotherfakelibrary=b,n" in command.env["WINEDLLOVERRIDES"]
 
         # DXVK overrides are set if the corresponding DLL files exist in the
         # Proton installation
