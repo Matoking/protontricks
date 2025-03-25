@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.12.1] - 2025-03-08
+## [Unreleased]
 ### Added
  - Improve compatibility by setting additional Proton related environment variables when applicable
 
+## [1.12.1] - 2025-03-08
 ### Fixed
  - Fix missing app icons for games installed using newer Steam client
  - Fix spurious "unknown file arch" Winetricks warnings (newer Winetricks required)
