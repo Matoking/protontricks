@@ -5,6 +5,7 @@ import string
 import struct
 import zlib
 from collections import OrderedDict
+from enum import Enum
 from pathlib import Path
 
 import vdf
@@ -45,6 +46,12 @@ OS_RELEASE_PATHS = [
 # "Proton name -> app ID" mappings with this app ID
 STEAM_PLAY_MANIFESTS_APPID = 891390
 
+
+class SteamAppType(Enum):
+    STEAM_APP = 1
+    CUSTOM_SHORTCUT = 2
+
+
 logger = logging.getLogger("protontricks")
 
 
@@ -56,12 +63,13 @@ class SteamApp(object):
     """
     __slots__ = (
         "appid", "name", "prefix_path", "install_path", "icon_path",
-        "required_tool_appid", "required_tool_app"
+        "required_tool_appid", "required_tool_app", "app_type"
     )
 
     def __init__(
             self, name, install_path, icon_path=None, prefix_path=None,
-            appid=None, required_tool_appid=None):
+            appid=None, required_tool_appid=None,
+            app_type=SteamAppType.STEAM_APP):
         """
         :appid: App's appid
         :name: The app's human-readable name
@@ -95,6 +103,8 @@ class SteamApp(object):
         # Reference to another SteamApp will be added later if necessary,
         # once we have the full list of Steam apps
         self.required_tool_app = None
+
+        self.app_type = SteamAppType(app_type)
 
     @property
     def prefix_path_exists(self):
@@ -1360,8 +1370,8 @@ def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
                 name=f"Non-Steam shortcut: {shortcut_data['appname']}",
                 prefix_path=prefix_path,
                 install_path=install_path,
-                icon_path=icon_path
-
+                icon_path=icon_path,
+                app_type=SteamAppType.CUSTOM_SHORTCUT
             )
         )
 
