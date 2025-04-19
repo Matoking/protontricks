@@ -21,8 +21,8 @@ __all__ = (
     "find_proton_app", "get_steam_lib_paths", "get_compat_tool_dirs",
     "get_custom_compat_tool_installations_in_dir",
     "get_custom_compat_tool_installations", "find_current_steamid3",
-    "get_appid_from_shortcut", "get_custom_windows_shortcuts",
-    "get_steam_apps"
+    "get_appid_from_shortcut", "get_vdf_steam_shortcuts",
+    "get_custom_windows_shortcuts", "get_steam_apps",
 )
 
 COMMON_STEAM_DIRS = [
@@ -1279,10 +1279,10 @@ def get_appid_from_shortcut(target, name):
     return result >> 32
 
 
-def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
+def get_vdf_steam_shortcuts(steam_path):
     """
-    Get a list of custom shortcuts for Windows applications as a list
-    of SteamApp objects
+    Get a list of Steam shortcuts as they're stored in the `shortcuts.vdf`.
+    Field names in each entry are normalized by converting them to lowercase.
     """
     # Get the Steam ID3 for the currently logged-in user
     steamid3 = find_current_steamid3(steam_path)
@@ -1297,20 +1297,33 @@ def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
         vdf_data = lower_dict(
             vdf.binary_loads(content, raise_on_remaining=False)
         )
-    except IOError:
+    except OSError:
         logger.info(
             "Couldn't find custom shortcuts. Maybe none have been created yet?"
         )
         return []
 
+    shortcuts = list(vdf_data["shortcuts"].values())
+
+    # The "exe" field can also be "Exe". Account for this by making
+    # all field names lowercase
+    shortcuts = [
+        lower_dict(shortcut) for shortcut in shortcuts
+    ]
+
+    return shortcuts
+
+
+def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
+    """
+    Get a list of custom shortcuts for Windows applications as a list
+    of SteamApp objects
+    """
+    vdf_shortcuts = get_vdf_steam_shortcuts(steam_path)
+
     steam_apps = []
 
-    for shortcut_id, shortcut_data in vdf_data["shortcuts"].items():
-        # The "exe" field can also be "Exe". Account for this by making
-        # all field names lowercase
-        shortcut_data = lower_dict(shortcut_data)
-        shortcut_id = int(shortcut_id)
-
+    for shortcut_data in vdf_shortcuts:
         if "appid" in shortcut_data:
             try:
                 appid = shortcut_data["appid"] & 0xffffffff
