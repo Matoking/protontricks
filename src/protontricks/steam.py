@@ -1,12 +1,13 @@
 import logging
 import os
 import re
+import shlex
 import string
 import struct
 import zlib
 from collections import OrderedDict
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import vdf
 
@@ -23,6 +24,7 @@ __all__ = (
     "get_custom_compat_tool_installations", "find_current_steamid3",
     "get_appid_from_shortcut", "get_vdf_steam_shortcuts",
     "get_custom_windows_shortcuts", "get_steam_apps",
+    "get_app_launch_parameters",
 )
 
 COMMON_STEAM_DIRS = [
@@ -1394,6 +1396,146 @@ def get_custom_windows_shortcuts(steam_path, steam_lib_paths):
     )
 
     return steam_apps
+
+
+def get_app_launch_parameters(steam_app, steam_path):
+    """
+    Get the default launch parameters for a Steam app
+    """
+    def _get_default_launch_option(launch_options):
+        # There doesn't seem to be a single unambigious way to declare
+        # the default Windows launch option.
+        # So, perform a series of checks, starting from the most specific
+        # and find the first one that matches
+        checks = [
+            # 'type' is 'default' and 'oslist' (if defined) is 'windows'.
+            # 'oslist' is not always defined
+            # (probably because the app is Windows-only?)
+            lambda option: (
+                option.get("type", None) == "default"
+                and (
+                    option.get("config", {}).get("oslist", "windows")
+                    == "windows"
+                    or "oslist" not in option.get("config", {})
+                )
+                and "betakey" not in option.get("config", {})
+            ),
+
+            # First 'windows' launch option
+            lambda option: (
+                option.get("config", {}).get("oslist", None) == "windows"
+                and "betakey" not in option.get("config", {})
+            ),
+
+            # First non-beta key launch option
+            lambda option: "betakey" not in option.get("config", {})
+        ]
+
+        for check in checks:
+            try:
+                return next(
+                    option for option in launch_options if check(option)
+                )
+            except StopIteration:
+                pass
+
+        # Just get the first entry, I guess
+        return launch_options[0]
+
+    # If dealing with a custom shortcut, read the launch options from the
+    # shortcut file
+    if steam_app.app_type == SteamAppType.CUSTOM_SHORTCUT:
+        shortcuts = get_vdf_steam_shortcuts(steam_path)
+        shortcut = next(
+            shortcut for shortcut in shortcuts
+            if shortcut["appid"] & 0xffffffff == steam_app.appid
+        )
+
+        parameters = {
+            "command": ["wine", shortcut["exe"]],
+            "cwd": shortcut["startdir"],
+        }
+
+        if parameters.get("launchoptions"):
+            parameters["command"] += shlex.split(parameters["launchoptions"])
+
+        return parameters
+
+    # TODO: This does _not_ retrieve the launch option the user has configured
+    # via Properties -> General -> Launch Options -> Selected Launch Option.
+    # The selected launch option is stored under Steam user specific file
+    # in `userdata/<steamid3>/config/localconfig.vdf` as an index, but it does
+    # not map directly to the launch options in the 'launch' object.
+    # Furthermore, the field name uses a changing hex string with an unknown
+    # meaning (perhaps it's used to tell the launch options apart
+    # if they're changed by a game update?).
+    #
+    # It has the following format:
+    #
+    # "DefaultLaunchOption"
+    # {
+    #     "ba0628a6"		"1"
+    # }
+
+    # Otherwise, we're dealing with a Steam app and need to parse `appinfo.vdf`
+    # instead.
+    appinfo_path = steam_path / "appcache" / "appinfo.vdf"
+
+    appinfo_section = next(
+        section for section in iter_appinfo_sections(appinfo_path)
+        if section["appinfo"]["appid"] == steam_app.appid
+    )
+
+    try:
+        launch_options = list(
+            appinfo_section["appinfo"]["config"]["launch"].values()
+        )
+    except KeyError:
+        logger.error(
+            "App %s has no launch configuration", steam_app.appid
+        )
+        return None
+
+    logger.debug(
+        "Found the following launch options for app %d:", steam_app.appid
+    )
+    for option in launch_options:
+        logger.debug("%s", option)
+
+    logger.info(
+        "App %d has %d launch options", steam_app.appid, len(launch_options)
+    )
+
+    # Get the default launch option. This is (probably) one the Steam
+    # client will use if the player launches the game without prompting
+    # the user to choose from different options.
+    launch_option = _get_default_launch_option(launch_options)
+    logger.debug(
+        "Found default launch options for app %d: %s",
+        steam_app.appid, launch_option
+    )
+
+    # Construct the launch parameters to be passed for subprocess
+    parameters = {
+        "command": [
+            "wine", str(
+                steam_app.install_path
+                / PureWindowsPath(launch_option["executable"])
+            )
+        ],
+        "cwd": str(Path(PureWindowsPath(steam_app.install_path)))
+    }
+
+    if launch_option.get("arguments"):
+        parameters["command"] += shlex.split(launch_option["arguments"])
+
+    if launch_option.get("workingdir"):
+        parameters["cwd"] = str(
+            steam_app.install_path
+            / PureWindowsPath(launch_option["workingdir"])
+        )
+
+    return parameters
 
 
 def _link_tool_apps(steam_apps):

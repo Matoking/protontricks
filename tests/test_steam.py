@@ -12,7 +12,8 @@ from protontricks.steam import (SteamApp, _get_steamapps_subdirs,
                                 find_steam_installations, find_steam_path,
                                 get_custom_compat_tool_installations,
                                 get_custom_windows_shortcuts, get_steam_apps,
-                                get_steam_lib_paths, iter_appinfo_sections)
+                                get_steam_lib_paths, get_app_launch_parameters,
+                                iter_appinfo_sections)
 
 
 class TestSteamApp:
@@ -1090,6 +1091,112 @@ class TestGetWindowsShortcuts:
             "Shortcut fakegame.exe (4149337689) does not have a prefix"
             in record.message
         )
+
+
+class TestGetAppLaunchParameters:
+    @pytest.mark.parametrize(
+        "launch_config,expected_parameters",
+        [
+            # Game is set as default
+            (
+                {
+                    "0": {"executable": "Game.exe", "type": "default"},
+                    "1": {"executable": "Wrong.exe", "type": "vr"}
+                },
+                {"command": ["wine", "Game.exe"]}
+            ),
+            # Game is not explicitly set as default, determine the
+            # correct default Windows app by its 'oslist' support
+            (
+                (
+
+                    {
+                        "0": {
+                            "executable": "Game.exe", "type": "none",
+                            "config": {"oslist": "windows"}
+                        },
+                        "1": {
+                            "executable": "Wrong.sh", "type": "none",
+                            "config": {"oslist": "linux"}
+                        }
+                    },
+                    {"command": ["wine", "Game.exe"]}
+                )
+            ),
+            # Launch options behind a beta key should be ignored,
+            # even if they're the first
+            (
+                {
+                    "0": {
+                        "executable": "Wrong.exe",
+                        "config": {"betakey": "blah"}
+                    },
+                    "1": {
+                        "executable": "Game.exe"
+                    }
+                },
+                {"command": ["wine", "Game.exe"]}
+            ),
+            # Custom arguments need to be appended when launching the game
+            (
+                {
+                    "0": {
+                        "executable": "Game.exe",
+                        "type": "default",
+                        "arguments": "-param1 -param2"
+                    }
+                },
+                {"command": ["wine", "Game.exe", "-param1", "-param2"]}
+            ),
+            # Game has non-default launch directory
+            (
+                {
+                    "0": {
+                        "executable": "dir\\Game.exe",
+                        "workingdir": "dir"
+                    }
+                },
+                {
+                    "command": ["wine", "dir/Game.exe"],
+                    "cwd": "dir"
+                }
+            )
+        ]
+    )
+    def test_get_steam_app_launch_options(
+            self, steam_dir, steam_app_factory, appinfo_factory,
+            launch_config, expected_parameters):
+        """
+        Test that the correct default launch parameters are detected for a
+        Steam app
+        """
+        app = steam_app_factory(appid=10, name="Test game")
+        appinfo_factory(
+            10,
+            {
+                "config": {
+                    "launch": launch_config
+                }
+            }
+        )
+
+        launch_parameters = get_app_launch_parameters(
+            app, steam_path=steam_dir
+        )
+
+        # Adjust the expected parameters to include the installation directory
+        expected_parameters["command"][1] = str(
+            app.install_path / expected_parameters["command"][1]
+        )
+
+        if "cwd" in expected_parameters:
+            expected_parameters["cwd"] = str(
+                app.install_path / expected_parameters["cwd"]
+            )
+        else:
+            expected_parameters["cwd"] = str(app.install_path)
+
+        assert launch_parameters == expected_parameters
 
 
 def test_parse_appinfo_v29():
