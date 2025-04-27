@@ -18,8 +18,8 @@ from ..flatpak import (FLATPAK_BWRAP_COMPATIBLE_VERSION,
 from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
                    select_steam_installation)
 from ..steam import (find_legacy_steam_runtime_path, find_proton_app,
-                     find_steam_installations, get_steam_apps,
-                     get_steam_lib_paths)
+                     find_steam_installations, get_app_launch_parameters,
+                     get_steam_apps, get_steam_lib_paths)
 from ..util import run_command
 from ..winetricks import get_winetricks_path
 from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
@@ -144,7 +144,12 @@ def main(args=None, steam_path=None, steam_root=None):
              "The command is passed to the shell as-is without being escaped.")
     parser.add_argument(
         "--gui", action="store_true",
-        help="Launch the Protontricks GUI.")
+        help="Launch the Protontricks GUI."
+    )
+    parser.add_argument(
+        "--game-launch", action="store_true",
+        help="Launch the game"
+    )
     parser.add_argument(
         "--no-runtime", action="store_true", default=False,
         help="Disable Steam Runtime")
@@ -207,6 +212,7 @@ def main(args=None, steam_path=None, steam_root=None):
     do_command = bool(args.command)
     do_list_apps = bool(args.search) or bool(args.list)
     do_gui = bool(args.gui)
+    do_game_launch = bool(args.game_launch)
     do_winetricks = bool(args.appid and args.winetricks_command)
 
     # Set 'use_bwrap' to opposite of args.no_bwrap if it was provided.
@@ -222,12 +228,16 @@ def main(args=None, steam_path=None, steam_root=None):
         else use_bwrap
     )
 
-    if not do_command and not do_list_apps and not do_gui and not do_winetricks:
+    action_count = sum([
+        do_command, do_list_apps, do_gui, do_game_launch, do_winetricks
+    ])
+
+    if action_count == 0:
         parser.print_help()
         return
 
     # Don't allow more than one action
-    if sum([do_list_apps, do_gui, do_winetricks, do_command]) != 1:
+    if action_count != 1:
         print("Only one action can be performed at a time.")
         parser.print_help()
         return
@@ -406,32 +416,39 @@ def main(args=None, steam_path=None, steam_root=None):
 
     cwd = str(steam_app.install_path) if args.cwd_app else None
 
+    command_kwargs = {
+        "winetricks_path": winetricks_path,
+        "proton_app": proton_app,
+        "steam_app": steam_app,
+        "use_steam_runtime": use_steam_runtime,
+        "legacy_steam_runtime_path": legacy_steam_runtime_path,
+        "use_bwrap": use_bwrap,
+        "start_wineserver": start_background_wineserver,
+    }
+
     if args.winetricks_command:
         returncode = run_command(
-            winetricks_path=winetricks_path,
-            proton_app=proton_app,
-            steam_app=steam_app,
-            use_steam_runtime=use_steam_runtime,
-            legacy_steam_runtime_path=legacy_steam_runtime_path,
-            use_bwrap=use_bwrap,
-            start_wineserver=start_background_wineserver,
+            **command_kwargs,
             command=[str(winetricks_path)] + args.winetricks_command,
             cwd=cwd
         )
     elif args.command:
         returncode = run_command(
-            winetricks_path=winetricks_path,
-            proton_app=proton_app,
-            steam_app=steam_app,
+            **command_kwargs,
             command=args.command,
-            use_steam_runtime=use_steam_runtime,
-            legacy_steam_runtime_path=legacy_steam_runtime_path,
-            use_bwrap=use_bwrap,
-            start_wineserver=start_background_wineserver,
             # Pass the command directly into the shell *without*
             # escaping it
             shell=True,
             cwd=cwd,
+        )
+    elif args.game_launch:
+        game_kwargs = get_app_launch_parameters(
+            steam_app=steam_app,
+            steam_path=steam_path
+        )
+        returncode = run_command(
+            **command_kwargs,
+            **game_kwargs
         )
 
     logger.info("Command returned %d", returncode)
