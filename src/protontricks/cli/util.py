@@ -11,7 +11,7 @@ from pathlib import Path
 
 from ..gui import show_text_dialog
 from ..flatpak import is_flatpak_sandbox
-from ..util import is_steam_deck
+from ..util import is_steam_deck, is_steamos
 from .. import __version__
 
 
@@ -138,6 +138,10 @@ def exit_with_error(error, desktop=False):
     with contextlib.suppress(Exception):
         is_steam_deck_ = is_steam_deck()
 
+    is_steamos_ = None
+    with contextlib.suppress(Exception):
+        is_steamos_ = is_steamos()
+
     # Display an error dialog containing the message
     message = "".join([
         "Protontricks was closed due to the following error:\n\n",
@@ -147,7 +151,8 @@ def exit_with_error(error, desktop=False):
         "Environment:\n\n",
         f"Protontricks version: {__version__}\n",
         f"Is Flatpak sandbox: {is_flatpak_sandbox_}\n",
-        f"Is Steam Deck: {is_steam_deck_}\n\n",
+        f"Is Steam Deck: {is_steam_deck_}\n",
+        f"Is SteamOS 3+: {is_steamos_}\n\n",
         "Log messages:\n\n",
         f"{log_messages}"
     ])
