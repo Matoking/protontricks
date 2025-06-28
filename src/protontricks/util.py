@@ -13,7 +13,7 @@ import pkg_resources
 
 __all__ = (
     "SUPPORTED_STEAM_RUNTIMES", "OS_RELEASE_PATHS", "lower_dict",
-    "is_steam_deck", "get_legacy_runtime_library_paths",
+    "is_steam_deck", "is_steamos", "get_legacy_runtime_library_paths",
     "get_host_library_paths", "RUNTIME_ROOT_GLOB_PATTERNS",
     "get_runtime_library_paths", "WINE_SCRIPT_TEMPLATE",
     "get_cache_dir", "create_wine_bin_dir", "run_command"
@@ -66,6 +66,24 @@ def is_steam_deck():
 
         if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
             logger.info("The current device is a Steam Deck")
+            return True
+
+    return False
+
+
+def is_steamos():
+    """
+    Check if we're running on SteamOS 3 (or newer)
+    """
+    for path in OS_RELEASE_PATHS:
+        try:
+            lines = Path(path).read_text("utf-8").split("\n")
+        except FileNotFoundError:
+            continue
+
+        # This will not detect SteamOS 2 or older which are based on Debian
+        if "ID=steamos" in lines and "ID_LIKE=arch" in lines:
+            logger.info("The current device is running on SteamOS 3+")
             return True
 
     return False

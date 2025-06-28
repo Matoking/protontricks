@@ -923,6 +923,7 @@ def steam_deck(monkeypatch, tmp_path):
     os_release_path.write_text("\n".join([
         'NAME="SteamOS"',
         "ID=steamos",
+        "ID_LIKE=arch",
         "VARIANT_ID=steamdeck"
     ]))
 
