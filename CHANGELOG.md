@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Improve compatibility by setting additional Proton related environment variables when applicable
 
+### Changed
+ - Fixed locale is now used for SteamOS 3, not only Steam Deck
+
 ## [1.12.1] - 2025-03-08
 ### Fixed
  - Fix missing app icons for games installed using newer Steam client

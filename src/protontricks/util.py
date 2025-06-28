@@ -283,8 +283,8 @@ def _get_fixed_locale_env():
     """
     # We can assume the 'en_US.UTF-8' locale always exists on Steam Deck, but
     # we can't assume the same about other distros. Therefore, only attempt
-    # fixing the locale when running on a Steam Deck.
-    if not is_steam_deck():
+    # fixing the locale when running on a SteamOS 3+.
+    if not is_steamos():
         return {}
 
     supported_locales = run(
