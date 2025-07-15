@@ -1,4 +1,5 @@
 import functools
+import importlib.resources
 import itertools
 import json
 import logging
@@ -9,13 +10,12 @@ import sys
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, run
 
-import pkg_resources
 from PIL import Image
 
 from .config import get_config
 from .flatpak import get_inaccessible_paths
-from .util import get_cache_dir
 from .steam import SNAP_STEAM_DIRS
+from .util import get_cache_dir
 
 APP_ICON_SIZE = (32, 32)
 
@@ -60,14 +60,15 @@ def _get_appid2icon(steam_apps):
     Get icons for Steam apps to show in the app selection dialog.
     Return a {appid: icon_path} dict.
     """
-    placeholder_path = Path(
-        pkg_resources.resource_filename(
-            "protontricks", "data/data/icon_placeholder.png"
-        )
-    )
-
     protontricks_icon_dir = get_cache_dir() / "app_icons"
     protontricks_icon_dir.mkdir(exist_ok=True)
+
+    # Write the placeholder from Python package into a more persistent
+    # cache directory
+    with importlib.resources.path(
+            "protontricks.data.data", "icon_placeholder.png") as path:
+        placeholder_path = protontricks_icon_dir / "icon_placeholder.png"
+        placeholder_path.write_bytes(path.read_bytes())
 
     appid2icon = {}
 

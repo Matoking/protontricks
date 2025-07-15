@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from subprocess import run
 
-import pkg_resources
+import importlib.resources
 
 from .util import CustomArgumentParser
 
@@ -20,16 +20,19 @@ def install_desktop_entries():
     applications_dir = Path.home() / ".local" / "share" / "applications"
     applications_dir.mkdir(parents=True, exist_ok=True)
 
-    run([
-        "desktop-file-install", "--dir", str(applications_dir),
-        pkg_resources.resource_filename(
-            "protontricks", "data/share/applications/protontricks.desktop"
-        ),
-        pkg_resources.resource_filename(
-            "protontricks",
-            "data/share/applications/protontricks-launch.desktop"
-        )
-    ], check=True)
+    desktop_path_resolver = importlib.resources.path(
+        "protontricks.data.share.applications", "protontricks.desktop"
+    )
+    launch_path_resolver = importlib.resources.path(
+        "protontricks.data.share.applications", "protontricks-launch.desktop"
+    )
+
+    with desktop_path_resolver as desktop_path, \
+            launch_path_resolver as launch_path:
+        run([
+            "desktop-file-install", "--dir", str(applications_dir),
+            str(desktop_path), str(launch_path)
+        ], check=True)
 
     return applications_dir
 

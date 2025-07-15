@@ -1,3 +1,4 @@
+import importlib.resources
 import itertools
 import locale
 import logging
@@ -8,8 +9,6 @@ import stat
 import tempfile
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, TimeoutExpired, check_output, run
-
-import pkg_resources
 
 __all__ = (
     "SUPPORTED_STEAM_RUNTIMES", "OS_RELEASE_PATHS", "lower_dict",
@@ -173,26 +172,18 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
     ])
 
 
-WINE_SCRIPT_TEMPLATE = Path(
-    pkg_resources.resource_filename(
-        "protontricks", "data/scripts/wine_launch.sh"
-    )
-).read_text(encoding="utf-8")
-WINESERVER_KEEPALIVE_SH_SCRIPT = Path(
-    pkg_resources.resource_filename(
-        "protontricks", "data/scripts/wineserver_keepalive.sh"
-    )
-).read_text(encoding="utf-8")
-WINESERVER_KEEPALIVE_BATCH_SCRIPT = Path(
-    pkg_resources.resource_filename(
-        "protontricks", "data/scripts/wineserver_keepalive.bat"
-    )
-).read_text(encoding="utf-8")
-BWRAP_LAUNCHER_SH_SCRIPT = Path(
-    pkg_resources.resource_filename(
-        "protontricks", "data/scripts/bwrap_launcher.sh"
-    )
-).read_text(encoding="utf-8")
+WINE_SCRIPT_TEMPLATE = importlib.resources.read_text(
+    "protontricks.data.scripts", "wine_launch.sh", encoding="utf-8"
+)
+WINESERVER_KEEPALIVE_SH_SCRIPT = importlib.resources.read_text(
+    "protontricks.data.scripts", "wineserver_keepalive.sh", encoding="utf-8"
+)
+WINESERVER_KEEPALIVE_BATCH_SCRIPT = importlib.resources.read_text(
+    "protontricks.data.scripts", "wineserver_keepalive.bat", encoding="utf-8"
+)
+BWRAP_LAUNCHER_SH_SCRIPT = importlib.resources.read_text(
+    "protontricks.data.scripts", "bwrap_launcher.sh", encoding="utf-8"
+)
 
 
 def get_cache_dir():
