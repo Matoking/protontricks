@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.13.0] - 2025-08-11
 ### Added
  - Improve compatibility by setting additional Proton related environment variables when applicable
 
@@ -318,7 +318,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.12.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.13.0...HEAD
+[1.13.0]: https://github.com/Matoking/protontricks/compare/1.12.1...1.13.0
 [1.12.1]: https://github.com/Matoking/protontricks/compare/1.12.0...1.12.1
 [1.12.0]: https://github.com/Matoking/protontricks/compare/1.11.1...1.12.0
 [1.11.1]: https://github.com/Matoking/protontricks/compare/1.11.0...1.11.1
