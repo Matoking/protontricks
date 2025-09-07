@@ -527,6 +527,57 @@ class TestFindLibraryPaths:
         assert len(library_paths) == 1
         assert str(library_paths[0]) == str(flatpak_steam_dir)
 
+    def test_get_steam_lib_paths_multiple_case_insensitive_matches(
+            self, steam_dir, steam_library_factory, home_dir, caplog):
+        """
+        Retrieve Steam library folders ensuring that when multiple
+        case-insensitive matches are found for one configured path, the first
+        path with 'steamapps' directory inside it is picked and a warning
+        is printed
+        """
+        library_dir = steam_library_factory("TestLibrary")
+        shutil.copytree(library_dir, library_dir.parent / "TESTLIBRARY")
+        shutil.copytree(library_dir, library_dir.parent / "testlibrary")
+
+        # Add 'steamapps' subdir to 'TESTLIBRARY' to ensure it's prioritized
+        expected_path = library_dir.parent / "TESTLIBRARY"
+        (expected_path / "steamapps").mkdir()
+
+        lib_paths = get_steam_lib_paths(steam_dir)
+
+        assert expected_path in lib_paths
+        assert library_dir not in lib_paths
+
+        assert any(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+            and f"Multiple Steam library folders with name {library_dir}"
+            in record.getMessage()
+        )
+
+    def test_get_steam_lib_paths_renamed_library(
+            self, steam_dir, steam_library_factory, home_dir, caplog):
+        """
+        Retrieve Steam library folders ensuring that a renamed library folder
+        can be found if it still matches the old name case-insensitively
+
+        Regression test for #433
+        """
+        library_dir = steam_library_factory("TestLibrary")
+        library_dir.rename(library_dir.parent / "testlibrary")
+
+        lib_paths = get_steam_lib_paths(steam_dir)
+
+        assert library_dir not in lib_paths
+        assert library_dir.parent / "testlibrary" in lib_paths
+
+        assert any(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+            and f"Steam library folder {library_dir} in configuration"
+            in record.getMessage()
+        )
+
 
 class TestFindAppidProtonPrefix:
     def test_find_appid_proton_prefix_steamapps_case(

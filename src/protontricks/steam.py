@@ -1016,6 +1016,54 @@ def get_steam_lib_paths(steam_path):
             if is_library_folder_xdg_steam and is_flatpak_steam:
                 path = flatpak_steam_path
 
+            # Steam matches library folders case-insensitively.
+            candidates = [
+                candidate
+                for candidate in path.parent.iterdir()
+                if candidate.name.lower() == path.name.lower()
+            ]
+
+            logger.debug(
+                "Following candidates found for the Steam library path %s: %s",
+                path, candidates
+            )
+
+            if not candidates:
+                logger.warning(
+                    "Steam library folder %s in Steam configuration does not "
+                    "exist",
+                    path
+                )
+                continue
+
+            # In case of multiple matches, prioritize those that contain
+            # a 'steamapps' subdirectory
+            candidates.sort(
+                key=lambda path: any(
+                    path.name.lower() == "steamapps"
+                    for path in path.iterdir()
+                ),
+                reverse=True
+            )
+
+            # In case multiple directories match, pick the first one,
+            # log a warning and hope for the best
+            if len(candidates) > 1:
+                logger.warning(
+                    "Multiple Steam library folders with name %s were found. "
+                    "Selecting %s.",
+                    path, candidates[0]
+                )
+
+            if candidates[0].name != path.name:
+                logger.warning(
+                    "Steam library folder %s in configuration differs from "
+                    "found path %s. Was this directory renamed?",
+                    path, candidates[0]
+                )
+
+            path = candidates[0]
+
             logger.debug(
                 "Found Steam library folder %s. Is Flatpak path: %s, "
                 "Is XDG Steam path: %s.",
