@@ -333,13 +333,24 @@ class TestFindSteamCompatToolApp:
         assert proton_app.name == "Proton 7.77"
 
     @pytest.mark.usefixtures("info_logging")
+    @pytest.mark.parametrize(
+        "alias,name",
+        [
+            ("proton-stable", "Proton 9.0"),
+            ("proton-experimental", "Proton Experimental")
+        ]
+    )
     def test_find_steam_default_proton(
-            self, steam_app_factory, steam_dir, default_proton,
-            proton_factory, steam_config_path, caplog):
+            self, steam_app_factory, steam_dir, proton_factory,
+            steam_config_path, caplog, alias, name):
         """
-        Ensure the function returns the stable version of Proton if no
-        other configuration is available
+        Ensure the function returns the Proton Experimental or stable version
+        of Proton if no other configuration is available
         """
+        proton_app = proton_factory(
+            name=name, appid=20, compat_tool_name="proton-installation",
+            aliases=[alias]
+        )
         steam_app_factory(name="Fake game", appid=10)
 
         # Clear the 'config.vdf' and remove any tool mappings, emulating
@@ -357,17 +368,18 @@ class TestFindSteamCompatToolApp:
             })
         )
 
-        proton_app = find_steam_compat_tool_app(
+        found_proton_app = find_steam_compat_tool_app(
             steam_path=steam_dir,
-            steam_apps=[default_proton],
+            steam_apps=[proton_app],
             appid=10
         )
 
-        assert proton_app.name == "Proton 4.20"
+        assert found_proton_app.name == proton_app.name
 
         assert any(
             record for record in caplog.records
-            if "Using stable version of Proton" in record.message
+            if "Using Proton Experimental or stable Proton as fallback"
+            in record.message
         )
 
     @pytest.mark.usefixtures("info_logging")
