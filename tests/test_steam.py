@@ -590,6 +590,36 @@ class TestFindLibraryPaths:
             in record.getMessage()
         )
 
+    def test_get_steam_lib_paths_missing_library_parent(
+            self, steam_dir, steam_library_factory, home_dir, caplog):
+        """
+        Retrieve Steam library folders ensuring that a missing parent directory
+        prints a warning
+
+        Regression test for #436
+        """
+        library_dir_a = steam_library_factory("Fake_SSD_A/TestLibrary")
+        library_dir_b = steam_library_factory("Fake_SSD_B/TestLibrary")
+        library_dir_c = steam_library_factory("Fake_SSD_C/TestLibrary")
+
+        shutil.rmtree(library_dir_b.parent)
+
+        lib_paths = get_steam_lib_paths(steam_dir)
+
+        assert library_dir_a in lib_paths
+        assert library_dir_b not in lib_paths
+        assert library_dir_c in lib_paths
+
+        assert any(
+            record for record in caplog.records
+            if record.levelname == "WARNING"
+            and (
+                f"Steam library folder parent directory "
+                f"{library_dir_b.parent} not found"
+                in record.getMessage()
+            )
+        )
+
 
 class TestFindAppidProtonPrefix:
     def test_find_appid_proton_prefix_steamapps_case(

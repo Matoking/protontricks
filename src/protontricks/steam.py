@@ -983,6 +983,92 @@ def get_steam_lib_paths(steam_path):
     Return a list of any Steam directories including any user-added
     Steam library folders
     """
+    def resolve_library_folder(path):
+        """
+        Resolve the Steam library folder for the given path found in
+        `libraryfolders.vdf` file. The final path is located in the
+        case-insensitive `steamapps` directory.
+        """
+        xdg_steam_path = Path.home() / ".local/share/Steam"
+        flatpak_steam_path = \
+            Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+
+        is_library_folder_xdg_steam = str(path) == str(xdg_steam_path)
+        is_flatpak_steam = str(steam_path) == str(flatpak_steam_path)
+
+        # Adjust the path if the library folder is "~/.local/share/Steam"
+        # and we're looking for library folders in
+        # "~/.var/app/com.valvesoftware.Steam"
+        # This is because ~/.local/share/Steam inside a Steam Flatpak
+        # sandbox corresponds to a different location, and we need to
+        # adjust for that.
+        if is_library_folder_xdg_steam and is_flatpak_steam:
+            path = flatpak_steam_path
+
+        # Steam matches library folders case-insensitively.
+        try:
+            candidates = [
+                candidate
+                for candidate in path.parent.iterdir()
+                if candidate.name.lower() == path.name.lower()
+            ]
+        except FileNotFoundError:
+            logger.warning(
+                "Steam library folder parent directory %s not found. "
+                "Maybe it is not mounted?",
+                path.parent
+            )
+            return None
+
+        logger.debug(
+            "Following candidates found for the Steam library path %s: %s",
+            path, candidates
+        )
+
+        if not candidates:
+            logger.warning(
+                "Steam library folder %s in Steam configuration does not "
+                "exist",
+                path
+            )
+            return None
+
+        # In case of multiple matches, prioritize those that contain
+        # a 'steamapps' subdirectory
+        candidates.sort(
+            key=lambda path: any(
+                path.name.lower() == "steamapps"
+                for path in path.iterdir()
+            ),
+            reverse=True
+        )
+
+        # In case multiple directories match, pick the first one,
+        # log a warning and hope for the best
+        if len(candidates) > 1:
+            logger.warning(
+                "Multiple Steam library folders with name %s were found. "
+                "Selecting %s.",
+                path, candidates[0]
+            )
+
+        if candidates[0].name != path.name:
+            logger.warning(
+                "Steam library folder %s in configuration differs from "
+                "found path %s. Was this directory renamed?",
+                path, candidates[0]
+            )
+
+        path = candidates[0]
+
+        logger.debug(
+            "Found Steam library folder %s. Is Flatpak path: %s, "
+            "Is XDG Steam path: %s.",
+            path, is_flatpak_steam, is_library_folder_xdg_steam
+        )
+
+        return path
+
     def parse_library_folders(data):
         """
         Parse the Steam library folders in the VDF file using the given data
@@ -1004,77 +1090,17 @@ def get_steam_lib_paths(steam_path):
                 # and nothing else
                 path = Path(value)
 
-            xdg_steam_path = Path.home() / ".local/share/Steam"
-            flatpak_steam_path = \
-                Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+            try:
+                path = resolve_library_folder(path)
 
-            is_library_folder_xdg_steam = str(path) == str(xdg_steam_path)
-            is_flatpak_steam = str(steam_path) == str(flatpak_steam_path)
-
-            # Adjust the path if the library folder is "~/.local/share/Steam"
-            # and we're looking for library folders in
-            # "~/.var/app/com.valvesoftware.Steam"
-            # This is because ~/.local/share/Steam inside a Steam Flatpak
-            # sandbox corresponds to a different location, and we need to
-            # adjust for that.
-            if is_library_folder_xdg_steam and is_flatpak_steam:
-                path = flatpak_steam_path
-
-            # Steam matches library folders case-insensitively.
-            candidates = [
-                candidate
-                for candidate in path.parent.iterdir()
-                if candidate.name.lower() == path.name.lower()
-            ]
-
-            logger.debug(
-                "Following candidates found for the Steam library path %s: %s",
-                path, candidates
-            )
-
-            if not candidates:
+                if path:
+                    library_folders.append(path)
+            except OSError:
                 logger.warning(
-                    "Steam library folder %s in Steam configuration does not "
-                    "exist",
-                    path
+                    "Could not resolve Steam library folder %s", path,
+                    exc_info=True
                 )
                 continue
-
-            # In case of multiple matches, prioritize those that contain
-            # a 'steamapps' subdirectory
-            candidates.sort(
-                key=lambda path: any(
-                    path.name.lower() == "steamapps"
-                    for path in path.iterdir()
-                ),
-                reverse=True
-            )
-
-            # In case multiple directories match, pick the first one,
-            # log a warning and hope for the best
-            if len(candidates) > 1:
-                logger.warning(
-                    "Multiple Steam library folders with name %s were found. "
-                    "Selecting %s.",
-                    path, candidates[0]
-                )
-
-            if candidates[0].name != path.name:
-                logger.warning(
-                    "Steam library folder %s in configuration differs from "
-                    "found path %s. Was this directory renamed?",
-                    path, candidates[0]
-                )
-
-            path = candidates[0]
-
-            logger.debug(
-                "Found Steam library folder %s. Is Flatpak path: %s, "
-                "Is XDG Steam path: %s.",
-                path, is_flatpak_steam, is_library_folder_xdg_steam
-            )
-
-            library_folders.append(path)
 
         logger.info(
             "Found %d Steam library folders", len(library_folders)
@@ -1091,16 +1117,27 @@ def get_steam_lib_paths(steam_path):
             "directory. Installation may be incomplete or broken."
         ) from exc
 
+    folders_vdf_content = None
     try:
-        library_folders = parse_library_folders(folders_vdf_path.read_text())
+        folders_vdf_content = folders_vdf_path.read_text()
     except OSError:
+        logger.warning(
+            "Could not read 'libraryfolders.vdf'. "
+            "Maybe no additional Steam library folders haven't been added?",
+            exc_info=True
+        )
         # libraryfolders.vdf doesn't exist; maybe no Steam library folders
         # are set?
         library_folders = []
-    except SyntaxError as exc:
-        raise ValueError(
-            f"Library folder configuration file {folders_vdf_path} is corrupted"
-        ) from exc
+
+    if folders_vdf_content:
+        try:
+            library_folders = parse_library_folders(folders_vdf_content)
+        except SyntaxError as exc:
+            raise ValueError(
+                f"Library folder configuration file {folders_vdf_path} is "
+                f"corrupted"
+            ) from exc
 
     paths = [steam_path] + library_folders
 
