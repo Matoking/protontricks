@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Fixed
- - Fix Steam library folder discovery by using case-insensitive directory name matching
+ - Fix Steam library folder discovery by using case-insensitive path matching
  - Fix default Proton version discovery. Protontricks will now use Proton Experimental as default per Steam client's hardcoded default setting, with stable Proton as fallback.
 
 ## [1.13.0] - 2025-08-11

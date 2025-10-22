@@ -4,6 +4,7 @@ import re
 import string
 import struct
 import zlib
+import glob
 from collections import OrderedDict
 from pathlib import Path
 
@@ -983,6 +984,16 @@ def get_steam_lib_paths(steam_path):
     Return a list of any Steam directories including any user-added
     Steam library folders
     """
+    def _case_insensitive_glob(pattern):
+        """
+        Convert glob pattern into a case-insensitive pattern
+        """
+        return "".join(
+            f"[{char_.upper()}{char_.lower()}]" if char_.isalpha()
+            else glob.escape(char_)
+            for char_ in pattern
+        )
+
     def resolve_library_folder(path):
         """
         Resolve the Steam library folder for the given path found in
@@ -1006,19 +1017,12 @@ def get_steam_lib_paths(steam_path):
             path = flatpak_steam_path
 
         # Steam matches library folders case-insensitively.
-        try:
-            candidates = [
-                candidate
-                for candidate in path.parent.iterdir()
-                if candidate.name.lower() == path.name.lower()
-            ]
-        except FileNotFoundError:
-            logger.warning(
-                "Steam library folder parent directory %s not found. "
-                "Maybe it is not mounted?",
-                path.parent
-            )
-            return None
+        # We will attempt to match the two leading parts case-insensitively;
+        # doing the entire path case-insensitively is probably too excessive.
+        candidates = [
+            Path(candidate) for candidate
+            in glob.glob(_case_insensitive_glob(str(path)))
+        ]
 
         logger.debug(
             "Following candidates found for the Steam library path %s: %s",
@@ -1052,7 +1056,7 @@ def get_steam_lib_paths(steam_path):
                 path, candidates[0]
             )
 
-        if candidates[0].name != path.name:
+        if str(candidates[0]) != str(path):
             logger.warning(
                 "Steam library folder %s in configuration differs from "
                 "found path %s. Was this directory renamed?",
