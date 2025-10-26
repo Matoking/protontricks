@@ -14,15 +14,15 @@ This is a fork of the original project created by sirmentio. The original reposi
 # Table of Contents
  - [What is it](#what-is-it)
  - [Requirements](#requirements)
-  - [Usage](#usage)
-  - [Command-line](#command-line)
-  - [Desktop](#desktop) 
+   - [Usage](#usage)
+   - [Command-line](#command-line)
+   - [Desktop](#desktop) 
  - [Troubleshooting](#troubleshooting)
  - [Installation](#installation)
-  - [Community packages](#community-packages-recommended)
-  - [Flatpak](#flatpak-recommended)
-  - [pipx](#pipx)
-  - [pip](#pip-not-recommended)
+   - [Community packages](#community-packages-recommended)
+   - [Flatpak](#flatpak-recommended)
+   - [pipx](#pipx)
+   - [pip](#pip-not-recommended)
 
 # What is it?
 
