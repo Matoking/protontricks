@@ -11,6 +11,19 @@ Run Winetricks commands for Steam Play/Proton games among other common Wine feat
 
 This is a fork of the original project created by sirmentio. The original repository is available at [Sirmentio/protontricks](https://github.com/Sirmentio/protontricks).
 
+# Table of Contents
+ - [What is it](#what-is-it)
+ - [Requirements](#requirements)
+  - [Usage](#usage)
+  - [Command-line](#command-line)
+  - [Desktop](#desktop) 
+ - [Troubleshooting](#troubleshooting)
+ - [Installation](#installation)
+  - [Community packages](#community-packages-recommended)
+  - [Flatpak](#flatpak-recommended)
+  - [pipx](#pipx)
+  - [pip](#pip-not-recommended)
+
 # What is it?
 
 This is a wrapper script that allows you to easily run Winetricks commands for Steam Play/Proton games among other common Wine features, such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications that are not included with Proton.
