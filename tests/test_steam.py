@@ -570,23 +570,31 @@ class TestFindLibraryPaths:
     def test_get_steam_lib_paths_renamed_library(
             self, steam_dir, steam_library_factory, home_dir, caplog):
         """
-        Retrieve Steam library folders ensuring that a renamed library folder
-        can be found if it still matches the old name case-insensitively
+        Retrieve Steam library folders ensuring that a renamed library path
+        can be found if it still matches the old path case-insensitively
 
         Regression test for #433
         """
-        library_dir = steam_library_factory("TestLibrary")
-        library_dir.rename(library_dir.parent / "testlibrary")
+        library_dir = steam_library_factory("one/two/three/TestLibrary")
+
+        # Rename to 'ONE/two/THREE/TestLibrary'
+        library_dir.parent.rename(library_dir.parent.parent / "THREE")
+        library_dir.parent.parent.parent.rename(
+            library_dir.parent.parent.parent.parent / "ONE"
+        )
+
+        new_library_dir = \
+            library_dir.parent.parent.parent.parent / "ONE/two/THREE/TestLibrary"
 
         lib_paths = get_steam_lib_paths(steam_dir)
 
         assert library_dir not in lib_paths
-        assert library_dir.parent / "testlibrary" in lib_paths
+        assert new_library_dir in lib_paths
 
         assert any(
             record for record in caplog.records
             if record.levelname == "WARNING"
-            and f"Steam library folder {library_dir} in configuration"
+            and f"Steam library path {library_dir} in configuration"
             in record.getMessage()
         )
 
@@ -614,8 +622,8 @@ class TestFindLibraryPaths:
             record for record in caplog.records
             if record.levelname == "WARNING"
             and (
-                f"Steam library folder parent directory "
-                f"{library_dir_b.parent} not found"
+                f"Steam library folder "
+                f"{library_dir_b} in Steam configuration does not exist"
                 in record.getMessage()
             )
         )
