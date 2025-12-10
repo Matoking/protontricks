@@ -326,6 +326,27 @@ class TestRunCommand:
 
         assert str(exc.value) == "bwrap launcher crashed, returncode: 1"
 
+    def test_steam_compat_data_path_env_var(
+            self, default_proton, steam_app_factory, monkeypatch,
+            command_mock):
+        """
+        Test that `STEAM_COMPAT_DATA_PATH` environment variable is used
+        to set the Wine prefix path if set by user
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        monkeypatch.setenv("STEAM_COMPAT_DATA_PATH", "/custom/path")
+
+        run_command(
+            winetricks_path=Path("/usr/bin/winetricks"),
+            proton_app=default_proton,
+            steam_app=steam_app,
+            command=["/bin/env"],
+        )
+
+        command = command_mock.commands[-1]
+        assert command.env["WINEPREFIX"] == "/custom/path/pfx"
+
 
 class TestLowerDict:
     def test_lower_nested_dict(self):

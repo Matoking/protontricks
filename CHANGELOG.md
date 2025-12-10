@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Added
+ - Use `$STEAM_COMPAT_DATA_PATH/pfx` as the game's prefix path if `STEAM_COMPAT_DATA_PATH` environment variable is set
+
 ## [1.13.1] - 2025-11-15
 ### Fixed
  - Fix Steam library folder discovery by using case-insensitive path matching

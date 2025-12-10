@@ -79,6 +79,8 @@ If you'd like to use a local version of Winetricks, you can set ``$WINETRICKS`` 
 
 You can also set ``$PROTON_VERSION`` to a specific Proton version manually. This is usually the name of the Proton installation without the revision version number. For example, if Steam displays the name as `Proton 5.0-3`, use `Proton 5.0` as the value for `$PROTON_VERSION`.
 
+Protontricks supports `$STEAM_COMPAT_DATA_PATH` variable to set a custom path to a Wine prefix (`WINEPREFIX=$STEAM_COMPAT_DATA_PATH/pfx`). This is supported by Proton and can be set for the game itself under Steam (`STEAM_COMPAT_DATA_PATH=<path> %command%` in game launch options).
+
 [Wanna see Protontricks in action?](https://asciinema.org/a/229323)
 
 ## Desktop

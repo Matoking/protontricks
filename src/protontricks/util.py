@@ -492,7 +492,21 @@ def run_command(
     user_provided_wineserver = os.environ.get("WINESERVER", False)
 
     wine_environ["WINETRICKS"] = str(winetricks_path)
+
     wine_environ["WINEPREFIX"] = str(steam_app.prefix_path)
+
+    # 'STEAM_COMPAT_DATA_PATH' is a Steam Runtime environment variable.
+    # Proton puts the prefix under `$STEAM_COMPAT_DATA_PATH/pfx`.
+    # While not directly documented, people seem to use this variable
+    # to set an alternate location for the game prefix.
+    if os.environ.get("STEAM_COMPAT_DATA_PATH"):
+        prefix_path = Path(os.environ["STEAM_COMPAT_DATA_PATH"]) / "pfx"
+        logger.info(
+            "Using user-provided STEAM_COMPAT_DATA_PATH for prefix path: %s",
+            prefix_path
+        )
+        wine_environ["WINEPREFIX"] = str(prefix_path)
+
     wine_environ["WINEDLLPATH"] = "".join([
         str(proton_app.proton_dist_path / "lib64" / "wine"),
         os.pathsep,
