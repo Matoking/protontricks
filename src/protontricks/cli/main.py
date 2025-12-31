@@ -25,8 +25,8 @@ from ..steam import (find_legacy_steam_runtime_path, find_proton_app,
                      get_steam_lib_paths)
 from ..util import run_command
 from ..winetricks import get_winetricks_path
-from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
-                   exit_with_error)
+from .util import (AppIDCompleter, CustomArgumentParser, cli_error_handler,
+                   enable_logging, exit_with_error)
 
 logger = logging.getLogger("protontricks")
 
@@ -186,7 +186,9 @@ def main(args=None, steam_path=None, steam_root=None):
     )
     parser.set_defaults(background_wineserver=False)
 
-    parser.add_argument("appid", type=int, nargs="?", default=None)
+    parser.add_argument(
+        "appid", type=int, nargs="?", default=None
+    ).completer = AppIDCompleter
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
     parser.add_argument(
         "-V", "--version", action="version",

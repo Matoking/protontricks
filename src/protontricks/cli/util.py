@@ -1,18 +1,20 @@
 import argparse
 import atexit
+import contextlib
 import functools
 import logging
 import os
 import sys
 import tempfile
 import traceback
-import contextlib
 from pathlib import Path
 
-from ..gui import show_text_dialog
-from ..flatpak import is_flatpak_sandbox
-from ..util import is_steam_deck, is_steamos
 from .. import __version__
+from ..flatpak import is_flatpak_sandbox
+from ..gui import show_text_dialog
+from ..steam import (find_steam_installations, get_steam_apps,
+                     get_steam_lib_paths)
+from ..util import is_steam_deck, is_steamos
 
 
 def _get_log_file_path():
@@ -198,3 +200,34 @@ class CustomArgumentParser(argparse.ArgumentParser):
         self.print_help(sys.stderr)
         args = {'prog': self.prog, 'message': message}
         self.exit(2, '%(prog)s: error: %(message)s\n' % args)
+
+
+def AppIDCompleter(prefix, **kwargs):
+    # Get all Steam apps for all Steam installations we find.
+    # We don't really have a way of determining what Steam installation
+    # the user will choose in case multiple exist, so this seems like the
+    # best approach.
+    all_apps = []
+
+    # Get all Steam installations
+    steam_installations = find_steam_installations()
+
+    for steam_path, steam_root in steam_installations:
+        all_apps += get_steam_apps(
+            steam_root=steam_root, steam_path=steam_path,
+            steam_lib_paths=get_steam_lib_paths(steam_path)
+        )
+
+    all_apps = [app for app in all_apps if app.is_windows_app]
+
+    # Sort apps by name and eliminate duplicates
+    all_apps = list(set(all_apps))
+    all_apps.sort(key=lambda app: app.name)
+
+    # Filter by prefix if one was provided
+    if prefix:
+        all_apps = [
+            app for app in all_apps if str(app.appid).startswith(prefix)
+        ]
+
+    return {str(app.appid): app.name for app in all_apps}

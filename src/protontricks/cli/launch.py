@@ -12,8 +12,8 @@ from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
 from ..steam import (find_steam_installations, get_steam_apps,
                      get_steam_lib_paths)
 from .main import main as cli_main
-from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
-                   exit_with_error)
+from .util import (AppIDCompleter, CustomArgumentParser, cli_error_handler,
+                   enable_logging, exit_with_error)
 
 logger = logging.getLogger("protontricks")
 
@@ -98,7 +98,7 @@ def main(args=None):
     )
     parser.add_argument(
         "--appid", type=int, nargs="?", default=None
-    )
+    ).completer = AppIDCompleter
     parser.add_argument(
         "--cwd-app",
         dest="cwd_app",
