@@ -4,7 +4,7 @@ ROOT ?= /
 PREFIX ?= /usr/local
 
 install:
-		${PYTHON} setup.py install --prefix="${DESTDIR}${PREFIX}" --root="${DESTDIR}${ROOT}"
+		${PYTHON} -m pip install --prefix="${DESTDIR}${PREFIX}" --root="${DESTDIR}${ROOT}" .
 
 		# Remove `protontricks-desktop-install`, since we already install
 		# .desktop files properly
