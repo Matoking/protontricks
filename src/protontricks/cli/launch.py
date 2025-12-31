@@ -1,8 +1,11 @@
+# PYTHON_ARGCOMPLETE_OK
 import argparse
 import logging
 import shlex
 import sys
 from pathlib import Path
+
+import argcomplete
 
 from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
                    select_steam_installation)
@@ -109,6 +112,7 @@ def main(args=None):
     parser.add_argument("executable", type=str)
     parser.add_argument("exec_args", nargs=argparse.REMAINDER)
     parser.set_defaults(background_wineserver=False)
+    argcomplete.autocomplete(parser)
 
     args = parser.parse_args(args)
 

@@ -1,3 +1,4 @@
+# PYTHON_ARGCOMPLETE_OK
 # _____         _           _       _     _
 # |  _  |___ ___| |_ ___ ___| |_ ___|_|___| |_ ___
 # |   __|  _| . |  _| . |   |  _|  _| |  _| '_|_ -|
@@ -11,6 +12,8 @@ import argparse
 import logging
 import os
 import sys
+
+import argcomplete
 
 from .. import __version__
 from ..flatpak import (FLATPAK_BWRAP_COMPATIBLE_VERSION,
@@ -189,6 +192,7 @@ def main(args=None, steam_path=None, steam_root=None):
         "-V", "--version", action="version",
         version=f"%(prog)s ({__version__})"
     )
+    argcomplete.autocomplete(parser)
 
     if len(args) == 0:
         # No arguments were provided, default to GUI
