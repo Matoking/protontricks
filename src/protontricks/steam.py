@@ -1184,6 +1184,8 @@ def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
 
     comptool_files = list(compat_tool_dir.glob("*/compatibilitytool.vdf"))
     comptool_files += list(compat_tool_dir.glob("compatibilitytool.vdf"))
+    # Also need to parse for ANY `*.vdf` file directly in the `compat_tool_dir`
+    comptool_files += list(compat_tool_dir.glob("*.vdf"))
 
     custom_tool_apps = []
 
@@ -1242,11 +1244,13 @@ def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
         if from_oslist != "windows" or to_oslist != "linux":
             continue
 
-        # Installation path can be relative if the VDF was in
+        # Installation path can be relative or absolute if the VDF was in
         # 'compatibilitytools.d/'
         # or '.' if the VDF was in 'compatibilitytools.d/TOOL_NAME'
         if install_path_name == ".":
             install_path = vdf_path.parent
+        elif install_path_name[0] == "/":
+            install_path = Path(install_path_name)
         else:
             install_path = compat_tool_dir / install_path_name
 
