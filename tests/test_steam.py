@@ -1066,6 +1066,63 @@ class TestGetSteamApps:
         warning = warnings[-1]
         assert f"{library_dir_b} not found." in warning.message
 
+    def get_custom_compat_tool_installed_outside_steam(
+            self, custom_proton_factory, steam_dir, steam_root, tmpdir):
+        """
+        Retrieve custom compatibility tool that has an `install_path`
+        with an absolute path and `compatibilitytool.vdf` that is located
+        as a lone file under `compatibilitytools.d`.
+
+        Regression test for #455
+        """
+        proton_app = custom_proton_factory(name="External Proton")
+
+        new_install_path = tmpdir / "external_proton"
+        new_vdf_path = (
+            steam_dir.parent
+            / "root" / "compatibilitytools.vdf" / "external_proton.vdf"
+        )
+
+        # Delete default `compatibilitytool.vdf`
+        (proton_app.install_path / "compatibilitytool.vdf").unlink()
+
+        # Move Proton to a different location
+        proton_app.install_path.rename(new_install_path)
+
+        # Move VDF to `compatibilitytools.d`
+        (proton_app.install_path / "compatibilitytool.vdf").rename(new_vdf_path)
+
+        # Make the `install_path` in the VDF absolute to indicate that it's
+        # installed outside Steam
+        new_vdf_path.write_text(
+            vdf.dumps({
+                "compatibilitytools": {
+                    "compat_tools": {
+                        "External Proton": {
+                            "install_path": str(new_install_path),
+                            "display_name": "External Proton",
+                            "from_oslist": "windows",
+                            "to_oslist": "linux"
+                        }
+                    }
+                }
+            })
+        )
+
+        steam_apps = get_steam_apps(
+            steam_root=steam_root,
+            steam_path=steam_dir,
+            steam_lib_paths=[]
+        )
+
+        # Ensure that the installation path points to the external directory
+        assert len(steam_apps) == 1
+        found_app = steam_apps[0]
+
+        assert found_app.name == "External Proton"
+        assert found_app.install_path == new_install_path
+
+
 
 class TestGetWindowsShortcuts:
     def test_get_custom_windows_shortcuts_derive_appid(
