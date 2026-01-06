@@ -30,6 +30,11 @@ COMMON_STEAM_DIRS = [
     ".local/share/Steam",
 ]
 
+COMMON_COMPAT_TOOL_DIRS = [
+    "/usr/share/steam/compatibilitytools.d",
+    "/usr/local/share/steam/compatibilitytools.d",
+]
+
 SNAP_STEAM_DIRS = [
     "snap/steam/common/.local/share/Steam",
 
@@ -1158,10 +1163,7 @@ def get_compat_tool_dirs(steam_root):
     """
     # The path list is ordered by priority, starting from Proton apps
     # with the lowest precedence ('/usr/share/steam/compatibilitytools.d')
-    paths = [
-        Path("/usr/share/steam/compatibilitytools.d"),
-        Path("/usr/local/share/steam/compatibilitytools.d"),
-    ]
+    paths = [Path(path) for path in COMMON_COMPAT_TOOL_DIRS]
     extra_ct_paths_env = os.getenv("STEAM_EXTRA_COMPAT_TOOLS_PATHS")
     if extra_ct_paths_env:
         logger.debug(

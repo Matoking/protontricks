@@ -23,13 +23,15 @@ from protontricks.steam import iter_appinfo_sections
 
 
 @pytest.fixture(scope="function", autouse=True)
-def env_vars(monkeypatch):
+def default_env(monkeypatch):
     """
-    Set default environment variables to prevent user's env vars from
-    intefering with tests
+    Set default environment variables and mock certain constants to prevent
+    user environment from intefering with tests
     """
     monkeypatch.setenv("STEAM_RUNTIME", "")
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+
+    monkeypatch.setattr("protontricks.steam.COMMON_COMPAT_TOOL_DIRS", [])
 
 
 @pytest.fixture(scope="function", autouse=True)
