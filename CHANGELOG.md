@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - Use `$STEAM_COMPAT_DATA_PATH/pfx` as the game's prefix path if `STEAM_COMPAT_DATA_PATH` environment variable is set
 
+### Fixed
+ - Fix detection for custom compatibility tools installed outside Steam directory
+ - Fix detection for custom compatibility tool placing their manifest directly under `compatibilitytools.d` directory
+
 ## [1.13.1] - 2025-11-15
 ### Fixed
  - Fix Steam library folder discovery by using case-insensitive path matching
