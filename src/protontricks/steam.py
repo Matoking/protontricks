@@ -1182,9 +1182,9 @@ def get_custom_compat_tool_installations_in_dir(compat_tool_dir):
     if not compat_tool_dir.is_dir():
         return []
 
+    # Tool manifest can be placed in subdirectory as `compatibilitytool.vdf`
+    # or under `compatibilitytools.d` directory with any file name
     comptool_files = list(compat_tool_dir.glob("*/compatibilitytool.vdf"))
-    comptool_files += list(compat_tool_dir.glob("compatibilitytool.vdf"))
-    # Also need to parse for ANY `*.vdf` file directly in the `compat_tool_dir`
     comptool_files += list(compat_tool_dir.glob("*.vdf"))
 
     custom_tool_apps = []
