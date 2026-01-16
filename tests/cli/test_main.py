@@ -524,12 +524,16 @@ class TestCLIRun:
         assert "Proton 5.13 is missing the required Steam Runtime" \
             in str(exc.value)
 
-    def test_old_flatpak_detected(self, cli, monkeypatch, caplog):
+    @pytest.mark.usefixtures("default_proton", "command_mock")
+    def test_old_flatpak_detected(
+            self, cli, monkeypatch, caplog, steam_app_factory):
         """
         Try performing a Protontricks command when running inside an older
         Flatpak environment and ensure bwrap is disabled.
         """
-        cli(["-s", "nothing"])
+        steam_app_factory(name="Test app", appid=10)
+
+        cli(["10", "winecfg"])
 
         # No warning is printed since we're not running inside Flatpak
         assert len([
@@ -539,13 +543,13 @@ class TestCLIRun:
 
         # Fake a Flatpak environment
         monkeypatch.setattr(
-            "protontricks.cli.main.get_running_flatpak_version",
+            "protontricks.cli.command.get_running_flatpak_version",
             # Mock version 1.12.0. 1.12.1 is new enough to not require
             # disabling bwrap.
             lambda: (1, 12, 0)
         )
 
-        cli(["-s", "nothing"])
+        cli(["10", "winecfg"])
 
         assert len([
             record for record in caplog.records
@@ -560,18 +564,22 @@ class TestCLIRun:
         assert "Flatpak version is too old" \
             in record.message
 
-    def test_new_flatpak_detected(self, cli, monkeypatch, caplog):
+    @pytest.mark.usefixtures("default_proton", "command_mock")
+    def test_new_flatpak_detected(
+            self, cli, monkeypatch, caplog, steam_app_factory):
         """
         Try performing a Protontricks command when running inside a newer
         Flatpak environment and ensure Flatpak is detected correctly.
         """
+        steam_app_factory(name="Test app", appid=10)
+
         # Fake a newer Flatpak environment
         monkeypatch.setattr(
-            "protontricks.cli.main.get_running_flatpak_version",
+            "protontricks.cli.command.get_running_flatpak_version",
             lambda: (1, 12, 1)
         )
 
-        cli(["-s", "nothing"])
+        cli(["10", "winecfg"])
 
         # Flatpak is new enough not to generate a warning.
         assert len([
