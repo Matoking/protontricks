@@ -4,13 +4,9 @@ import shlex
 import sys
 from pathlib import Path
 
-from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
-                   select_steam_installation)
-from ..steam import (find_steam_installations, get_steam_apps,
-                     get_steam_lib_paths)
+from .command import BaseCommand
 from .main import main as cli_main
-from .util import (CustomArgumentParser, cli_error_handler, enable_logging,
-                   exit_with_error)
+from .util import CustomArgumentParser, cli_error_handler, enable_logging
 
 logger = logging.getLogger("protontricks")
 
@@ -116,96 +112,60 @@ def main(args=None):
     # not
     main.no_term = args.no_term
 
-    # Shorthand function for aborting with error message
-    def exit_(error):
-        exit_with_error(error, args.no_term)
-
     enable_logging(args.verbose, record_to_file=args.no_term)
 
-    executable_path = Path(args.executable).resolve(strict=True)
+    RunExecutableCommand(args).execute()
 
-    # 1. Find Steam path
-    steam_installations = find_steam_installations()
-    if not steam_installations:
-        exit_("Steam installation directory could not be found.")
 
-    steam_path, steam_root = select_steam_installation(steam_installations)
-    if not steam_path:
-        exit_("No Steam installation was selected.")
+class RunExecutableCommand(BaseCommand):
+    steam_app_required = True
 
-    # 2. Find any Steam library folders
-    steam_lib_paths = get_steam_lib_paths(steam_path)
+    def run(self):
+        # Build the command to pass to the main Protontricks CLI entrypoint
+        cli_args = []
 
-    # Check if Protontricks has access to all the required paths
-    prompt_filesystem_access(
-        paths=[steam_path, steam_root] + steam_lib_paths,
-        show_dialog=args.no_term
-    )
+        executable_path = Path(self.cli_args.executable).resolve(strict=True)
 
-    # 3. Find any Steam apps
-    steam_apps = get_steam_apps(
-        steam_root=steam_root, steam_path=steam_path,
-        steam_lib_paths=steam_lib_paths
-    )
-    steam_apps = [
-        app for app in steam_apps if app.prefix_path_exists and app.appid
-    ]
+        # Ensure each individual argument passed to the EXE is escaped
+        exec_args = [shlex.quote(arg) for arg in self.cli_args.exec_args]
 
-    if not steam_apps:
-        exit_(
-            "No Proton enabled Steam apps were found. Have you launched one "
-            "of the apps at least once?"
+        if self.cli_args.verbose:
+            cli_args += ["-" + ("v" * self.cli_args.verbose)]
+
+        if self.cli_args.no_runtime:
+            cli_args += ["--no-runtime"]
+
+        if self.cli_args.no_bwrap:
+            cli_args += ["--no-bwrap"]
+
+        if self.cli_args.background_wineserver is True:
+            cli_args += ["--background-wineserver"]
+        elif self.cli_args.background_wineserver is False:
+            cli_args += ["--no-background-wineserver"]
+
+        if self.cli_args.no_term:
+            cli_args += ["--no-term"]
+
+        inner_args = " ".join(
+            ["wine", shlex.quote(str(executable_path))]
+            + exec_args
         )
 
-    if not args.appid:
-        appid = select_steam_app_with_gui(
-            steam_apps,
-            title=f"Choose Wine prefix to run {executable_path.name}",
-            steam_path=steam_path
-        ).appid
-    else:
-        appid = args.appid
+        if self.cli_args.cwd_app:
+            cli_args += ["--cwd-app"]
 
-    # Build the command to pass to the main Protontricks CLI entrypoint
-    cli_args = []
+        cli_args += [
+            "-c", inner_args, str(self.steam_app.appid)
+        ]
 
-    # Ensure each individual argument passed to the EXE is escaped
-    exec_args = [shlex.quote(arg) for arg in args.exec_args]
+        # Launch the main Protontricks CLI entrypoint
+        logger.info(
+            "Calling `protontricks` with the command: %s", cli_args
+        )
 
-    if args.verbose:
-        cli_args += ["-" + ("v" * args.verbose)]
-
-    if args.no_runtime:
-        cli_args += ["--no-runtime"]
-
-    if args.no_bwrap:
-        cli_args += ["--no-bwrap"]
-
-    if args.background_wineserver is True:
-        cli_args += ["--background-wineserver"]
-    elif args.background_wineserver is False:
-        cli_args += ["--no-background-wineserver"]
-
-    if args.no_term:
-        cli_args += ["--no-term"]
-
-    inner_args = " ".join(
-        ["wine", shlex.quote(str(executable_path))]
-        + exec_args
-    )
-
-    if args.cwd_app:
-        cli_args += ["--cwd-app"]
-
-    cli_args += [
-        "-c", inner_args, str(appid)
-    ]
-
-    # Launch the main Protontricks CLI entrypoint
-    logger.info(
-        "Calling `protontricks` with the command: %s", cli_args
-    )
-    cli_main(cli_args, steam_path=steam_path, steam_root=steam_root)
+        cli_main(
+            cli_args, steam_path=self.steam_path, steam_root=self.steam_root
+        )
 
 
 if __name__ == "__main__":

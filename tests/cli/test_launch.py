@@ -71,7 +71,7 @@ class TestCLIRun:
         """
         result = launch_cli(["test.exe"], expect_returncode=1)
 
-        assert "No Proton enabled Steam apps were found" in result
+        assert "Found no games. You need to launch a game" in result
 
     def test_run_executable_no_apps_from_desktop(
             self, launch_cli, gui_provider):
@@ -86,7 +86,7 @@ class TestCLIRun:
 
         message = gui_provider.kwargs["input"]
 
-        assert b"No Proton enabled Steam apps were found." in message
+        assert b"Found no games. You need to launch a game" in message
 
         # Also ensure log messages are included in the error message
         assert b"Found Steam directory at" in message
