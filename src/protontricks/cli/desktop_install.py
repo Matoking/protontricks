@@ -5,8 +5,6 @@ from subprocess import run
 
 import importlib.resources
 
-from .util import CustomArgumentParser
-
 
 def install_desktop_entries():
     """
@@ -48,7 +46,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    parser = CustomArgumentParser(
+    parser = argparse.ArgumentParser(
         description=(
             "Install Protontricks application shortcuts for the local user\n"
         ),

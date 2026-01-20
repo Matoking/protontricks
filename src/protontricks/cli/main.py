@@ -73,21 +73,7 @@ def main(args=None, steam_path=None, steam_root=None):
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument(
-        "--verbose", "-v", action="count", default=0,
-        help=(
-            "Increase log verbosity. Can be supplied twice for "
-            "maximum verbosity."
-        )
-    )
-    parser.add_argument(
-        "--no-term", action="store_true",
-        help=(
-            "Program was launched from desktop. This is used automatically "
-            "when lauching Protontricks from desktop and no user-visible "
-            "terminal is available."
-        )
-    )
+
     parser.add_argument(
         "-s", "--search", type=str, dest="search", nargs="+",
         required=False, help="Search for game(s) with the given name")
@@ -103,43 +89,6 @@ def main(args=None, steam_path=None, steam_root=None):
     parser.add_argument(
         "--gui", action="store_true",
         help="Launch the Protontricks GUI.")
-    parser.add_argument(
-        "--no-runtime", action="store_true", default=False,
-        help="Disable Steam Runtime")
-    parser.add_argument(
-        "--no-bwrap", action="store_true", default=None,
-        help="Disable bwrap containerization when using Steam Runtime"
-    )
-    parser.add_argument(
-        "--background-wineserver",
-        dest="background_wineserver",
-        action="store_true",
-        help=(
-            "Launch a background wineserver process to improve Wine command "
-            "startup time. Disabled by default, as it can cause problems with "
-            "some graphical applications."
-        )
-    )
-    parser.add_argument(
-        "--no-background-wineserver",
-        dest="background_wineserver",
-        action="store_false",
-        help=(
-            "Do not launch a background wineserver process to improve Wine "
-            "command startup time."
-        )
-    )
-    parser.add_argument(
-        "--cwd-app",
-        dest="cwd_app",
-        default=False,
-        action="store_true",
-        help=(
-            "Set the working directory of launched command to the Steam app's "
-            "installation directory."
-        )
-    )
-    parser.set_defaults(background_wineserver=False)
 
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)

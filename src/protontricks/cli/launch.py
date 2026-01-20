@@ -49,62 +49,10 @@ def main(args=None):
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument(
-        "--no-term", action="store_true",
-        help=(
-            "Program was launched from desktop and no user-visible "
-            "terminal is available. Error will be shown in a dialog instead "
-            "of being printed."
-        )
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="count", default=0,
-        help=(
-            "Increase log verbosity. Can be supplied twice for "
-            "maximum verbosity."
-        )
-    )
-    parser.add_argument(
-        "--no-runtime", action="store_true", default=False,
-        help="Disable Steam Runtime")
-    parser.add_argument(
-        "--no-bwrap", action="store_true", default=False,
-        help="Disable bwrap containerization when using Steam Runtime"
-    )
-    parser.add_argument(
-        "--background-wineserver",
-        dest="background_wineserver",
-        action="store_true",
-        help=(
-            "Launch a background wineserver process to improve Wine command "
-            "startup time. Disabled by default, as it can cause problems with "
-            "some graphical applications."
-        )
-    )
-    parser.add_argument(
-        "--no-background-wineserver",
-        dest="background_wineserver",
-        action="store_false",
-        help=(
-            "Do not launch a background wineserver process to improve Wine "
-            "command startup time."
-        )
-    )
-    parser.add_argument(
         "--appid", type=int, nargs="?", default=None
-    )
-    parser.add_argument(
-        "--cwd-app",
-        dest="cwd_app",
-        default=False,
-        action="store_true",
-        help=(
-            "Set the working directory of launched executable to the Steam "
-            "app's installation directory."
-        )
     )
     parser.add_argument("executable", type=str)
     parser.add_argument("exec_args", nargs=argparse.REMAINDER)
-    parser.set_defaults(background_wineserver=False)
 
     args = parser.parse_args(args)
 

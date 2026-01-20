@@ -191,10 +191,69 @@ def cli_error_handler(cli_func):
 
 class CustomArgumentParser(argparse.ArgumentParser):
     """
-    Custom argument parser that prints the full help message
-    when incorrect parameters are provided
+    Custom argument parser that provides common parameters and prints the full
+    help message when incorrect parameters are provided
     """
     def error(self, message):
         self.print_help(sys.stderr)
         args = {'prog': self.prog, 'message': message}
         self.exit(2, '%(prog)s: error: %(message)s\n' % args)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Add common parameters
+        self.add_argument(
+            "--verbose", "-v", action="count", default=0,
+            help=(
+                "Increase log verbosity. Can be supplied twice for "
+                "maximum verbosity."
+            )
+        )
+        self.add_argument(
+            "--no-term", action="store_true",
+            help=(
+                "Program was launched from desktop. This is used automatically "
+                "when lauching Protontricks from desktop and no user-visible "
+                "terminal is available."
+            )
+        )
+
+        self.add_argument(
+            "--no-runtime", action="store_true", default=False,
+            help="Disable Steam Runtime")
+        self.add_argument(
+            "--no-bwrap", action="store_true", default=None,
+            help="Disable bwrap containerization when using Steam Runtime"
+        )
+        self.add_argument(
+            "--background-wineserver",
+            dest="background_wineserver",
+            action="store_true",
+            help=(
+                "Launch a background wineserver process to improve Wine command "
+                "startup time. Disabled by default, as it can cause problems with "
+                "some graphical applications."
+            )
+        )
+        self.add_argument(
+            "--no-background-wineserver",
+            dest="background_wineserver",
+            action="store_false",
+            help=(
+                "Do not launch a background wineserver process to improve Wine "
+                "command startup time."
+            )
+        )
+        self.add_argument(
+            "--cwd-app",
+            dest="cwd_app",
+            default=False,
+            action="store_true",
+            help=(
+                "Set the working directory of launched command to the Steam app's "
+                "installation directory."
+            )
+        )
+
+        self.set_defaults(background_wineserver=False)
