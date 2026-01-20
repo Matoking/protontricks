@@ -491,7 +491,8 @@ def run_command(
     user_provided_wine = os.environ.get("WINE", False)
     user_provided_wineserver = os.environ.get("WINESERVER", False)
 
-    wine_environ["WINETRICKS"] = str(winetricks_path)
+    if winetricks_path:
+        wine_environ["WINETRICKS"] = str(winetricks_path)
 
     wine_environ["WINEPREFIX"] = str(steam_app.prefix_path)
 

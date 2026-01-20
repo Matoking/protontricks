@@ -120,8 +120,7 @@ class BaseCommand:
             if self.proton_app_required:
                 self.populate_steam_runtime()
 
-        if self.winetricks_required:
-            self.populate_winetricks()
+        self.populate_winetricks(strict=self.winetricks_required)
 
         if self.steam_apps_required:
             self.populate_steam_apps()
@@ -184,16 +183,18 @@ class BaseCommand:
         self.use_bwrap = use_bwrap
         self.start_background_wineserver = start_background_wineserver
 
-    def populate_winetricks(self):
+    def populate_winetricks(self, strict):
         """
         Populate Winetricks
+
+        :param strict: If true, exit if Winetricks cannot be found.
         """
         # Find Winetricks
         winetricks_path = get_winetricks_path()
-        if not winetricks_path:
+        if not winetricks_path and strict:
             self.exit(
                 "Winetricks isn't installed, please install "
-                "winetricks in order to use this script!"
+                "winetricks in order to use this command!"
             )
 
         self.winetricks_path = winetricks_path

@@ -850,6 +850,27 @@ class TestCLICommand:
             str(proton_install_path / "dist" / "lib" / "wine")
         )
 
+    def test_run_command_winetricks_optional(
+            self, cli, default_proton, steam_app_factory, gui_provider,
+            command_mock, home_dir):
+        """
+        Run a shell command for a given game without having Winetricks
+        installed. Ensure command is allowed to run.
+        """
+        steam_app_factory(name="Fake game", appid=10)
+
+        # Remove Winetricks
+        (home_dir / ".local/bin/winetricks").unlink()
+
+        cli(["-c", "bash", "10"])
+
+        command = command_mock.commands[-1]
+
+        # The command is just 'bash'
+        assert command.args == "bash"
+
+        assert "WINETRICKS" not in command.env
+
     @pytest.mark.usefixtures("default_proton")
     def test_run_command_cwd_app(self, cli, steam_app_factory, command_mock):
         """

@@ -238,7 +238,6 @@ class RunWinetricksGUICommand(BaseCommand):
 class RunCustomCommand(BaseCommand):
     steam_app_required = True
     proton_app_required = True
-    winetricks_required = True
 
     def run(self):
         cwd = (
@@ -265,7 +264,6 @@ class RunCustomCommand(BaseCommand):
 
 class ListAppsCommand(BaseCommand):
     steam_apps_required = True
-    winetricks_required = True
 
     def run(self):
         if self.cli_args.list:
