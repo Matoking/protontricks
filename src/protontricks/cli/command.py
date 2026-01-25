@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
@@ -10,8 +11,8 @@ from ..flatpak import (FLATPAK_BWRAP_COMPATIBLE_VERSION,
                        get_running_flatpak_version)
 from ..gui import (prompt_filesystem_access, select_steam_app_with_gui,
                    select_steam_installation)
-from ..steam import (SteamApp, find_legacy_steam_runtime_path, find_proton_app,
-                     find_steam_installations, get_steam_apps,
+from ..steam import (SNAP_STEAM_DIRS, SteamApp, find_legacy_steam_runtime_path,
+                     find_proton_app, find_steam_installations, get_steam_apps,
                      get_steam_lib_paths)
 from ..winetricks import get_winetricks_path
 from .util import exit_with_error
@@ -32,6 +33,8 @@ class BaseCommand:
     steam_runtime_required: ClassVar[bool] = False
     proton_app_required: ClassVar[bool] = False
     winetricks_required: ClassVar[bool] = False
+    all_steam_installations_required: ClassVar[bool] = False
+    all_steam_apps_required: ClassVar[bool] = False
 
     cli_args: dict = field(default_factory=dict)
     """Original command-line arguments"""
@@ -112,6 +115,9 @@ class BaseCommand:
         if self.steam_apps_required:
             self.steam_required = True
 
+        if self.all_steam_apps_required:
+            self.all_steam_installations_required = True
+
         # Perform the actual detection. User might be prompted
         # if multiple choices exist.
         if self.steam_required:
@@ -130,6 +136,12 @@ class BaseCommand:
 
         if self.proton_app_required:
             self.populate_proton_app()
+
+        if self.all_steam_installations_required:
+            self.populate_all_steam_installations()
+
+        if self.all_steam_apps_required:
+            self.populate_all_steam_apps()
 
     def populate_steam_runtime(self):
         """
@@ -312,3 +324,57 @@ class BaseCommand:
             )
 
         self.proton_app = proton_app
+
+    def populate_all_steam_installations(self):
+        """
+        Populate all Steam installations
+        """
+        # Dict that maps installation type (Flatpak, Snap, native) to list
+        # of found Steam installations.
+        # In an ideal case each type will only have one installation or none,
+        # but do not assume so.
+        steam_dirs_by_type = defaultdict(list)
+
+        steam_installations = find_steam_installations()
+
+        for steam_path, steam_root in steam_installations:
+            is_flatpak = (
+                str(steam_path).endswith(
+                    "/com.valvesoftware.Steam/.local/share/Steam"
+                )
+            )
+            is_snap = any(
+                str(steam_path).endswith(snap_dir)
+                for snap_dir in SNAP_STEAM_DIRS
+            )
+
+            if is_flatpak:
+                steam_dirs_by_type["Flatpak"].append((steam_path, steam_root))
+            elif is_snap:
+                steam_dirs_by_type["Snap"].append((steam_path, steam_root))
+            else:
+                steam_dirs_by_type["Native"].append((steam_path, steam_root))
+
+        if not steam_dirs_by_type:
+            self.exit("Found no Steam installations.")
+
+        self.steam_dirs_by_type = steam_dirs_by_type
+
+    def populate_all_steam_apps(self):
+        """
+        Populate all Steam apps for all found Steam installations
+        """
+        steam_apps_by_install_type = defaultdict(list)
+
+        for install_type, steam_installations in \
+                self.steam_dirs_by_type.items():
+            for steam_path, steam_root in steam_installations:
+                steam_lib_paths = get_steam_lib_paths(steam_path)
+                steam_apps = get_steam_apps(
+                    steam_root=steam_root, steam_path=steam_path,
+                    steam_lib_paths=steam_lib_paths
+                )
+
+                steam_apps_by_install_type[install_type] += steam_apps
+
+        self.steam_apps_by_install_type = steam_apps_by_install_type
