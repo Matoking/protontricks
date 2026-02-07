@@ -486,9 +486,14 @@ def steam_app_factory(steam_dir, steam_config_path):
     """
     Factory function to add fake Steam apps
     """
+    steam_dir_fx = steam_dir
+
     def func(
-            name, appid, compat_tool_name=None, library_dir=None,
-            add_prefix=True, required_tool_app=None):
+            name, appid, compat_tool_name=None, steam_dir=None,
+            library_dir=None, add_prefix=True, required_tool_app=None):
+        if not steam_dir:
+            steam_dir = steam_dir_fx
+
         if not library_dir:
             steamapps_dir = steam_dir / "steamapps"
         else:
