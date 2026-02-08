@@ -513,7 +513,7 @@ class TestFindLibraryPaths:
         Regression test for flathub/com.github.Matoking.protontricks#10
         """
         flatpak_steam_dir = \
-            home_dir / ".var/app/com.valvesoftware.Steam/data/Steam"
+            home_dir / ".var/app/com.valvesoftware.Steam/.local/share/Steam"
         flatpak_steam_dir.mkdir(parents=True)
         steam_dir.rename(str(flatpak_steam_dir))
         shutil.rmtree(str(home_dir / ".local"))
@@ -530,7 +530,7 @@ class TestFindLibraryPaths:
         )
 
         library_paths = get_steam_lib_paths(
-            home_dir / ".var/app/com.valvesoftware.Steam/data/Steam"
+            home_dir / ".var/app/com.valvesoftware.Steam/.local/share/Steam"
         )
         # The only library folder should point under "~/.var/app", even if the
         # path in the configuration file is "~/.local/share/Steam".
@@ -730,7 +730,7 @@ class TestFindSteamPath:
     @pytest.mark.parametrize(
         "new_path",
         [
-            ".var/app/com.valvesoftware.Steam/data/Steam",
+            ".var/app/com.valvesoftware.Steam/.local/share/Steam",
             "snap/steam/common/.local/share/Steam"
         ]
     )
@@ -766,8 +766,8 @@ class TestFindSteamPath:
         instructing the user to select the correct one as necessary.
         """
         steam_flatpak_dir = (
-            home_dir / ".var" / "app" / "com.valvesoftware.Steam" / "data"
-            / "Steam"
+            home_dir / ".var" / "app" / "com.valvesoftware.Steam" / ".local"
+            / "share" / "Steam"
         )
         steam_flatpak_dir.parent.mkdir(parents=True)
         shutil.copytree(steam_dir, steam_flatpak_dir)

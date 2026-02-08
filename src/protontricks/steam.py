@@ -429,7 +429,7 @@ def find_steam_installations():
     # Check for Flatpak and Snap Steam separately and ensure we don't mix steam_root
     # and steam_path from Flatpak/Snap and native installations of Steam.
     steam_path = \
-        Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+        Path.home() / ".var/app/com.valvesoftware.Steam/.local/share/Steam"
     steam_path = steam_path.resolve()
     if has_steamapps_dir(steam_path):
         candidates[(str(steam_path), str(steam_path))] = True
@@ -1007,7 +1007,7 @@ def get_steam_lib_paths(steam_path):
         """
         xdg_steam_path = Path.home() / ".local/share/Steam"
         flatpak_steam_path = \
-            Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+            Path.home() / ".var/app/com.valvesoftware.Steam/.local/share/Steam"
 
         is_library_folder_xdg_steam = str(path) == str(xdg_steam_path)
         is_flatpak_steam = str(steam_path) == str(flatpak_steam_path)

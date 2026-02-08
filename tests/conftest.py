@@ -124,7 +124,7 @@ def flatpak_steam_dir(steam_dir_factory, home_dir):
     Fake Flatpak Steam directory
     """
     flatpak_steam_dir = \
-        home_dir / ".var/app/com.valvesoftware.Steam/data"
+        home_dir / ".var/app/com.valvesoftware.Steam/.local/share"
     steam_dir_factory(flatpak_steam_dir)
 
     # Rename the created directory to match the real directory hierarchy
