@@ -10,6 +10,7 @@
 import argparse
 import logging
 import sys
+from collections import defaultdict
 
 from .. import __version__
 from ..util import run_command
@@ -76,11 +77,27 @@ def main(args=None, steam_path=None, steam_root=None):
 
     parser.add_argument(
         "-s", "--search", type=str, dest="search", nargs="+",
-        required=False, help="Search for game(s) with the given name")
+        required=False, help="Search for game(s) with the given name"
+    )
+    parser.add_argument(
+        "-S", "--search-all", type=str, dest="search_all", nargs="+",
+        required=False,
+        help=(
+            "Search for game(s) with the given name among all "
+            "Steam installations"
+        )
+    )
+
     parser.add_argument(
         "-l", "--list", action="store_true", dest="list", default=False,
         help="List all apps"
     )
+    parser.add_argument(
+        "-L", "--list-all", action="store_true", dest="list_all",
+        default=False,
+        help="List all apps for all Steam installations"
+    )
+
     parser.add_argument(
         "-c", "--command", type=str, dest="command",
         required=False,
@@ -109,15 +126,18 @@ def main(args=None, steam_path=None, steam_root=None):
 
     do_command = bool(args.command)
     do_list_apps = bool(args.search) or bool(args.list)
+    do_list_all_apps = bool(args.search_all) or bool(args.list_all)
     do_gui = bool(args.gui)
     do_winetricks = bool(args.appid and args.winetricks_command)
 
-    if not do_command and not do_list_apps and not do_gui and not do_winetricks:
+    if not do_command and not do_list_apps and not do_list_all_apps and \
+            not do_gui and not do_winetricks:
         parser.print_help()
         return
 
     # Don't allow more than one action
-    if sum([do_list_apps, do_gui, do_winetricks, do_command]) != 1:
+    if sum([do_list_apps, do_list_all_apps, do_gui, do_winetricks, do_command]) \
+            != 1:
         print("Only one action can be performed at a time.")
         parser.print_help()
         return
@@ -130,6 +150,8 @@ def main(args=None, steam_path=None, steam_root=None):
     # List apps (either all or using a search)
     elif do_list_apps:
         ListAppsCommand(args).execute()
+    elif do_list_all_apps:
+        ListAllAppsCommand(args).execute()
     elif do_winetricks:
         RunWinetricksCommand(args).execute()
     elif do_command:
@@ -247,6 +269,69 @@ class ListAppsCommand(BaseCommand):
             "NOTE: A game must be launched at least once before Protontricks "
             "can find the game."
         )
+
+
+class ListAllAppsCommand(BaseCommand):
+    all_steam_apps_required = True
+
+    def run(self):
+        search_query = (
+            " ".join(self.cli_args.search_all)
+            if self.cli_args.search_all
+            else None
+        )
+
+        # Whether multiple Steam installations exist
+        multiple_steam_installations = len(self.steam_dirs_by_type) > 1
+
+        appid2install_types = defaultdict(set)
+        appid2app = {}
+
+        for install_type, steam_apps in self.steam_apps_by_install_type.items():
+            for steam_app in steam_apps:
+                if not steam_app.is_windows_app:
+                    continue
+
+                if search_query and not steam_app.name_contains(search_query):
+                    continue
+
+                appid2install_types[steam_app.appid].add(install_type)
+                appid2app[steam_app.appid] = steam_app
+
+        lines = []
+
+        for appid, app in appid2app.items():
+            parts = [app.name]
+
+            if multiple_steam_installations:
+                install_types = sorted(appid2install_types[appid])
+                parts.append(f"({', '.join(install_types)})")
+
+            parts.append(f"({appid})")
+
+            lines.append(" ".join(parts))
+
+        lines.sort()
+
+        if lines:
+            print(
+                "Found the following games:"
+                "\n{}\n".format("\n".join(lines))
+            )
+            print(
+                "To run Protontricks for the chosen game, run:\n"
+                "$ protontricks APPID COMMAND"
+            )
+        else:
+            print("Found no games.")
+
+        print(
+            "\n"
+            "NOTE: A game must be launched at least once before Protontricks "
+            "can find the game."
+        )
+
+
 
 
 if __name__ == "__main__":

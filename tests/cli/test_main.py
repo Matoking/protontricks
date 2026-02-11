@@ -1004,6 +1004,77 @@ class TestCLISearch:
         assert "Fake game" in result
 
 
+class TestCLIListAll:
+    def test_list_all_install_type_labels(
+            self, cli, steam_dir, flatpak_steam_dir, steam_app_factory):
+        """
+        Check that Steam installations are listed for each game if there are
+        two or more installations that have games
+        """
+        steam_app_factory(name="Fake game 1", appid=10, steam_dir=steam_dir)
+        steam_app_factory(
+            name="Fake game 1", appid=10, steam_dir=flatpak_steam_dir
+        )
+
+        steam_app_factory(name="Fake game 2", appid=20, steam_dir=steam_dir)
+
+        steam_app_factory(
+            name="Fake game 3", appid=30, steam_dir=flatpak_steam_dir
+        )
+
+        # List is case-insensitive
+        stdout = cli(["-L"])
+
+        assert "Fake game 1 (Flatpak, Native) (10)" in stdout
+        assert "Fake game 2 (Native) (20)" in stdout
+        assert "Fake game 3 (Flatpak) (30)" in stdout
+
+        # Remove Flatpak games; the label should no longer appear
+        shutil.rmtree(flatpak_steam_dir / "steamapps")
+
+        # List is case-insensitive
+        stdout = cli(["-L"])
+
+        assert "Fake game 1 (10)" in stdout
+        assert "Fake game 2 (20)" in stdout
+        assert "Fake game 3" not in stdout
+
+    def test_no_steam_installations(self, cli, steam_dir):
+        """
+        Test that "no Steam installations" message is printed if no Steam
+        installations are found
+        """
+        # Delete only Steam installation
+        shutil.rmtree(steam_dir)
+
+        stdout = cli(["-L"], expect_returncode=1)
+
+        assert "Found no Steam installations" in stdout
+
+    def test_no_games(self, cli, steam_dir):
+        """
+        Test that "no games found" is printed if no games are found
+        """
+        stdout = cli(["-L"])
+
+        assert "Found no games" in stdout
+
+    def test_search(self, cli, steam_dir, flatpak_steam_dir, steam_app_factory):
+        """
+        Test searching for games among all Steam installations
+        """
+        steam_app_factory(name="Fake game 1", appid=10, steam_dir=steam_dir)
+        steam_app_factory(
+            name="Fake game 2", appid=10, steam_dir=flatpak_steam_dir
+        )
+
+        # Search is case-insensitive
+        stdout = cli(["-S", "fake", "game", "2"])
+
+        assert "Fake game 2 (Flatpak) (10)" in stdout
+        assert "Fake game 1" not in stdout
+
+
 def test_cli_error_help(cli):
     """
     Ensure that the full help message is printed when an incorrect argument

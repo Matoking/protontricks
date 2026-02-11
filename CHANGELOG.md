@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Added
  - Use `$STEAM_COMPAT_DATA_PATH/pfx` as the game's prefix path if `STEAM_COMPAT_DATA_PATH` environment variable is set
+ - Add `--list-all/-L` command to list all games for all found Steam installations
+ - Add `--search-all/-S` command to search for games among all found Steam installations
 
 ### Changed
  - Winetricks is no longer required when running non-Winetricks commands (eg. `--command` or `--list`)
