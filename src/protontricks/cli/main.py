@@ -77,7 +77,11 @@ def main(args=None, steam_path=None, steam_root=None):
 
     parser.add_argument(
         "-s", "--search", type=str, dest="search", nargs="+",
-        required=False, help="Search for game(s) with the given name"
+        required=False,
+        help=(
+            "Search for game(s) with the given name for "
+            "a single Steam installation"
+        )
     )
     parser.add_argument(
         "-S", "--search-all", type=str, dest="search_all", nargs="+",
@@ -90,12 +94,12 @@ def main(args=None, steam_path=None, steam_root=None):
 
     parser.add_argument(
         "-l", "--list", action="store_true", dest="list", default=False,
-        help="List all apps"
+        help="List games for a single Steam installation"
     )
     parser.add_argument(
         "-L", "--list-all", action="store_true", dest="list_all",
         default=False,
-        help="List all apps for all Steam installations"
+        help="List all games for all Steam installations"
     )
 
     parser.add_argument(
