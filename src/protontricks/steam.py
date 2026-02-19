@@ -264,7 +264,14 @@ class SteamApp(object):
             appid=appid, steam_lib_paths=steam_lib_paths
         )
 
-        install_path = Path(path).parent / "common" / app_state["installdir"]
+        try:
+            install_path = \
+                Path(path).parent / "common" / app_state["installdir"]
+        except KeyError:
+            logger.warning(
+                "Skipping appmanifest missing 'installdir' field: %s", path
+            )
+            return None
 
         icon_path = None
 

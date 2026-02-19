@@ -206,6 +206,31 @@ class TestSteamApp:
 
         assert app.name == "Fake game"
 
+    def test_steam_appmanifest_missing_installdir(self, steam_app_factory):
+        """
+        Ensure an appmanifest file containing a nearly empty `AppState` object
+        is skipped
+
+        Regression test for #465
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        appmanifest_path = \
+            Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
+
+        # Write an incomplete appmanifest containing a nearly empty 'AppState'
+        # object.
+        appmanifest_path.write_text(
+            vdf.dumps({
+                "AppState": {"name": "Fake game", "appid": 10}
+            })
+        )
+
+        assert SteamApp.from_appmanifest(
+            path=appmanifest_path,
+            steam_lib_paths=[]
+        ) is None
+
 
 class TestFindSteamCompatToolApp:
     def test_find_steam_specific_app_proton(
