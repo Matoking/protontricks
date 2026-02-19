@@ -245,6 +245,26 @@ class SteamApp(object):
             logger.info("Skipping empty appmanifest %s", path)
             return None
 
+        # Try parsing 'stateflags' if it exists
+        try:
+            state_flags = int(app_state["stateflags"])
+
+            # Check if AppState flag StateUninstalled (1) is set, and
+            # skip parsing the rest of the appmanifest if so.
+            # See Lutris docs for rest of flags:
+            # https://github.com/lutris/lutris/blob/master/docs/steam.rst
+            # TODO: Maybe we should also check for StateFullyInstalled (4)?
+            if state_flags & 1:
+                logger.info("Appmanifest %s is uninstalled", path)
+                return None
+        except (KeyError, ValueError):
+            logger.debug(
+                "Could not parse 'StateFlags' for %s, "
+                "the field might be missing",
+                path
+            )
+            pass
+
         # The app ID field can be named 'appID' or 'appid'.
         # 'appid' is more common, but certain appmanifest
         # files (created by old Steam clients?) also use 'appID'.
