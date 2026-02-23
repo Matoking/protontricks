@@ -38,6 +38,7 @@
   <url type="homepage">https://github.com/Matoking/protontricks</url>
   <url type="help">https://github.com/Matoking/protontricks#readme</url>
   <url type="bugtracker">https://github.com/Matoking/protontricks/issues</url>
+  <url type="vcs-browser">https://github.com/Matoking/protontricks</url>
   <project_license>GPL-3.0</project_license>
   <metadata_license>CC0-1.0</metadata_license>
   <update_contact>janne.pulkkinen@protonmail.com</update_contact>
