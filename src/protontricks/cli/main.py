@@ -150,16 +150,22 @@ def main(args=None, steam_path=None, steam_root=None):
 
     # Run the GUI
     if do_gui:
-        RunWinetricksGUICommand(args).execute()
+        command_cls = RunWinetricksGUICommand
     # List apps (either all or using a search)
     elif do_list_apps:
-        ListAppsCommand(args).execute()
+        command_cls = ListAppsCommand
     elif do_list_all_apps:
-        ListAllAppsCommand(args).execute()
+        command_cls = ListAllAppsCommand
     elif do_winetricks:
-        RunWinetricksCommand(args).execute()
+        command_cls = RunWinetricksCommand
     elif do_command:
-        RunCustomCommand(args).execute()
+        command_cls = RunCustomCommand
+
+    command = command_cls(args)
+    command.steam_path = steam_path
+    command.steam_root = steam_root
+
+    command.execute()
 
 
 class RunWinetricksCommand(BaseCommand):

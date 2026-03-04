@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Fixed
+ - Fix Steam installation being prompted twice when using `protontricks-launch`
+
 ## [1.14.0] - 2026-02-22
 ### Added
  - Use `$STEAM_COMPAT_DATA_PATH/pfx` as the game's prefix path if `STEAM_COMPAT_DATA_PATH` environment variable is set
