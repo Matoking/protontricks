@@ -35,7 +35,7 @@ BLACKLISTED_ROOT_DIRS=(
 )
 
 ADDITIONAL_MOUNT_DIRS=(
-    /run/media "$PROTON_PATH" "$WINEPREFIX"
+    /run/media "$PROTON_PATH" "$WINEPREFIX" "$STEAM_RUNTIME_PATH"
 )
 
 mount_dirs=()

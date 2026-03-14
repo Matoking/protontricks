@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix Steam installation being prompted twice when using `protontricks-launch`
+ - Fix Steam Runtime crash if it's installed under a blacklisted root directory (eg. `/run/<path>` instead of `/run/media/<path>`)
 
 ## [1.14.0] - 2026-02-22
 ### Added
