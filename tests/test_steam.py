@@ -665,7 +665,7 @@ class TestFindLibraryPaths:
         lib_paths = get_steam_lib_paths(steam_dir)
 
         assert library_dir_a in lib_paths
-        assert library_dir_b not in lib_paths
+        assert library_dir_b in lib_paths
         assert library_dir_c in lib_paths
 
         assert any(

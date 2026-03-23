@@ -1065,7 +1065,11 @@ def get_steam_lib_paths(steam_path):
                 "exist",
                 path
             )
-            return None
+            # If the path does not exist, return it anyway; if we're
+            # inside a Flatpak sandbox we'll need the path to perform
+            # a permission check. Missing permission might explain why the
+            # directory appears nonexistent.
+            return Path(path)
 
         # In case of multiple matches, prioritize those that contain
         # a 'steamapps' subdirectory

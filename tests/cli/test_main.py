@@ -1,6 +1,8 @@
 import os
 import sys
 import shutil
+from glob import glob
+
 from pathlib import Path
 
 import pytest
@@ -737,6 +739,7 @@ class TestCLIRun:
         assert "No Steam installation was selected" in result
 
 
+
 class TestCLIGUI:
     def test_run_gui(
             self, cli, default_proton, steam_app_factory, gui_provider,
@@ -1123,3 +1126,64 @@ def test_cli_enable_logging(cli, parameter, log_levels):
 
         assert "DEBUG" not in stderr
         assert "INFO" not in stderr
+
+
+@pytest.mark.usefixtures("flatpak_sandbox")
+def test_inaccessible_path_prompted(
+        cli, tmp_path, steam_library_factory, monkeypatch, steam_dir,
+        gui_provider):
+    """
+    Test that an inaccessible path is prompted when the user
+    is inside a Flatpak sandbox and the directory does not appear
+    to exist, usually because it's not mounted in the sandbox and
+    requires a permission first.
+
+    Regression test for #472
+    """
+    flatpak_info_path = tmp_path / "flatpak-info"
+
+    flatpak_info_path.write_text(
+        "[Application]\n"
+        "name=fake.flatpak.Protontricks\n"
+        "\n"
+        "[Instance]\n"
+        "flatpak-version=1.12.1\n"
+        "\n"
+        "[Context]\n"
+        f"filesystems={steam_dir}"
+    )
+    monkeypatch.setattr(
+        "protontricks.flatpak.FLATPAK_INFO_PATH", str(flatpak_info_path)
+    )
+    library_dir = steam_library_factory("hidden-library")
+
+    # Mock 'glob' so that it conceals the existence of the library
+    # directory.
+    mock_glob_called = False
+    def mock_glob(path):
+        results = glob(path)
+        results = [
+            path for path in results
+            if path != str(library_dir)
+        ]
+
+        nonlocal mock_glob_called
+        mock_glob_called = True
+
+        return results
+
+    # Mock the user closing the dialog without ignoring the messages
+    gui_provider.returncode = 1
+
+    with monkeypatch.context() as m:
+        m.setattr("glob.glob", mock_glob)
+        cli(["--no-term", "-s", "app"])
+
+    input_ = gui_provider.kwargs["input"].decode("utf-8")
+
+    # Ensure the 'hidden-library' is listed among the directories to enable
+    # and that the mocked glob was actually used
+    assert "does not appear to have access" in input_
+    assert str(library_dir) in input_
+
+    assert mock_glob_called is True
