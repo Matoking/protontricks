@@ -27,7 +27,8 @@ SUPPORTED_STEAM_RUNTIMES = [
 
     # New names
     "Steam Linux Runtime 2.0 (soldier)",
-    "Steam Linux Runtime 3.0 (sniper)"
+    "Steam Linux Runtime 3.0 (sniper)",
+    "Steam Linux Runtime 4.0"
 ]
 
 OS_RELEASE_PATHS = [
