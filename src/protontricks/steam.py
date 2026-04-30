@@ -62,12 +62,12 @@ class SteamApp(object):
     """
     __slots__ = (
         "appid", "name", "prefix_path", "install_path", "icon_path",
-        "required_tool_appid", "required_tool_app"
+        "last_updated", "required_tool_appid", "required_tool_app"
     )
 
     def __init__(
             self, name, install_path, icon_path=None, prefix_path=None,
-            appid=None, required_tool_appid=None):
+            appid=None, last_updated=None, required_tool_appid=None):
         """
         :appid: App's appid
         :name: The app's human-readable name
@@ -76,6 +76,7 @@ class SteamApp(object):
         :app_path: Absolute path to app's installation directory
         :icon_path: Absolute path to app's icon, whether Steam's own or custom
                     one configured by user
+        :last_updated: App's last update date, if any
         :required_tool_appid: App ID required to run this application.
                               Usually corresponds to a Steam Runtime for
                               Proton installations.
@@ -97,6 +98,8 @@ class SteamApp(object):
             self.icon_path = None
 
         self.install_path = Path(install_path)
+
+        self.last_updated = int(last_updated) if last_updated else 0
 
         # Reference to another SteamApp will be added later if necessary,
         # once we have the full list of Steam apps
@@ -245,6 +248,8 @@ class SteamApp(object):
             logger.info("Skipping empty appmanifest %s", path)
             return None
 
+        last_updated = int(app_state.get("lastupdated", 0))
+
         # Try parsing 'stateflags' if it exists
         try:
             state_flags = int(app_state["stateflags"])
@@ -339,6 +344,7 @@ class SteamApp(object):
         return cls(
             appid=appid, name=name, prefix_path=prefix_path,
             install_path=install_path, icon_path=icon_path,
+            last_updated=last_updated,
             required_tool_appid=required_tool_appid
         )
 

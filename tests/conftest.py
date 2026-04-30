@@ -490,7 +490,8 @@ def steam_app_factory(steam_dir, steam_config_path):
 
     def func(
             name, appid, compat_tool_name=None, steam_dir=None,
-            library_dir=None, add_prefix=True, required_tool_app=None):
+            library_dir=None, add_prefix=True, required_tool_app=None,
+            last_updated=0):
         if not steam_dir:
             steam_dir = steam_dir_fx
 
@@ -516,7 +517,8 @@ def steam_app_factory(steam_dir, steam_config_path):
                 "AppState": {
                     "appid": str(appid),
                     "name": name,
-                    "installdir": name
+                    "installdir": name,
+                    "LastUpdated": last_updated
                 }
             })
         )
@@ -571,14 +573,15 @@ def proton_factory(
     """
     def func(
             name, appid, compat_tool_name, is_default_proton=True,
-            library_dir=None, required_tool_app=None, aliases=None):
+            library_dir=None, required_tool_app=None, aliases=None,
+            last_updated=0):
         if not aliases:
             aliases = []
 
         steam_app = steam_app_factory(
             name=name, appid=appid, library_dir=library_dir,
             required_tool_app=required_tool_app,
-            add_prefix=False
+            add_prefix=False, last_updated=last_updated
         )
 
         install_path = Path(steam_app.install_path)
