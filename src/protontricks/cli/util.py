@@ -7,6 +7,7 @@ import sys
 import tempfile
 import traceback
 import contextlib
+import platform
 from pathlib import Path
 
 from ..gui import show_text_dialog
@@ -144,6 +145,19 @@ def exit_with_error(error, desktop=False):
 
     sys_path = ";".join(sys.path)
 
+    # 'platform.freedesktop_os_release' only available on Python 3.10+;
+    # provide default value if it's not available
+    os_info = "UNAVAILABLE"
+    with contextlib.suppress(Exception):
+        os_info = " ".join([
+            f"{key}='{value}'"
+            for key, value in platform.freedesktop_os_release().items()
+            if key in (
+                "NAME", "ID", "ID_LIKE", "VARIANT_ID",
+                "VERSION_ID", "BUILD_ID", "RELEASE_TYPE"
+            )
+        ])
+
     # Display an error dialog containing the message
     message = "".join([
         "Protontricks was closed due to the following error:\n\n",
@@ -155,7 +169,8 @@ def exit_with_error(error, desktop=False):
         f"Is Flatpak sandbox: {is_flatpak_sandbox_}\n",
         f"Is Steam Deck: {is_steam_deck_}\n",
         f"Is SteamOS 3+: {is_steamos_}\n",
-        f"Python sys.path: {sys_path}\n\n",
+        f"Python sys.path: {sys_path}\n",
+        f"/etc/os-release info: {os_info}\n\n",
         "Log messages:\n\n",
         f"{log_messages}"
     ])
