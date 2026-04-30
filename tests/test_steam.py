@@ -1116,7 +1116,7 @@ class TestGetSteamApps:
         warning = warnings[-1]
         assert f"{library_dir_b} not found." in warning.message
 
-    def get_custom_compat_tool_installed_outside_steam(
+    def test_get_custom_compat_tool_installed_outside_steam(
             self, custom_proton_factory, steam_dir, steam_root, tmpdir):
         """
         Retrieve custom compatibility tool that has an `install_path`
@@ -1130,7 +1130,7 @@ class TestGetSteamApps:
         new_install_path = tmpdir / "external_proton"
         new_vdf_path = (
             steam_dir.parent
-            / "root" / "compatibilitytools.vdf" / "external_proton.vdf"
+            / "root" / "compatibilitytools.d" / "external_proton.vdf"
         )
 
         # Delete default `compatibilitytool.vdf`
@@ -1138,9 +1138,6 @@ class TestGetSteamApps:
 
         # Move Proton to a different location
         proton_app.install_path.rename(new_install_path)
-
-        # Move VDF to `compatibilitytools.d`
-        (proton_app.install_path / "compatibilitytool.vdf").rename(new_vdf_path)
 
         # Make the `install_path` in the VDF absolute to indicate that it's
         # installed outside Steam
@@ -1171,7 +1168,6 @@ class TestGetSteamApps:
 
         assert found_app.name == "External Proton"
         assert found_app.install_path == new_install_path
-
 
 
 class TestGetWindowsShortcuts:
