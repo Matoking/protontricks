@@ -1169,6 +1169,61 @@ class TestGetSteamApps:
         assert found_app.name == "External Proton"
         assert found_app.install_path == new_install_path
 
+    def test_get_steam_apps_remove_duplicate_installations(
+            self, steam_library_factory, proton_factory, custom_proton_factory,
+            steam_dir, steam_root, caplog):
+        """
+        Create three installations of the same Proton in three locations
+        and ensure only the one with the most recent update date
+        is returned
+        """
+        library_a = steam_library_factory("TestLibrary_A")
+        library_b = steam_library_factory("TestLibrary_B")
+        library_c = steam_library_factory("TestLibrary_C")
+
+        # Create two compatibility tools without app IDs; these should be
+        # ignored when performing deduplication
+        custom_proton_factory(name="Custom Proton A")
+        custom_proton_factory(name="Custom Proton B")
+
+        # Installation B is the most recent one
+        proton_factory(
+            appid=100, name="Proton", compat_tool_name="custom_proton",
+            library_dir=library_a, last_updated=100
+        )
+        proton_b = proton_factory(
+            appid=100, name="Proton", compat_tool_name="custom_proton",
+            library_dir=library_b, last_updated=500
+        )
+        proton_factory(
+            appid=100, name="Proton", compat_tool_name="custom_proton",
+            library_dir=library_c, last_updated=300
+        )
+
+        steam_apps = get_steam_apps(
+            steam_root=steam_root, steam_path=steam_dir,
+            steam_lib_paths=[library_a, library_b, library_c]
+        )
+
+        assert len(steam_apps) == 3
+
+        # Only installation B remains
+        assert any(
+            app.install_path == proton_b.install_path for app in steam_apps
+        )
+        assert any(
+            record for record in caplog.records
+            if f"Ignoring duplicate app 100 in {library_a}"
+        )
+        assert any(
+            record for record in caplog.records
+            if f"Ignoring duplicate app 100 in {library_c}"
+        )
+
+        # Custom compatibility tools were ignored during deduplication
+        assert any(app.name == "Custom Proton A" for app in steam_apps)
+        assert any(app.name == "Custom Proton B" for app in steam_apps)
+
 
 class TestGetWindowsShortcuts:
     def test_get_custom_windows_shortcuts_derive_appid(

@@ -5,8 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Changed
+ - Ignore duplicate Steam apps and only list the most recently updated app
+
 ### Fixed
  - _Steam Linux Runtime 4.0_ is no longer incorrectly reported as an unsupported runtime
+ - Fix random app selection if multiple installations for the same app were discovered
 
 ## [1.14.1] - 2026-03-29
 ### Fixed

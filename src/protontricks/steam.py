@@ -5,7 +5,8 @@ import string
 import struct
 import zlib
 import glob
-from collections import OrderedDict
+import itertools
+from collections import OrderedDict, defaultdict
 from pathlib import Path
 
 import vdf
@@ -1520,6 +1521,36 @@ def _link_tool_apps(steam_apps):
                 appid2steam_app.get(steam_app.required_tool_appid)
 
 
+def _filter_duplicate_apps(steam_apps):
+    """
+    Filter and return a list of Steam apps with duplicates removed. The
+    app with the most recent update date takes precedence.
+    """
+    appid2app = defaultdict(list)
+
+    for steam_app in steam_apps:
+        # Ignore apps without app IDs (eg. external compatibility tools)
+        # TODO: Also deduplicate custom compatibility tools
+        if not steam_app.appid:
+            appid2app[None].append(steam_app)
+            continue
+
+        app_list = appid2app[steam_app.appid]
+        app_list.append(steam_app)
+
+        if len(app_list) > 1:
+            app_list.sort(key=lambda app: app.last_updated, reverse=True)
+            older_app = app_list.pop()
+
+            logger.warning(
+                "Ignoring duplicate app %s in %s with older update time %d",
+                older_app.name, older_app.install_path,
+                older_app.last_updated
+            )
+
+    return list(itertools.chain(*appid2app.values()))
+
+
 def get_steam_apps(steam_root, steam_path, steam_lib_paths):
     """
     Find all the installed Steam apps and return them as a list of SteamApp
@@ -1596,6 +1627,9 @@ def get_steam_apps(steam_root, steam_path, steam_lib_paths):
     # Populate the `SteamApp.required_tool_app` parameter for Steam apps
     # which rely on other Steam apps
     _link_tool_apps(steam_apps)
+
+    # Eliminate duplicate apps by comparing their update times
+    steam_apps = _filter_duplicate_apps(steam_apps)
 
     # Sort the apps by their names
     steam_apps.sort(key=lambda app: app.name)
