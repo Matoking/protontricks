@@ -1,0 +1,62 @@
+# Kudos to maintainers from official arch repos
+# Carl Smedstad <carsme@archlinux.org>
+# Jason Stryker <public at jasonstryker dot com>
+# Konstantin Liberty <jon9097 at gmail dot com>
+
+pkgname=protontricks
+pkgver=1.14.1
+pkgrel=1
+pkgdesc="Run Winetricks commands for Steam Play/Proton games among other common Wine features"
+arch=('any')
+url="https://github.com/twig6943/protontricks"
+license=('GPL-3.0-only')
+depends=(
+  'python'
+  'python-pillow'
+  'python-vdf'
+  'winetricks'
+  'openjpeg2'
+  'libimagequant'
+  'zenity'
+  'yad'
+)
+makedepends=(
+  'git'
+  'python-build'
+  'python-installer'
+  'python-setuptools'
+  'python-setuptools-scm'
+  'python-wheel'
+)
+checkdepends=('python-pytest')
+
+source=()
+b2sums=()
+
+prepare() {
+  git clone --depth 1 --branch appimage "$url.git" "$pkgname"
+}
+
+build() {
+  cd $pkgname
+  python -m build --wheel --no-isolation
+}
+
+check() {
+  cd $pkgname
+  python -m venv --system-site-packages test-env
+  test-env/bin/python -m installer dist/*.whl
+  test-env/bin/python -m pytest
+}
+
+package() {
+  cd $pkgname
+  install -vDm644 src/protontricks/data/share/icons/hicolor/scalable/apps/com.github.Matoking.protontricks.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/com.github.Matoking.protontricks.svg"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  install -vDm644 -t "$pkgdir/usr/share/doc/$pkgname" ./*.md
+
+  # We already install the desktop entries, not needed
+  rm -v "$pkgdir/usr/bin/protontricks-desktop-install"
+  local site_packages=$(python -c "import site; print(site.getsitepackages()[0])")
+  rm -vr "$pkgdir/$site_packages/protontricks/data/share"
+}

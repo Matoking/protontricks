@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag (example: 1.0.0)"
+        required: false
+        type: string
+
+      prerelease:
+        description: "Mark as prerelease"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: archlinux:latest
+
+    steps:
+      - name: Install base dependencies
+        run: |
+          pacman -Syu --noconfirm archlinux-keyring
+          pacman -Syu --noconfirm pkg-config \
+          base-devel \
+          sudo \
+          wget \
+          patchelf
+
+      - name: Create build user
+        run: |
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Fix permissions
+        run: chown -R builder:builder .
+
+      - name: Build
+        run: |
+          sudo -u builder sh <<'EOF'
+          set -e
+          cd src/protontricks/data/appimage
+          makepkg -p PKGBUILD-git -fs --noconfirm
+          EOF
+          ls -lh
+          cd src/protontricks/data/appimage
+          pacman --noconfirm -U ./*.pkg.tar.zst
+          chmod +x ./make-appimage.sh
+          ./make-appimage.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: AppImage
+          path: "src/protontricks/data/appimage/dist/*.AppImage"
+          archive: false
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '')
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
+          name: ${{ github.event.inputs.release_tag || github.ref_name }}
+          files: "src/protontricks/data/appimage/dist/*.AppImage"
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}

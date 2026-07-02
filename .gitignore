@@ -118,3 +118,14 @@ pip-selfcheck.json
 
 
 # End of https://www.gitignore.io/api/python,virtualenv
+
+# AppImage
+AppDir/
+
+*.tar.zst
+
+quick-sharun*
+get-debloated-pkgs*
+src/protontricks/data/appimage/protontricks/
+src/protontricks/data/appimage/protontricks/src/
+src/protontricks/data/appimage/pkg/
