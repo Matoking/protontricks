@@ -55,6 +55,13 @@ done
 # Add additional mount directories, including the Wine prefix and Proton
 # installation directory
 for dir in "${ADDITIONAL_MOUNT_DIRS[@]}"; do
+    # Skip empty or relative paths. Non-Steam shortcuts don't have an
+    # install directory, which leaves STEAM_APP_PATH empty. Passing an
+    # empty --filesystem argument causes pressure-vessel to reject it.
+    if [[ -z "$dir" || "$dir" != /* ]]; then
+        continue
+    fi
+
     if [[ ! -d "$dir" ]]; then
         continue
     fi
