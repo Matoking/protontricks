@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
  - _Steam Linux Runtime 4.0_ is no longer incorrectly reported as an unsupported runtime
  - Fix random app selection if multiple installations for the same app were discovered
+ - Fix Steam Runtime crash when launching non-Steam shortcut with empty "Start In" directory
 
 ## [1.14.1] - 2026-03-29
 ### Fixed
