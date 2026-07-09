@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Changed
  - Ignore duplicate Steam apps and only list the most recently updated app
+ - `protontricks-launch` now allows non-executable arguments and no longer checks that the executable corresponds to an Unix path
  - Windows executables launched using `protontricks-launch` or desktop integration use the executable location as the working directory to match Wine behavior
 
 ### Fixed

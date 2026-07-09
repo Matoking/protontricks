@@ -2,7 +2,6 @@ import argparse
 import logging
 import shlex
 import sys
-from pathlib import Path
 
 from .command import BaseCommand
 from .main import main as cli_main
@@ -29,11 +28,11 @@ def main(args=None):
             "\n"
             "Usage:\n"
             "\n"
-            "Launch EXECUTABLE and pick the Steam app using a dialog.\n"
-            "$ protontricks-launch EXECUTABLE [ARGS]\n"
+            "Launch PROGRAM and pick the Steam app using a dialog.\n"
+            "$ protontricks-launch PROGRAM [ARGS]\n"
             "\n"
-            "Launch EXECUTABLE for Steam app APPID\n"
-            "$ protontricks-launch --appid APPID EXECUTABLE [ARGS]\n"
+            "Launch PROGRAM for Steam app APPID\n"
+            "$ protontricks-launch --appid APPID PROGRAM [ARGS]\n"
             "\n"
             "Environment variables:\n"
             "\n"
@@ -72,7 +71,10 @@ class RunExecutableCommand(BaseCommand):
         # Build the command to pass to the main Protontricks CLI entrypoint
         cli_args = []
 
-        executable_path = Path(self.cli_args.executable).resolve(strict=True)
+        # Missing file is OK, this can be something besides an Unix file
+        # path, such as an argument utilizing protocol association
+        # (eg. "irc:<uri>")
+        executable_path = self.cli_args.executable
 
         # Ensure each individual argument passed to the EXE is escaped
         exec_args = [shlex.quote(arg) for arg in self.cli_args.exec_args]

@@ -29,7 +29,7 @@ class TestCLIRun:
         # 'test.exe' was executed
         command = command_mock.commands[-1]
         assert command.args.startswith("wine start /wait /unix ")
-        assert command.args.endswith("/test.exe")
+        assert command.args.endswith(" test.exe")
 
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
 
@@ -45,7 +45,7 @@ class TestCLIRun:
         # 'test.exe' was executed
         command = command_mock.commands[-1]
         assert command.args.startswith("wine start /wait /unix ")
-        assert command.args.endswith("/test.exe")
+        assert command.args.endswith(" test.exe")
 
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
 
