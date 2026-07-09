@@ -95,8 +95,10 @@ class RunExecutableCommand(BaseCommand):
             cli_args += ["--no-term"]
 
         inner_args = " ".join(
-            ["wine", shlex.quote(str(executable_path))]
-            + exec_args
+            [
+                "wine", "start", "/wait",
+                "/unix", shlex.quote(str(executable_path))
+            ] + exec_args
         )
 
         if self.cli_args.cwd_app:
