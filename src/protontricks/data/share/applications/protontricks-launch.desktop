@@ -6,4 +6,4 @@ Terminal=false
 NoDisplay=true
 Categories=Utility
 Icon=wine
-MimeType=application/x-ms-dos-executable;application/x-msi;application/x-ms-shortcut;
+MimeType=application/x-ms-dos-executable;application/x-msi;application/x-ms-shortcut;application/x-bat;application/x-mswinurl
