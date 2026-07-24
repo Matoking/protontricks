@@ -741,9 +741,17 @@ class TestCLIRun:
 
 
 class TestCLIGUI:
+    @pytest.mark.parametrize(
+        "cli_args, expected_winetricks_args",
+        [
+            (["--gui"], ["--gui"]),
+            (["--gui", "-q"], ["--gui", "-q"]),
+            (["--gui", "--unattended"], ["--gui", "-q"])
+        ]
+    )
     def test_run_gui(
             self, cli, default_proton, steam_app_factory, gui_provider,
-            command_mock, home_dir):
+            command_mock, home_dir, cli_args, expected_winetricks_args):
         """
         Start the GUI and fake selecting a game
         """
@@ -753,13 +761,13 @@ class TestCLIGUI:
         # Fake the user selecting the game
         gui_provider.mock_stdout = "Fake game 1: 10"
 
-        cli(["--gui"])
+        cli(cli_args)
 
         command = command_mock.commands[-1]
         # 'winetricks --gui' was run for the game selected by user
         assert str(command.args[0]) == \
             str(home_dir / ".local" / "bin" / "winetricks")
-        assert command.args[1] == "--gui"
+        assert command.args[1:] == expected_winetricks_args
 
         # Correct environment vars were set
         assert command.env["WINE"] == str(

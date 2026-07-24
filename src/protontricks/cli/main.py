@@ -110,6 +110,13 @@ def main(args=None, steam_path=None, steam_root=None):
     parser.add_argument(
         "--gui", action="store_true",
         help="Launch the Protontricks GUI.")
+    parser.add_argument(
+        "-q", "--unattended", action="store_true",
+        help=(
+            "Run Winetricks in unattended mode when using --gui. "
+            "This suppresses the 64-bit Wine prefix warning."
+        )
+    )
 
     parser.add_argument("appid", type=int, nargs="?", default=None)
     parser.add_argument("winetricks_command", nargs=argparse.REMAINDER)
@@ -203,13 +210,17 @@ class RunWinetricksGUICommand(BaseCommand):
         cwd = \
             str(self.steam_app.install_path) if self.cli_args.cwd_app else None
 
+        command = [str(self.winetricks_path), "--gui"]
+        if self.cli_args.unattended:
+            command.append("-q")
+
         run_command(
             winetricks_path=self.winetricks_path,
             proton_app=self.proton_app,
             steam_app=self.steam_app,
             use_steam_runtime=self.use_steam_runtime,
             legacy_steam_runtime_path=self.legacy_steam_runtime_path,
-            command=[str(self.winetricks_path), "--gui"],
+            command=command,
             use_bwrap=self.use_bwrap,
             start_wineserver=self.start_background_wineserver,
             cwd=cwd
