@@ -1,9 +1,13 @@
 [Desktop Entry]
 Exec=protontricks --no-term --gui
 Name=Protontricks
+GenericName=Winetricks for Proton games
+GenericName[ru]=Winetricks для игр на Proton
 Comment=A simple wrapper that does winetricks things for Proton enabled games
+Comment[ru]=Простая обёртка, позволяющая применять winetricks к играм, работающим через Proton
 Type=Application
 Terminal=false
 Categories=Utility;
 Icon=wine
 Keywords=Steam;Proton;Wine;Winetricks;
+Keywords[ru]=Steam;Proton;Wine;Winetricks;Стим;Протон;Вайн;Винтрикс;

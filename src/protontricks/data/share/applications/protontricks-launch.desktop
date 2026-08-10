@@ -1,6 +1,9 @@
 [Desktop Entry]
 Exec=protontricks-launch --no-term %f
 Name=Protontricks Launcher
+Name[ru]=Запуск через Protontricks
+Comment=Run a Windows executable inside a Proton game's Wine prefix
+Comment[ru]=Запустить программу Windows в префиксе Wine игры на Proton
 Type=Application
 Terminal=false
 NoDisplay=true
