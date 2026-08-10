@@ -3,6 +3,7 @@
   <id>com.github.Matoking.protontricks</id>
   <name>Protontricks</name>
   <summary>Apps and fixes for Proton games</summary>
+  <summary xml:lang="ru">Программы и исправления для игр на Proton</summary>
   <icon type="stock">wine</icon>
   <provides>
     <binary>protontricks</binary>
@@ -16,6 +17,7 @@
     <screenshot type="default">
       <image type="source">https://raw.githubusercontent.com/Matoking/protontricks/master/data/screenshot.png</image>
       <caption>App selection screen</caption>
+      <caption xml:lang="ru">Окно выбора приложения</caption>
     </screenshot>
   </screenshots>
   <supports>
@@ -28,6 +30,10 @@
     <p>Run Winetricks commands for Steam Play/Proton games among other common Wine features,
        such as launching external Windows executables. This is often useful when a game requires closed-source runtime libraries or applications
        that are not included with Proton.</p>
+    <p xml:lang="ru">Выполняет команды Winetricks для игр Steam Play/Proton, а также даёт доступ к другим
+       привычным возможностям Wine — например, к запуску сторонних программ Windows. Это часто
+       нужно, когда игре требуются библиотеки или приложения с закрытым исходным кодом,
+       которых нет в составе Proton.</p>
   </description>
   <categories>
     <category>Utility</category>
