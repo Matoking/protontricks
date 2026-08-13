@@ -40,6 +40,18 @@ class TestCLIRun:
             str(proton_install_path / "dist" / "lib" / "wine")
         )
 
+    def test_run_winetricks_with_options(
+            self, cli, steam_app_factory, default_proton, command_mock):
+        """
+        Pass Winetricks options after an app ID
+        """
+        steam_app_factory(name="Fake game 1", appid=10)
+
+        cli(["10", "-q", "--force", "vcrun2019"])
+
+        command = command_mock.commands[-1]
+        assert command.args[1:] == ["-q", "--force", "vcrun2019"]
+
     def test_run_winetricks_shortcut(
             self, cli, shortcut_factory, default_proton, command_mock,
             steam_dir):
@@ -367,11 +379,18 @@ class TestCLIRun:
         steam_app_factory(name="Fake game", appid=10)
         cli(["-c", "exit 5", "10"], expect_returncode=5)
 
-    def test_run_multiple_command_mock(self, cli):
+    @pytest.mark.parametrize(
+        "cli_args",
+        [
+            ["--gui", "-s", "game"],
+            ["--gui", "10", "--", "-q"]
+        ]
+    )
+    def test_run_multiple_command_mock(self, cli, cli_args):
         """
         Try performing multiple command_mock at once
         """
-        result = cli(["--gui", "-s", "game"])
+        result = cli(cli_args)
 
         assert "Only one action can be performed" in result
 
@@ -741,9 +760,24 @@ class TestCLIRun:
 
 
 class TestCLIGUI:
+    @pytest.mark.parametrize(
+        "cli_args,expected_winetricks_args",
+        [
+            (["--gui"], ["--gui"]),
+            (["--no-term", "--gui", "--", "-q"], ["--gui", "-q"]),
+            (
+                ["--gui", "--", "-q", "--force", "--country=US"],
+                ["--gui", "-q", "--force", "--country=US"]
+            ),
+            (
+                ["--gui", "--", "--verbose", "--version"],
+                ["--gui", "--verbose", "--version"]
+            )
+        ]
+    )
     def test_run_gui(
             self, cli, default_proton, steam_app_factory, gui_provider,
-            command_mock, home_dir):
+            command_mock, home_dir, cli_args, expected_winetricks_args):
         """
         Start the GUI and fake selecting a game
         """
@@ -753,13 +787,13 @@ class TestCLIGUI:
         # Fake the user selecting the game
         gui_provider.mock_stdout = "Fake game 1: 10"
 
-        cli(["--gui"])
+        cli(cli_args)
 
         command = command_mock.commands[-1]
         # 'winetricks --gui' was run for the game selected by user
         assert str(command.args[0]) == \
             str(home_dir / ".local" / "bin" / "winetricks")
-        assert command.args[1] == "--gui"
+        assert command.args[1:] == expected_winetricks_args
 
         # Correct environment vars were set
         assert command.env["WINE"] == str(
@@ -776,6 +810,16 @@ class TestCLIGUI:
             os.pathsep,
             str(proton_install_path / "dist" / "lib" / "wine")
         )
+
+    def test_run_gui_winetricks_args_require_delimiter(self, cli):
+        """
+        Require a delimiter before Winetricks arguments in GUI mode
+        """
+        _, stderr = cli(
+            ["--gui", "-q"], expect_returncode=2, include_stderr=True
+        )
+
+        assert "unrecognized arguments: -q" in stderr
 
     def test_run_gui_no_games(self, cli, default_proton):
         """
