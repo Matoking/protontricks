@@ -64,6 +64,10 @@ protontricks -c <COMMAND> <APPID>
 # Run the Protontricks GUI
 protontricks --gui
 
+# Pass arguments to Winetricks when using the Protontricks GUI.
+# Everything after "--" is passed directly to Winetricks.
+protontricks --gui -- <WINETRICKS_ARGUMENTS>
+
 # Launch a Windows program (executable or command) using Protontricks
 protontricks-launch <PROGRAM>
 

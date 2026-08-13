@@ -54,6 +54,10 @@ def main(args=None, steam_path=None, steam_root=None):
             "Use Protontricks GUI to select the game\n"
             "$ protontricks --gui\n"
             "\n"
+            "Pass arguments to Winetricks when using the Protontricks GUI. "
+            "Arguments after '--' are passed to Winetricks as-is.\n"
+            "$ protontricks --gui -- WINETRICKS_ARGUMENTS\n"
+            "\n"
             "Environment variables:\n"
             "\n"
             "PROTON_VERSION: name of the preferred Proton installation\n"
@@ -122,7 +126,22 @@ def main(args=None, steam_path=None, steam_root=None):
         # No arguments were provided, default to GUI
         args = ["--gui"]
 
-    args = parser.parse_args(args)
+    # When using the GUI, allow Winetricks arguments to be passed after a
+    # delimiter.
+    winetricks_args = []
+    if "--" in args:
+        delimiter_idx = args.index("--")
+        args_before_delimiter = parser.parse_args(args[:delimiter_idx])
+
+        if args_before_delimiter.gui:
+            winetricks_args = list(args[delimiter_idx + 1:])
+            args = args_before_delimiter
+        else:
+            args = parser.parse_args(args)
+    else:
+        args = parser.parse_args(args)
+
+    args.winetricks_command += winetricks_args
 
     # 'cli_error_handler' relies on this to know whether to use error dialog or
     # not
@@ -209,7 +228,10 @@ class RunWinetricksGUICommand(BaseCommand):
             steam_app=self.steam_app,
             use_steam_runtime=self.use_steam_runtime,
             legacy_steam_runtime_path=self.legacy_steam_runtime_path,
-            command=[str(self.winetricks_path), "--gui"],
+            command=(
+                [str(self.winetricks_path), "--gui"]
+                + self.cli_args.winetricks_command
+            ),
             use_bwrap=self.use_bwrap,
             start_wineserver=self.start_background_wineserver,
             cwd=cwd
