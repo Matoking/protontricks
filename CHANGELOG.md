@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+ - Add support for ARM64 Proton installations
  - Add desktop file associations for batch files and Internet shortcuts
  - Add support for passing Winetricks arguments after `--` when using the Protontricks GUI
 

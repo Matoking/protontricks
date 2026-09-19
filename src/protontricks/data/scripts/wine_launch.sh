@@ -167,7 +167,7 @@ if [[ -n "$PROTONTRICKS_INSIDE_STEAM_RUNTIME"
         export LD_LIBRARY_PATH="$PROTON_LD_LIBRARY_PATH"
         log_info "LD_LIBRARY_PATH set to $LD_LIBRARY_PATH"
     fi
-    exec "$PROTON_DIST_PATH"/bin/@@name@@ "$@" || :
+    exec "${PROTON_BIN_PATH:-$PROTON_DIST_PATH/bin}"/@@name@@ "$@" || :
 elif [[ "$PROTONTRICKS_STEAM_RUNTIME" = "bwrap" ]]; then
     # Command is being executed outside Steam Runtime and bwrap is enabled.
     # Use "pressure-vessel-launch" to launch it in the existing container.
