@@ -204,6 +204,31 @@ class SteamApp(object):
         except StopIteration:
             return None
 
+    @property
+    def proton_bin_path(self):
+        """
+        Return path to the directory containing Proton's Wine executables.
+        None is returned if this isn't a Proton installation or the directory
+        doesn't exist.
+
+        The directory is named either 'bin-arm64' or 'bin'.
+
+        'bin-arm64' is used by ARM64 Proton releases, which might not ship
+        'bin' at all.
+        'bin' is used by every other Proton release.
+        """
+        dist_path = self.proton_dist_path
+        if not dist_path:
+            return None
+
+        try:
+            return next(
+                (dist_path / name) for name in ("bin-arm64", "bin")
+                if (dist_path / name).is_dir()
+            )
+        except StopIteration:
+            return None
+
     @classmethod
     def from_appmanifest(cls, path, steam_lib_paths, steam_path=None):
         """
@@ -686,25 +711,61 @@ def get_appinfo_sections(path):
     return list(iter_appinfo_sections(path))
 
 
-def get_tool_appid(compat_tool_name, steam_play_manifest):
+def _get_compat_tools_section(section):
+    """
+    Return the 'compat_tools' mapping in an appinfo.vdf section, or None if
+    the section doesn't declare any compatibility tools
+    """
+    try:
+        compat_tools = section["appinfo"]["extended"]["compat_tools"]
+    except (KeyError, TypeError):
+        return None
+
+    return compat_tools if isinstance(compat_tools, dict) else None
+
+
+def get_tool_appid(compat_tool_name, steam_play_manifests):
     """
     Get the App ID for compatibility tool by the compat tool name
     used in STEAM_DIR/config/config.vdf
+
+    Compatibility tools are declared across multiple Steam Play manifests.
+    Besides the main manifest, Valve ships separate manifests for eg. ARM64
+    compatibility tools, so all of them are searched.
     """
-    compat_tools = steam_play_manifest["appinfo"]["extended"]["compat_tools"]
+    entries = []
 
-    for default_name, entry in compat_tools.items():
-        # A single compatibility tool may have multiple valid names
-        # eg. "proton_316" and "proton_316_beta"
-        aliases = [default_name]
+    for manifest in steam_play_manifests:
+        compat_tools = _get_compat_tools_section(manifest)
+        if not compat_tools:
+            continue
 
-        # Each compat tool entry can also contain an 'aliases' field
-        # with a different compat tool name
-        if "aliases" in entry:
-            aliases += entry["aliases"].split(",")
+        for default_name, entry in compat_tools.items():
+            # A single compatibility tool may have multiple valid names
+            # eg. "proton_316" and "proton_316_beta"
+            aliases = []
 
-        logger.debug("%s has compat tool aliases %s", default_name, aliases)
+            # Each compat tool entry can also contain an 'aliases' field
+            # with a different compat tool name
+            if "aliases" in entry:
+                aliases += entry["aliases"].split(",")
 
+            logger.debug(
+                "%s has compat tool aliases %s", default_name,
+                [default_name] + aliases
+            )
+
+            entries.append((default_name, aliases, entry))
+
+    # Prefer an exact match on the tool's own name before falling back to
+    # aliases. Aliases are not unique between manifests: for example,
+    # 'proton-experimental' is an alias for both the x86_64 and the ARM64
+    # Proton Experimental.
+    for default_name, _, entry in entries:
+        if compat_tool_name == default_name:
+            return entry["appid"]
+
+    for _, aliases, entry in entries:
         if compat_tool_name in aliases:
             return entry["appid"]
 
@@ -722,8 +783,8 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
     The compatibility tool *may* not be a Proton installation. This can be
     checked using `SteamApp.is_proton`.
     """
-    def _get_tool_app(compat_tool_name, steam_apps, steam_play_manifest):
-        tool_appid = get_tool_appid(compat_tool_name, steam_play_manifest)
+    def _get_tool_app(compat_tool_name, steam_apps, steam_play_manifests):
+        tool_appid = get_tool_appid(compat_tool_name, steam_play_manifests)
 
         if not tool_appid:
             return None
@@ -755,10 +816,23 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
     appinfo_sections = [
         section for section in iter_appinfo_sections(appinfo_path)
         if section["appinfo"]["appid"] in (STEAM_PLAY_MANIFESTS_APPID, appid)
+        or _get_compat_tools_section(section)
     ]
     steam_play_manifest = next(
         section for section in appinfo_sections
         if section["appinfo"]["appid"] == STEAM_PLAY_MANIFESTS_APPID
+    )
+
+    # Compatibility tools are spread across several manifests. Keep the
+    # main manifest first so that its names win any ambiguity, preserving
+    # the behavior for setups that only use the main manifest.
+    steam_play_manifests = [steam_play_manifest] + sorted(
+        (
+            section for section in appinfo_sections
+            if _get_compat_tools_section(section)
+            and section["appinfo"]["appid"] != STEAM_PLAY_MANIFESTS_APPID
+        ),
+        key=lambda section: section["appinfo"]["appid"]
     )
 
     try:
@@ -912,7 +986,7 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
         tool_app = _get_tool_app(
             compat_tool_name=compat_tool_name,
             steam_apps=steam_apps,
-            steam_play_manifest=steam_play_manifest
+            steam_play_manifests=steam_play_manifests
         )
 
         if tool_app:

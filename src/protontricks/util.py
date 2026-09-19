@@ -28,7 +28,8 @@ SUPPORTED_STEAM_RUNTIMES = [
     # New names
     "Steam Linux Runtime 2.0 (soldier)",
     "Steam Linux Runtime 3.0 (sniper)",
-    "Steam Linux Runtime 4.0"
+    "Steam Linux Runtime 4.0",
+    "Steam Linux Runtime 4.0 - Arm64"
 ]
 
 OS_RELEASE_PATHS = [
@@ -207,7 +208,7 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     using Steam Runtime and Proton's own libraries instead of the system
     libraries
     """
-    binaries = list((proton_app.proton_dist_path / "bin").iterdir())
+    binaries = list(proton_app.proton_bin_path.iterdir())
 
     # Create the base directory containing files for every Proton installation
     base_path = get_cache_dir() / "proton"
@@ -516,7 +517,7 @@ def run_command(
     ])
 
     wine_environ["PATH"] = "".join([
-        str(proton_app.proton_dist_path / "bin"), os.pathsep,
+        str(proton_app.proton_bin_path), os.pathsep,
         wine_environ["PATH"]
     ])
 
@@ -524,6 +525,7 @@ def run_command(
     # Wine helper scripts, but other scripts could use it as well.
     wine_environ["PROTON_PATH"] = str(proton_app.install_path)
     wine_environ["PROTON_DIST_PATH"] = str(proton_app.proton_dist_path)
+    wine_environ["PROTON_BIN_PATH"] = str(proton_app.proton_bin_path)
 
     wine_environ["STEAM_APP_PATH"] = str(steam_app.install_path)
     wine_environ["STEAM_APPID"] = str(steam_app.appid)
@@ -612,7 +614,7 @@ def run_command(
         )
         wine_environ["WINE"] = str(wine_bin_dir / "wine")
         wine_environ["WINE_BIN"] = str(
-            proton_app.proton_dist_path / "bin" / "wine"
+            proton_app.proton_bin_path / "wine"
         )
 
     wine_environ["WINELOADER"] = wine_environ["WINE"]
@@ -624,7 +626,7 @@ def run_command(
         )
         wine_environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
         wine_environ["WINESERVER_BIN"] = str(
-            proton_app.proton_dist_path / "bin" / "wineserver"
+            proton_app.proton_bin_path / "wineserver"
         )
 
     temp_dir = Path(tempfile.mkdtemp(prefix="protontricks-"))
