@@ -384,6 +384,110 @@ class TestFindSteamCompatToolApp:
         # version for this game
         assert proton_app.name == "Proton 6.66"
 
+    @pytest.mark.usefixtures("arm64")
+    def test_find_arm64_compat_tool(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that the compatibility tool with the '-arm64' suffix is
+        preferred on ARM64
+        """
+        proton = proton_factory(
+            name="Proton 11.0", appid=100, compat_tool_name="proton-stable"
+        )
+        arm64_proton = proton_factory(
+            name="Proton 11.0 (ARM64)", appid=200,
+            compat_tool_name="proton-stable-arm64"
+        )
+        steam_app_factory(
+            name="Fake game", appid=10, compat_tool_name="proton-stable"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[proton, arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 11.0 (ARM64)"
+
+    @pytest.mark.usefixtures("arm64")
+    def test_find_arm64_compat_tool_differing_name(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that the corresponding ARM64 compatibility tool is found even
+        when its name is not derived from the configured name
+        """
+        proton = proton_factory(
+            name="Proton Experimental", appid=100,
+            compat_tool_name="proton_experimental",
+            aliases=["proton-experimental"], is_default_proton=False
+        )
+        arm64_proton = proton_factory(
+            name="Proton Experimental (ARM64)", appid=200,
+            compat_tool_name="proton-experimental-arm64",
+            aliases=["proton-experimental"], is_default_proton=False
+        )
+        steam_app_factory(
+            name="Fake game", appid=10,
+            compat_tool_name="proton_experimental"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[proton, arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton Experimental (ARM64)"
+
+    @pytest.mark.usefixtures("arm64")
+    def test_find_arm64_compat_tool_already_suffixed(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that a compatibility tool name that already has the '-arm64'
+        suffix is resolved as-is
+        """
+        arm64_proton = proton_factory(
+            name="Proton 11.0 (ARM64)", appid=200,
+            compat_tool_name="proton-stable-arm64"
+        )
+        steam_app_factory(
+            name="Fake game", appid=10,
+            compat_tool_name="proton-stable-arm64"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 11.0 (ARM64)"
+
+    def test_find_compat_tool_not_arm64(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that the '-arm64' suffix is not used outside of ARM64
+        """
+        proton = proton_factory(
+            name="Proton 11.0", appid=100, compat_tool_name="proton-stable"
+        )
+        arm64_proton = proton_factory(
+            name="Proton 11.0 (ARM64)", appid=200,
+            compat_tool_name="proton-stable-arm64"
+        )
+        steam_app_factory(
+            name="Fake game", appid=10, compat_tool_name="proton-stable"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[proton, arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 11.0"
+
     @pytest.mark.usefixtures("info_logging")
     def test_find_legacy_tool_mapping_global(
             self, steam_dir, steam_config_path, proton_factory,

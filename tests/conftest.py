@@ -946,6 +946,16 @@ def steam_deck(monkeypatch, tmp_path):
 
 
 @pytest.fixture(scope="function")
+def arm64(monkeypatch):
+    """
+    Mock an ARM64 environment
+    """
+    monkeypatch.setattr(
+        "protontricks.util.platform.machine", lambda: "aarch64"
+    )
+
+
+@pytest.fixture(scope="function")
 def steam_frame(monkeypatch, tmp_path):
     """
     Mock a Steam Frame environment

@@ -3,6 +3,7 @@ import itertools
 import locale
 import logging
 import os
+import platform
 import shlex
 import shutil
 import stat
@@ -12,7 +13,7 @@ from subprocess import DEVNULL, PIPE, Popen, TimeoutExpired, check_output, run
 
 __all__ = (
     "SUPPORTED_STEAM_RUNTIMES", "OS_RELEASE_PATHS", "lower_dict",
-    "is_steam_deck", "is_steam_frame", "is_steamos",
+    "is_arm64", "is_steam_deck", "is_steam_frame", "is_steamos",
     "get_legacy_runtime_library_paths", "get_host_library_paths",
     "RUNTIME_ROOT_GLOB_PATTERNS", "get_runtime_library_paths",
     "WINE_SCRIPT_TEMPLATE", "get_cache_dir", "create_wine_bin_dir",
@@ -69,6 +70,13 @@ def _get_os_release_lines():
     # VARIANT_ID is quoted on Steam Frame, but unquoted on Steam Deck.
     lines = [line.replace('"', '').replace("'", '') for line in lines]
     return lines
+
+
+def is_arm64():
+    """
+    Check if we're running on an ARM64 platform
+    """
+    return platform.machine() == "aarch64"
 
 
 def is_steam_deck():
