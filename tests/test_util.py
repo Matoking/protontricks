@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from protontricks.util import (create_wine_bin_dir, is_steam_deck, is_steamos,
+from protontricks.util import (create_wine_bin_dir, is_steam_deck,
+                               is_steam_frame, is_steamos,
                                lower_dict, run_command)
 
 
@@ -389,6 +390,19 @@ class TestIsSteamOSOrDeck:
         Test that Steam Deck environment is detected correctly
         """
         assert is_steam_deck()
+
+    def test_is_not_steam_frame(self):
+        """
+        Test that non-Steam Frame environment is detected correctly
+        """
+        assert not is_steam_frame()
+
+    @pytest.mark.usefixtures("steam_frame")
+    def test_is_steam_frame(self):
+        """
+        Test that Steam Frame environment is detected correctly
+        """
+        assert is_steam_frame()
 
     def test_not_steamos(self):
         """

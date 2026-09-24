@@ -945,6 +945,28 @@ def steam_deck(monkeypatch, tmp_path):
     )
 
 
+@pytest.fixture(scope="function")
+def steam_frame(monkeypatch, tmp_path):
+    """
+    Mock a Steam Frame environment
+    """
+    os_release_path = tmp_path / "etc" / "os-release"
+    os_release_path.parent.mkdir(parents=True)
+
+    os_release_path.write_text("\n".join([
+        'NAME="SteamOS"',
+        "ID=steamos",
+        "ID_LIKE=arch",
+        "VARIANT_ID=\"vr\""
+    ]))
+
+    monkeypatch.setattr(
+        "protontricks.util.OS_RELEASE_PATHS",
+        [str(tmp_path / "etc" / "os-release")]
+    )
+
+
+
 def _run_cli(monkeypatch, capsys, cli_func):
     """
     Run protontricks with the given arguments and environment variables
