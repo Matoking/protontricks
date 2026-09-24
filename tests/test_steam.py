@@ -435,12 +435,13 @@ class TestFindSteamCompatToolApp:
         )
         assert proton_app.name == "Proton B"
 
-    @pytest.mark.usefixtures("steam_deck", "info_logging")
-    def test_find_steam_deck_profile(
-            self, steam_app_factory, proton_factory, appinfo_factory,
-            default_proton, steam_config_path, steam_dir):
+    @pytest.mark.usefixtures("info_logging")
+    @pytest.mark.parametrize("device", ["steam_deck", "steam_frame"])
+    def test_find_device_specific_profile(
+            self, request, steam_app_factory, proton_factory, appinfo_factory,
+            default_proton, steam_config_path, steam_dir, device):
         """
-        Create a Steam Deck compatibility profile for a game and ensure
+        Create a device-specific compatibility profile for a game and ensure
         that it is used if `config.vdf` doesn't contain any configuration
         """
         custom_proton = proton_factory(
@@ -449,12 +450,17 @@ class TestFindSteamCompatToolApp:
 
         steam_app_factory(name="Fake game", appid=10)
 
-        # Add Steam Deck compatibility profile
+        if device == "steam_deck":
+            request.getfixturevalue("steam_deck")
+        elif device == "steam_frame":
+            request.getfixturevalue("steam_frame")
+
+        # Add device-specific compatibility profile
         appinfo_factory(
             appid=10,
             appinfo={
                 "common": {
-                    "steam_deck_compatibility": {
+                    f"{device}_compatibility": {
                         "configuration": {
                             "recommended_runtime": "proton_7_77"
                         }

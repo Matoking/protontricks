@@ -12,7 +12,7 @@ from pathlib import Path
 import vdf
 
 from ._vdf import binary_loads as vendored_binary_loads
-from .util import is_steam_deck, lower_dict
+from .util import is_steam_deck, is_steam_frame, lower_dict
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_installations",
@@ -887,24 +887,34 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
         )
         potential_names.append(tool_name)
 
-    # Steam Deck compatibility profile has the 2nd highest priority
-    if app_section and is_steam_deck():
-        logger.info(
-            "We're on a Steam Deck, checking if compatibility profile is "
-            "available for the app"
-        )
+    # Steam Deck/Frame compatibility profile has the 2nd highest priority
+    if app_section:
+        device_compatibility_key = None
+        if is_steam_deck():
+            device_compatibility_key = "steam_deck_compatibility"
+            logger.info(
+                "We're on a Steam Deck, checking if compatibility profile is "
+                "available for the app"
+            )
+        elif is_steam_frame():
+            device_compatibility_key = "steam_frame_compatibility"
+            logger.info(
+                "We're on a Steam Frame, checking if compatibility profile is "
+                "available for the app"
+            )
+
         recommended_runtime = (
             app_section["appinfo"]
             .get("common", {})
-            .get("steam_deck_compatibility", {})
+            .get(device_compatibility_key, {})
             .get("configuration", {})
             .get("recommended_runtime", None)
         )
 
         if recommended_runtime not in (None, "native"):
             logger.info(
-                "App has Steam Deck compatibility profile with Proton "
-                "version: %s",
+                "App has Valve device-specific compatibility profile "
+                "with Proton version: %s",
                 recommended_runtime
             )
             potential_names.append(recommended_runtime)
