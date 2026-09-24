@@ -12,7 +12,7 @@ from pathlib import Path
 import vdf
 
 from ._vdf import binary_loads as vendored_binary_loads
-from .util import is_steam_deck, is_steam_frame, lower_dict
+from .util import is_arm64, is_steam_deck, is_steam_frame, lower_dict
 
 __all__ = (
     "COMMON_STEAM_DIRS", "SteamApp", "find_steam_installations",
@@ -724,6 +724,54 @@ def _get_compat_tools_section(section):
     return compat_tools if isinstance(compat_tools, dict) else None
 
 
+def _iter_compat_tool_entries(steam_play_manifests):
+    """
+    Iterate the compatibility tools declared in the given Steam Play
+    manifests, yielding the tool's own name, every name it is known by, and
+    the entry itself
+    """
+    for manifest in steam_play_manifests:
+        compat_tools = _get_compat_tools_section(manifest)
+        if not compat_tools:
+            continue
+
+        for default_name, entry in compat_tools.items():
+            # A single compatibility tool may have multiple valid names
+            # eg. "proton_316" and "proton_316_beta". Each compat tool entry
+            # can also contain an 'aliases' field with a different compat
+            # tool name
+            names = [default_name]
+            if "aliases" in entry:
+                names += entry["aliases"].split(",")
+
+            yield default_name, names, entry
+
+
+def _get_arm64_tool_name(compat_tool_name, steam_play_manifests):
+    """
+    Get the name of the ARM64 compatibility tool corresponding to the given
+    compatibility tool name, or None if there is none
+
+    Corresponding tools are not named consistently between manifests. The
+    ARM64 counterpart of 'proton_experimental' is
+    'proton-experimental-arm64', and the two are only connected by the
+    'proton-experimental' alias they have in common.
+    """
+    entries = list(_iter_compat_tool_entries(steam_play_manifests))
+
+    names = {compat_tool_name}
+    for _, tool_names, _entry in entries:
+        if compat_tool_name in tool_names:
+            names = set(tool_names)
+            break
+
+    for default_name, tool_names, _entry in entries:
+        if default_name.endswith("-arm64") and names & set(tool_names):
+            return default_name
+
+    return None
+
+
 def get_tool_appid(compat_tool_name, steam_play_manifests):
     """
     Get the App ID for compatibility tool by the compat tool name
@@ -733,40 +781,21 @@ def get_tool_appid(compat_tool_name, steam_play_manifests):
     Besides the main manifest, Valve ships separate manifests for eg. ARM64
     compatibility tools, so all of them are searched.
     """
-    entries = []
+    entries = list(_iter_compat_tool_entries(steam_play_manifests))
 
-    for manifest in steam_play_manifests:
-        compat_tools = _get_compat_tools_section(manifest)
-        if not compat_tools:
-            continue
-
-        for default_name, entry in compat_tools.items():
-            # A single compatibility tool may have multiple valid names
-            # eg. "proton_316" and "proton_316_beta"
-            aliases = []
-
-            # Each compat tool entry can also contain an 'aliases' field
-            # with a different compat tool name
-            if "aliases" in entry:
-                aliases += entry["aliases"].split(",")
-
-            logger.debug(
-                "%s has compat tool aliases %s", default_name,
-                [default_name] + aliases
-            )
-
-            entries.append((default_name, aliases, entry))
+    for default_name, names, _entry in entries:
+        logger.debug("%s has compat tool aliases %s", default_name, names)
 
     # Prefer an exact match on the tool's own name before falling back to
     # aliases. Aliases are not unique between manifests: for example,
     # 'proton-experimental' is an alias for both the x86_64 and the ARM64
     # Proton Experimental.
-    for default_name, _, entry in entries:
+    for default_name, _names, entry in entries:
         if compat_tool_name == default_name:
             return entry["appid"]
 
-    for _, aliases, entry in entries:
-        if compat_tool_name in aliases:
+    for _default_name, names, entry in entries:
+        if compat_tool_name in names:
             return entry["appid"]
 
     return None
@@ -970,6 +999,30 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
             "Using Proton Experimental or stable Proton as fallback."
         )
         compat_tool_names = ["proton-experimental", "proton-stable"]
+
+    # Steam looks for a compatibility tool with the '-arm64' suffix first on
+    # ARM64 and falls back to the original name if there is none.
+    if is_arm64():
+        arm64_names = []
+
+        for compat_tool_name in compat_tool_names:
+            candidates = []
+
+            if not compat_tool_name.endswith("-arm64"):
+                candidates.append(f"{compat_tool_name}-arm64")
+
+            # The ARM64 tool is not always named after the configured tool,
+            # so also look for the tool it corresponds to
+            candidates.append(
+                _get_arm64_tool_name(compat_tool_name, steam_play_manifests)
+            )
+            candidates.append(compat_tool_name)
+
+            for candidate in candidates:
+                if candidate and candidate not in arm64_names:
+                    arm64_names.append(candidate)
+
+        compat_tool_names = arm64_names
 
     # We've got a compatibility tool name,
     # now there are two possible ways to find the installation
