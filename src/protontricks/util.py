@@ -98,7 +98,6 @@ def is_steam_frame():
     """
     lines = _get_os_release_lines()
 
-    # TODO: No idea if 'steamframe' is the actual variant ID
     if "ID=steamos" in lines and "VARIANT_ID=vr" in lines:
         logger.info("The current device is a Steam Frame")
         return True
