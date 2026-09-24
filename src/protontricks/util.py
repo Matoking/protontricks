@@ -55,19 +55,30 @@ def lower_dict(d):
     return {k.lower(): _lower_value(v) for k, v in d.items()}
 
 
-def is_steam_deck():
-    """
-    Check if we're running on a Steam Deck
-    """
+def _get_os_release_lines():
+    lines = []
+
     for path in OS_RELEASE_PATHS:
         try:
             lines = Path(path).read_text("utf-8").split("\n")
         except FileNotFoundError:
             continue
 
-        if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
-            logger.info("The current device is a Steam Deck")
-            return True
+    # Remove quotes from values, just in case.
+    # VARIANT_ID is quoted on Steam Frame, but unquoted on Steam Deck.
+    lines = [line.replace('"', '').replace("'", '') for line in lines]
+    return lines
+
+
+def is_steam_deck():
+    """
+    Check if we're running on a Steam Deck
+    """
+    lines = _get_os_release_lines()
+
+    if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
+        logger.info("The current device is a Steam Deck")
+        return True
 
     return False
 
@@ -76,16 +87,12 @@ def is_steamos():
     """
     Check if we're running on SteamOS 3 (or newer)
     """
-    for path in OS_RELEASE_PATHS:
-        try:
-            lines = Path(path).read_text("utf-8").split("\n")
-        except FileNotFoundError:
-            continue
+    lines = _get_os_release_lines()
 
-        # This will not detect SteamOS 2 or older which are based on Debian
-        if "ID=steamos" in lines and "ID_LIKE=arch" in lines:
-            logger.info("The current device is running on SteamOS 3+")
-            return True
+    # This will not detect SteamOS 2 or older which are based on Debian
+    if "ID=steamos" in lines and "ID_LIKE=arch" in lines:
+        logger.info("The current device is running on SteamOS 3+")
+        return True
 
     return False
 
