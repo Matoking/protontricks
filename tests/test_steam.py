@@ -12,7 +12,8 @@ from protontricks.steam import (SteamApp, _get_steamapps_subdirs,
                                 find_steam_installations, find_steam_path,
                                 get_custom_compat_tool_installations,
                                 get_custom_windows_shortcuts, get_steam_apps,
-                                get_steam_lib_paths, iter_appinfo_sections)
+                                get_steam_lib_paths, get_tool_appid,
+                                iter_appinfo_sections)
 
 
 class TestSteamApp:
@@ -178,6 +179,29 @@ class TestSteamApp:
         shutil.rmtree(str(default_proton.install_path / "files"))
         assert default_proton.proton_dist_path is None
 
+    def test_steam_app_proton_bin_path(self, default_proton):
+        """
+        Check that the correct directory containing Proton's Wine executables
+        is found using the `SteamApp.proton_bin_path` property
+        """
+        dist_path = default_proton.proton_dist_path
+
+        # 'bin' exists and is found correctly
+        assert default_proton.proton_bin_path == dist_path / "bin"
+
+        # ARM64 Proton ships 'bin-arm64' instead, which is favored over 'bin'
+        (dist_path / "bin-arm64").mkdir()
+        (dist_path / "bin-arm64" / "wine").touch()
+        assert default_proton.proton_bin_path == dist_path / "bin-arm64"
+
+        # Official Valve ARM64 builds ship 'bin-arm64' only
+        shutil.rmtree(str(dist_path / "bin"))
+        assert default_proton.proton_bin_path == dist_path / "bin-arm64"
+
+        # If neither exists, None is returned
+        shutil.rmtree(str(dist_path / "bin-arm64"))
+        assert default_proton.proton_bin_path is None
+
     def test_steam_app_userconfig_name(self, steam_app_factory):
         """
         Try creating a SteamApp from an older version of the app manifest
@@ -257,6 +281,84 @@ class TestSteamApp:
 
 
 
+def _manifest(appid, compat_tools):
+    return {"appinfo": {"appid": appid, "extended": {
+        "compat_tools": compat_tools
+    }}}
+
+
+class TestGetToolAppid:
+    """
+    Compatibility tools are declared across several Steam Play manifests.
+    Valve ships ARM64 compatibility tools in a manifest of their own.
+    """
+    MAIN = _manifest(891390, {
+        "proton_experimental": {
+            "appid": 1493710, "aliases": "proton-experimental"
+        },
+        "proton_11": {"appid": 4628710, "aliases": "proton-stable"},
+    })
+    ARM64 = _manifest(3043620, {
+        "proton-experimental-arm64": {
+            "appid": 4427310, "aliases": "proton-experimental"
+        },
+        "proton_11-arm64": {
+            "appid": 4628740, "aliases": "proton-stable-arm64,proton-stable"
+        },
+    })
+
+    def test_tool_from_secondary_manifest(self):
+        """
+        An ARM64 compat tool is found even though it is declared in a
+        manifest other than the main one
+        """
+        assert get_tool_appid(
+            "proton-experimental-arm64", [self.MAIN, self.ARM64]
+        ) == 4427310
+        assert get_tool_appid(
+            "proton_11-arm64", [self.MAIN, self.ARM64]
+        ) == 4628740
+
+    def test_ambiguous_alias_resolves_to_main_manifest(self):
+        """
+        'proton-stable' is an alias in both manifests, while
+        'proton-stable-arm64' is an alias only in the ARM64 manifest
+        """
+        # Ambiguous alias resolves to the main manifest
+        assert get_tool_appid(
+            "proton-stable", [self.MAIN, self.ARM64]
+        ) == 4628710
+        # Unambiguous alias resolves to the ARM64 manifest
+        assert get_tool_appid(
+            "proton-stable-arm64", [self.MAIN, self.ARM64]
+        ) == 4628740
+
+    def test_exact_name_preferred_over_alias(self):
+        """
+        A tool's own name takes precedence over the same name used as an
+        alias by a tool in an earlier manifest
+        """
+        main = _manifest(891390, {
+            "some_tool": {"appid": 100, "aliases": "shared-name"}
+        })
+        other = _manifest(3043620, {
+            "shared-name": {"appid": 200, "aliases": ""}
+        })
+
+        assert get_tool_appid("shared-name", [main, other]) == 200
+
+    def test_main_manifest_unaffected(self):
+        """
+        Tool names in the main manifest keep resolving as before
+        """
+        for name in ("proton_experimental", "proton-experimental"):
+            assert get_tool_appid(name, [self.MAIN, self.ARM64]) == 1493710
+
+    def test_unknown_tool(self):
+        assert get_tool_appid("does-not-exist", [self.MAIN, self.ARM64]) \
+            is None
+
+
 class TestFindSteamCompatToolApp:
     def test_find_steam_specific_app_proton(
             self, steam_app_factory, steam_dir, default_proton,
@@ -281,6 +383,110 @@ class TestFindSteamCompatToolApp:
         # Proton 4.20 is the global default, but Proton 6.66 is the selected
         # version for this game
         assert proton_app.name == "Proton 6.66"
+
+    @pytest.mark.usefixtures("arm64")
+    def test_find_arm64_compat_tool(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that the compatibility tool with the '-arm64' suffix is
+        preferred on ARM64
+        """
+        proton = proton_factory(
+            name="Proton 11.0", appid=100, compat_tool_name="proton-stable"
+        )
+        arm64_proton = proton_factory(
+            name="Proton 11.0 (ARM64)", appid=200,
+            compat_tool_name="proton-stable-arm64"
+        )
+        steam_app_factory(
+            name="Fake game", appid=10, compat_tool_name="proton-stable"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[proton, arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 11.0 (ARM64)"
+
+    @pytest.mark.usefixtures("arm64")
+    def test_find_arm64_compat_tool_differing_name(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that the corresponding ARM64 compatibility tool is found even
+        when its name is not derived from the configured name
+        """
+        proton = proton_factory(
+            name="Proton Experimental", appid=100,
+            compat_tool_name="proton_experimental",
+            aliases=["proton-experimental"], is_default_proton=False
+        )
+        arm64_proton = proton_factory(
+            name="Proton Experimental (ARM64)", appid=200,
+            compat_tool_name="proton-experimental-arm64",
+            aliases=["proton-experimental"], is_default_proton=False
+        )
+        steam_app_factory(
+            name="Fake game", appid=10,
+            compat_tool_name="proton_experimental"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[proton, arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton Experimental (ARM64)"
+
+    @pytest.mark.usefixtures("arm64")
+    def test_find_arm64_compat_tool_already_suffixed(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that a compatibility tool name that already has the '-arm64'
+        suffix is resolved as-is
+        """
+        arm64_proton = proton_factory(
+            name="Proton 11.0 (ARM64)", appid=200,
+            compat_tool_name="proton-stable-arm64"
+        )
+        steam_app_factory(
+            name="Fake game", appid=10,
+            compat_tool_name="proton-stable-arm64"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 11.0 (ARM64)"
+
+    def test_find_compat_tool_not_arm64(
+            self, steam_app_factory, steam_dir, proton_factory):
+        """
+        Check that the '-arm64' suffix is not used outside of ARM64
+        """
+        proton = proton_factory(
+            name="Proton 11.0", appid=100, compat_tool_name="proton-stable"
+        )
+        arm64_proton = proton_factory(
+            name="Proton 11.0 (ARM64)", appid=200,
+            compat_tool_name="proton-stable-arm64"
+        )
+        steam_app_factory(
+            name="Fake game", appid=10, compat_tool_name="proton-stable"
+        )
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[proton, arm64_proton],
+            appid=10
+        )
+
+        assert proton_app.name == "Proton 11.0"
 
     @pytest.mark.usefixtures("info_logging")
     def test_find_legacy_tool_mapping_global(
@@ -333,12 +539,13 @@ class TestFindSteamCompatToolApp:
         )
         assert proton_app.name == "Proton B"
 
-    @pytest.mark.usefixtures("steam_deck", "info_logging")
-    def test_find_steam_deck_profile(
-            self, steam_app_factory, proton_factory, appinfo_factory,
-            default_proton, steam_config_path, steam_dir):
+    @pytest.mark.usefixtures("info_logging")
+    @pytest.mark.parametrize("device", ["steam_deck", "steam_frame"])
+    def test_find_device_specific_profile(
+            self, request, steam_app_factory, proton_factory, appinfo_factory,
+            default_proton, steam_config_path, steam_dir, device):
         """
-        Create a Steam Deck compatibility profile for a game and ensure
+        Create a device-specific compatibility profile for a game and ensure
         that it is used if `config.vdf` doesn't contain any configuration
         """
         custom_proton = proton_factory(
@@ -347,12 +554,17 @@ class TestFindSteamCompatToolApp:
 
         steam_app_factory(name="Fake game", appid=10)
 
-        # Add Steam Deck compatibility profile
+        if device == "steam_deck":
+            request.getfixturevalue("steam_deck")
+        elif device == "steam_frame":
+            request.getfixturevalue("steam_frame")
+
+        # Add device-specific compatibility profile
         appinfo_factory(
             appid=10,
             appinfo={
                 "common": {
-                    "steam_deck_compatibility": {
+                    f"{device}_compatibility": {
                         "configuration": {
                             "recommended_runtime": "proton_7_77"
                         }

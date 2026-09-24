@@ -3,6 +3,7 @@ import itertools
 import locale
 import logging
 import os
+import platform
 import shlex
 import shutil
 import stat
@@ -12,10 +13,11 @@ from subprocess import DEVNULL, PIPE, Popen, TimeoutExpired, check_output, run
 
 __all__ = (
     "SUPPORTED_STEAM_RUNTIMES", "OS_RELEASE_PATHS", "lower_dict",
-    "is_steam_deck", "is_steamos", "get_legacy_runtime_library_paths",
-    "get_host_library_paths", "RUNTIME_ROOT_GLOB_PATTERNS",
-    "get_runtime_library_paths", "WINE_SCRIPT_TEMPLATE",
-    "get_cache_dir", "create_wine_bin_dir", "run_command"
+    "is_arm64", "is_steam_deck", "is_steam_frame", "is_steamos",
+    "get_legacy_runtime_library_paths", "get_host_library_paths",
+    "RUNTIME_ROOT_GLOB_PATTERNS", "get_runtime_library_paths",
+    "WINE_SCRIPT_TEMPLATE", "get_cache_dir", "create_wine_bin_dir",
+    "run_command"
 )
 
 logger = logging.getLogger("protontricks")
@@ -28,7 +30,8 @@ SUPPORTED_STEAM_RUNTIMES = [
     # New names
     "Steam Linux Runtime 2.0 (soldier)",
     "Steam Linux Runtime 3.0 (sniper)",
-    "Steam Linux Runtime 4.0"
+    "Steam Linux Runtime 4.0",
+    "Steam Linux Runtime 4.0 - Arm64"
 ]
 
 OS_RELEASE_PATHS = [
@@ -54,19 +57,50 @@ def lower_dict(d):
     return {k.lower(): _lower_value(v) for k, v in d.items()}
 
 
-def is_steam_deck():
-    """
-    Check if we're running on a Steam Deck
-    """
+def _get_os_release_lines():
+    lines = []
+
     for path in OS_RELEASE_PATHS:
         try:
             lines = Path(path).read_text("utf-8").split("\n")
         except FileNotFoundError:
             continue
 
-        if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
-            logger.info("The current device is a Steam Deck")
-            return True
+    # Remove quotes from values, just in case.
+    # VARIANT_ID is quoted on Steam Frame, but unquoted on Steam Deck.
+    lines = [line.replace('"', '').replace("'", '') for line in lines]
+    return lines
+
+
+def is_arm64():
+    """
+    Check if we're running on an ARM64 platform
+    """
+    return platform.machine() == "aarch64"
+
+
+def is_steam_deck():
+    """
+    Check if we're running on a Steam Deck
+    """
+    lines = _get_os_release_lines()
+
+    if "ID=steamos" in lines and "VARIANT_ID=steamdeck" in lines:
+        logger.info("The current device is a Steam Deck")
+        return True
+
+    return False
+
+
+def is_steam_frame():
+    """
+    Check if we're running on a Steam Frame
+    """
+    lines = _get_os_release_lines()
+
+    if "ID=steamos" in lines and "VARIANT_ID=vr" in lines:
+        logger.info("The current device is a Steam Frame")
+        return True
 
     return False
 
@@ -75,16 +109,12 @@ def is_steamos():
     """
     Check if we're running on SteamOS 3 (or newer)
     """
-    for path in OS_RELEASE_PATHS:
-        try:
-            lines = Path(path).read_text("utf-8").split("\n")
-        except FileNotFoundError:
-            continue
+    lines = _get_os_release_lines()
 
-        # This will not detect SteamOS 2 or older which are based on Debian
-        if "ID=steamos" in lines and "ID_LIKE=arch" in lines:
-            logger.info("The current device is running on SteamOS 3+")
-            return True
+    # This will not detect SteamOS 2 or older which are based on Debian
+    if "ID=steamos" in lines and "ID_LIKE=arch" in lines:
+        logger.info("The current device is running on SteamOS 3+")
+        return True
 
     return False
 
@@ -207,7 +237,7 @@ def create_wine_bin_dir(proton_app, use_bwrap=True):
     using Steam Runtime and Proton's own libraries instead of the system
     libraries
     """
-    binaries = list((proton_app.proton_dist_path / "bin").iterdir())
+    binaries = list(proton_app.proton_bin_path.iterdir())
 
     # Create the base directory containing files for every Proton installation
     base_path = get_cache_dir() / "proton"
@@ -516,7 +546,7 @@ def run_command(
     ])
 
     wine_environ["PATH"] = "".join([
-        str(proton_app.proton_dist_path / "bin"), os.pathsep,
+        str(proton_app.proton_bin_path), os.pathsep,
         wine_environ["PATH"]
     ])
 
@@ -524,6 +554,7 @@ def run_command(
     # Wine helper scripts, but other scripts could use it as well.
     wine_environ["PROTON_PATH"] = str(proton_app.install_path)
     wine_environ["PROTON_DIST_PATH"] = str(proton_app.proton_dist_path)
+    wine_environ["PROTON_BIN_PATH"] = str(proton_app.proton_bin_path)
 
     wine_environ["STEAM_APP_PATH"] = str(steam_app.install_path)
     wine_environ["STEAM_APPID"] = str(steam_app.appid)
@@ -612,7 +643,7 @@ def run_command(
         )
         wine_environ["WINE"] = str(wine_bin_dir / "wine")
         wine_environ["WINE_BIN"] = str(
-            proton_app.proton_dist_path / "bin" / "wine"
+            proton_app.proton_bin_path / "wine"
         )
 
     wine_environ["WINELOADER"] = wine_environ["WINE"]
@@ -624,7 +655,7 @@ def run_command(
         )
         wine_environ["WINESERVER"] = str(wine_bin_dir / "wineserver")
         wine_environ["WINESERVER_BIN"] = str(
-            proton_app.proton_dist_path / "bin" / "wineserver"
+            proton_app.proton_bin_path / "wineserver"
         )
 
     temp_dir = Path(tempfile.mkdtemp(prefix="protontricks-"))
