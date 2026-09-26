@@ -160,12 +160,20 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
     # The order matters: all the existing directories are concatenated
     # together to form the LD_LIBRARY_PATH value.
     proton_library_paths = [
+        # Older Proton
         proton_app.proton_dist_path / "lib",
         proton_app.proton_dist_path / "lib64",
+
+        # Newer Proton
+        proton_app.proton_dist_path / "lib/x86_64-linux-gnu",
+        proton_app.proton_dist_path / "lib/i386-linux-gnu",
     ]
     proton_library_paths = [
         str(path) for path in proton_library_paths if path.is_dir()
     ]
+
+    if use_bwrap:
+        return os.pathsep.join(proton_library_paths)
 
     runtime_root = find_runtime_app_root(proton_app.required_tool_app)
     runtime_library_paths = [

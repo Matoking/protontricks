@@ -401,3 +401,48 @@ class TestIsSteamOSOrDeck:
     @pytest.mark.usefixtures("steam_deck")
     def test_is_steamos(self):
         assert is_steamos()
+
+
+def test_get_runtime_library_paths(default_new_proton):
+    """
+    Test that `get_runtime_library_paths` returns the correct LD_LIBRARY_PATH
+    value using the correct order
+    """
+    runtime_root = \
+        default_new_proton.required_tool_app.install_path / "soldier/files"
+    proton_root = default_new_proton.install_path / "dist"
+
+    # Ensure only the 'aarch64-linux-gnu' library exists for the runtime and Proton;
+    # they should be only such directories present in LD_LIBRARY_PATH
+    shutil.rmtree(proton_root / "lib")
+    shutil.rmtree(runtime_root / "lib")
+
+    proton_dir = proton_root / "lib/x86_64-linux-gnu"
+    runtime_dir = runtime_root / "lib/x86_64-linux-gnu"
+
+    proton_dir.mkdir(parents=True)
+    runtime_dir.mkdir(parents=True)
+
+    # Retrieve bwrap values. Runtime related directories are omitted since
+    # Steam Runtime script will take care of them.
+    value = get_runtime_library_paths(default_new_proton, use_bwrap=True)
+    assert str(runtime_root) not in value
+
+    paths = value.split(":")
+    # x86-64 dir is included
+    assert str(proton_dir) in paths
+    assert str(runtime_dir) not in paths
+    assert str(proton_root / "lib/i386-linux-gnu") not in paths
+
+    value = get_runtime_library_paths(default_new_proton, use_bwrap=False)
+    paths = value.split(":")
+
+    # x86-64 dir is included for both
+    assert str(proton_dir) in paths
+    assert str(runtime_dir) in paths
+
+    assert paths.index(str(proton_dir)) < paths.index(str(runtime_dir))
+
+    # 'i386' is omitted due to the directory not existing
+    assert str(proton_root / "lib/i386-linux-gnu") not in paths
+    assert str(runtime_root / "lib/i386-linux-gnu") not in paths
