@@ -1008,6 +1008,7 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
         for compat_tool_name in compat_tool_names:
             candidates = []
 
+
             if not compat_tool_name.endswith("-arm64"):
                 candidates.append(f"{compat_tool_name}-arm64")
 
@@ -1022,7 +1023,12 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
                 if candidate and candidate not in arm64_names:
                     arm64_names.append(candidate)
 
-        compat_tool_names = arm64_names
+        # Sort the list so that '-arm64' suffixed tools are first and anything
+        # else comes afterward.
+        compat_tool_names = (
+            list(filter(lambda name: name.endswith("-arm64"), arm64_names))
+            + list(filter(lambda name: not name.endswith("-arm64"), arm64_names))
+        )
 
     # We've got a compatibility tool name,
     # now there are two possible ways to find the installation

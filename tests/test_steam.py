@@ -464,6 +464,43 @@ class TestFindSteamCompatToolApp:
 
         assert proton_app.name == "Proton 11.0 (ARM64)"
 
+    @pytest.mark.usefixtures("arm64")
+    def test_find_arm64_compat_tools_first(
+            self, steam_app_factory, steam_dir, proton_factory,
+            steam_config_path, caplog):
+        """
+        Ensure that all ARM64 compat tools are searched first
+        before attempting any x86-64 compatibility tools
+        """
+        proton_arm64 = proton_factory(
+            name="Proton 11.0 (ARM64)", appid=10,
+            compat_tool_name="proton-stable-arm64"
+        )
+        proton_experimental = proton_factory(
+            name="Proton Experimental", appid=20,
+            compat_tool_name="proton-experimental"
+        )
+
+        steam_app = steam_app_factory(name="Fake game", appid=30)
+
+        # Clear Steam configuration to remove any app Proton selections
+        steam_config_path.write_text("{}")
+
+        proton_app = find_steam_compat_tool_app(
+            steam_path=steam_dir,
+            steam_apps=[proton_experimental, proton_arm64],
+            # Non-existent Proton app to force
+            appid=30
+        )
+
+        # 'Experimental or stable Proton' fallback was used
+        assert next(
+            record for record in caplog.records
+            if "Using Proton Experimental or stable Proton" in record.message
+        )
+
+        assert proton_app.name == "Proton 11.0 (ARM64)"
+
     def test_find_compat_tool_not_arm64(
             self, steam_app_factory, steam_dir, proton_factory):
         """
