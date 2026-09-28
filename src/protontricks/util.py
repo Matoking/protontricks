@@ -195,6 +195,7 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
 
         # Newer Proton
         proton_app.proton_dist_path / "lib/x86_64-linux-gnu",
+        proton_app.proton_dist_path / "lib/aarch64-linux-gnu",
         proton_app.proton_dist_path / "lib/i386-linux-gnu",
     ]
     proton_library_paths = [
@@ -207,6 +208,7 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
     runtime_root = find_runtime_app_root(proton_app.required_tool_app)
     runtime_library_paths = [
         runtime_root / "lib/i386-linux-gnu",
+        runtime_root / "lib/aarch64-linux-gnu",
         runtime_root / "lib/x86_64-linux-gnu"
     ]
     runtime_library_paths = [
