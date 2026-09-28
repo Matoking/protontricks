@@ -157,20 +157,30 @@ def get_runtime_library_paths(proton_app, use_bwrap=True):
             f"Could not find Steam Runtime runtime root for {runtime_app.name}"
         )
 
-    if use_bwrap:
-        return "".join([
-            str(proton_app.proton_dist_path / "lib"), os.pathsep,
-            str(proton_app.proton_dist_path / "lib64"), os.pathsep
-        ])
+    # The order matters: all the existing directories are concatenated
+    # together to form the LD_LIBRARY_PATH value.
+    proton_library_paths = [
+        proton_app.proton_dist_path / "lib",
+        proton_app.proton_dist_path / "lib64",
+    ]
+    proton_library_paths = [
+        str(path) for path in proton_library_paths if path.is_dir()
+    ]
 
     runtime_root = find_runtime_app_root(proton_app.required_tool_app)
-    return "".join([
-        str(proton_app.proton_dist_path / "lib"), os.pathsep,
-        str(proton_app.proton_dist_path / "lib64"), os.pathsep,
-        get_host_library_paths(), os.pathsep,
-        str(runtime_root / "lib" / "i386-linux-gnu"), os.pathsep,
-        str(runtime_root / "lib" / "x86_64-linux-gnu")
-    ])
+    runtime_library_paths = [
+        runtime_root / "lib/i386-linux-gnu",
+        runtime_root / "lib/x86_64-linux-gnu"
+    ]
+    runtime_library_paths = [
+        str(path) for path in runtime_library_paths if path.is_dir()
+    ]
+
+    return os.pathsep.join(
+        proton_library_paths
+        + [get_host_library_paths()]
+        + runtime_library_paths
+    )
 
 
 WINE_SCRIPT_TEMPLATE = importlib.resources.read_text(

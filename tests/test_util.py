@@ -1,10 +1,12 @@
+import shutil
 import stat
 import textwrap
 from pathlib import Path
 
 import pytest
 
-from protontricks.util import (create_wine_bin_dir, is_steam_deck, is_steamos,
+from protontricks.util import (create_wine_bin_dir, get_runtime_library_paths,
+                               is_steam_deck, is_steamos,
                                lower_dict, run_command)
 
 

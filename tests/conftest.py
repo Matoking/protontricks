@@ -592,6 +592,8 @@ def proton_factory(
         (install_path / "dist" / "bin").mkdir(parents=True)
         (install_path / "dist" / "bin" / "wine").touch()
         (install_path / "dist" / "bin" / "wineserver").touch()
+        (install_path / "dist" / "lib").mkdir()
+        (install_path / "dist" / "lib64").mkdir()
 
         # Update config
         if is_default_proton:

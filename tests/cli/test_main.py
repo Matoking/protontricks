@@ -217,7 +217,7 @@ class TestCLIRun:
         proton_install_path = Path(proton_app.install_path)
         assert command.env["PROTON_LD_LIBRARY_PATH"] == "".join([
             str(proton_install_path / "dist" / "lib"), os.pathsep,
-            str(proton_install_path / "dist" / "lib64"), os.pathsep
+            str(proton_install_path / "dist" / "lib64")
         ])
 
         # Environment variables for both legacy and new Steam Runtime exist
