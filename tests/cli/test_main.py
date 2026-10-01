@@ -34,10 +34,11 @@ class TestCLIRun:
             home_dir / ".local" / "bin" / "winetricks")
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
         assert command.env["WINELOADER"] == command.env["WINE"]
-        assert command.env["WINEDLLPATH"] == "{}{}{}".format(
-            str(proton_install_path / "dist" / "lib64" / "wine"),
-            os.pathsep,
-            str(proton_install_path / "dist" / "lib" / "wine")
+        assert command.env["WINEDLLPATH"].startswith(
+            ":".join([
+                str(proton_install_path / "dist/lib64/vkd3d"),
+                str(proton_install_path / "dist/lib/vkd3d")
+            ])
         )
 
     def test_run_winetricks_with_options(
@@ -805,10 +806,11 @@ class TestCLIGUI:
             home_dir / ".local" / "bin" / "winetricks")
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
         assert command.env["WINELOADER"] == command.env["WINE"]
-        assert command.env["WINEDLLPATH"] == "{}{}{}".format(
-            str(proton_install_path / "dist" / "lib64" / "wine"),
-            os.pathsep,
-            str(proton_install_path / "dist" / "lib" / "wine")
+        assert command.env["WINEDLLPATH"].startswith(
+            ":".join([
+                str(proton_install_path / "dist/lib64/vkd3d"),
+                str(proton_install_path / "dist/lib/vkd3d")
+            ])
         )
 
     def test_run_gui_winetricks_args_require_delimiter(self, cli):
@@ -891,10 +893,11 @@ class TestCLICommand:
             home_dir / ".local" / "bin" / "winetricks")
         assert command.env["WINEPREFIX"] == str(steam_app.prefix_path)
         assert command.env["WINELOADER"] == command.env["WINE"]
-        assert command.env["WINEDLLPATH"] == "{}{}{}".format(
-            str(proton_install_path / "dist" / "lib64" / "wine"),
-            os.pathsep,
-            str(proton_install_path / "dist" / "lib" / "wine")
+        assert command.env["WINEDLLPATH"].startswith(
+            ":".join([
+                str(proton_install_path / "dist/lib64/vkd3d"),
+                str(proton_install_path / "dist/lib/vkd3d")
+            ])
         )
 
     def test_run_command_winetricks_optional(

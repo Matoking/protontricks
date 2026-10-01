@@ -558,10 +558,12 @@ def run_command(
         )
         wine_environ["WINEPREFIX"] = str(prefix_path)
 
-    wine_environ["WINEDLLPATH"] = "".join([
-        str(proton_app.proton_dist_path / "lib64" / "wine"),
-        os.pathsep,
-        str(proton_app.proton_dist_path / "lib" / "wine")
+    wine_environ["WINEDLLPATH"] = os.pathsep.join([
+        str(proton_app.proton_dist_path / "lib64/vkd3d"),
+        str(proton_app.proton_dist_path / "lib/vkd3d"),
+
+        str(proton_app.proton_dist_path / "lib64/wine"),
+        str(proton_app.proton_dist_path / "lib/wine"),
     ])
 
     wine_environ["PATH"] = "".join([
