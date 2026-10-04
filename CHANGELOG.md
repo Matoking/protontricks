@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.15.0] - 2026-10-04
 ### Added
  - Add support for ARM64 Proton installations
  - Add support for Steam Frame game compatibility profiles for Proton discovery
@@ -361,7 +361,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.14.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.15.0...HEAD
+[1.15.0]: https://github.com/Matoking/protontricks/compare/1.14.1...1.15.0
 [1.14.1]: https://github.com/Matoking/protontricks/compare/1.14.0...1.14.1
 [1.14.0]: https://github.com/Matoking/protontricks/compare/1.13.1...1.14.0
 [1.13.1]: https://github.com/Matoking/protontricks/compare/1.13.0...1.13.1
