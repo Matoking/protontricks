@@ -278,7 +278,42 @@ class TestSteamApp:
             steam_lib_paths=[]
         ) is None
 
+    def test_steam_appmanifest_last_updated_empty(
+            self, steam_app_factory, caplog):
+        """
+        Ensure an appmanifest file with the "lastupdated" field empty, or
+        with a non-integer value is ignored with a warning
 
+        Regression test for #509
+        """
+        steam_app = steam_app_factory(name="Fake game", appid=10)
+
+        appmanifest_path = \
+            Path(steam_app.install_path).parent.parent / "appmanifest_10.acf"
+
+        # Write an incomplete appmanifest containing a nearly empty 'AppState'
+        # object. Steam client can sometimes generate these, apparently.
+        appmanifest_path.write_text(
+            vdf.dumps({
+                "AppState": {
+                    "name": "Fake game",
+                    "installdir": "Fake game",
+                    "appid": 10,
+                    "lastupdated": ""
+                }
+            })
+        )
+
+        app = SteamApp.from_appmanifest(
+            path=appmanifest_path,
+            steam_lib_paths=[]
+        )
+        assert app.last_updated == 0
+
+        assert any(
+            record for record in caplog.records
+            if "'last_updated' field had non-integer value" in str(record)
+        )
 
 
 def _manifest(appid, compat_tools):

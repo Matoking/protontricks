@@ -274,7 +274,14 @@ class SteamApp(object):
             logger.info("Skipping empty appmanifest %s", path)
             return None
 
-        last_updated = int(app_state.get("lastupdated", 0))
+        try:
+            last_updated = int(app_state.get("lastupdated", 0))
+        except ValueError:
+            logger.info(
+                "'last_updated' field had non-integer value %s",
+                app_state["lastupdated"]
+            )
+            last_updated = 0
 
         # Try parsing 'stateflags' if it exists
         try:
