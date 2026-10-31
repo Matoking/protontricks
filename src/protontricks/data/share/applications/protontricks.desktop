@@ -8,6 +8,6 @@ Comment[ru]=Простая обёртка, позволяющая применя
 Type=Application
 Terminal=false
 Categories=Utility;
-Icon=wine
+Icon=protontricks
 Keywords=Steam;Proton;Wine;Winetricks;
 Keywords[ru]=Steam;Proton;Wine;Winetricks;Стим;Протон;Вайн;Винтрикс;

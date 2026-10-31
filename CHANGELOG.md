@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+ - Add application icon. Flatpak packaging formerly used stock icon from the KDE Breeze icon set as placeholder.
+
 ### Fixed
  - Fix crash caused by appmanifest files with an empty or invalid `LastUpdated` value
 

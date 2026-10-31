@@ -9,3 +9,6 @@ install:
 		# Remove `protontricks-desktop-install`, since we already install
 		# .desktop files properly
 		rm "${DESTDIR}${PREFIX}/bin/protontricks-desktop-install"
+
+		# Install the icon
+		install -Dm 0644 data/icon.svg "${DESTDIR}${PREFIX}/share/icons/hicolor/scalable/apps/protontricks.svg"

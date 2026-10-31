@@ -4,7 +4,7 @@
   <name>Protontricks</name>
   <summary>Apps and fixes for Proton games</summary>
   <summary xml:lang="ru">Программы и исправления для игр на Proton</summary>
-  <icon type="stock">wine</icon>
+  <icon type="stock">protontricks</icon>
   <provides>
     <binary>protontricks</binary>
     <binary>protontricks-launch</binary>

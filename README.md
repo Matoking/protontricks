@@ -1,8 +1,8 @@
 > [!CAUTION]
 > **`hxxps[://]protontricks[.]com` IS A FAKE SITE** and not affiliated with any of the Protontricks developers. https://github.com/Matoking/protontricks is the only official page for Protontricks.
 
-Protontricks
-============
+![Protontricks logo](data/icon.svg) Protontricks
+================================================
 
 [![image](https://img.shields.io/pypi/v/protontricks.svg)](https://pypi.org/project/protontricks/)
 [![Coverage Status](https://coveralls.io/repos/github/Matoking/protontricks/badge.svg?branch=master)](https://coveralls.io/github/Matoking/protontricks?branch=master)
