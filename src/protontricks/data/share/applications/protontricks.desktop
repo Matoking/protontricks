@@ -11,3 +11,4 @@ Categories=Utility;
 Icon=wine
 Keywords=Steam;Proton;Wine;Winetricks;
 Keywords[ru]=Steam;Proton;Wine;Winetricks;Стим;Протон;Вайн;Винтрикс;
+StartupWMClass=zenity
