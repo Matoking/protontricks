@@ -177,7 +177,8 @@ def show_text_dialog(
 
     def _get_yad_args():
         args = [
-            "yad", "--text-info", "--window-icon", window_icon,
+            "yad", "--name=protontricks", "--class=protontricks",
+            "--text-info", "--window-icon", window_icon,
             "--title", title, "--width", str(width), "--height", str(height),
             f"--button={ok_label}:0", "--wrap",
             "--margins", "2", "--center"
@@ -218,7 +219,8 @@ def select_steam_installation(steam_installations):
     """
     def _get_yad_args():
         return [
-            "yad", "--list", "--no-headers", "--center",
+            "yad", "--name=protontricks", "--class=protontricks",
+            "--list", "--no-headers", "--center",
             "--window-icon", "wine",
             # Disabling markup means we won't have to escape special characters
             "--no-markup",
@@ -305,7 +307,8 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
     """
     def _get_yad_args():
         return [
-            "yad", "--list", "--no-headers", "--center",
+            "yad", "--name=protontricks", "--class=protontricks",
+            "--list", "--no-headers", "--center",
             "--window-icon", "wine",
             # Disabling markup means we won't have to escape special characters
             "--no-markup",
