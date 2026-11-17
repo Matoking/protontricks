@@ -279,7 +279,7 @@ class TestSelectApp:
         # use
         if gui_cmd == "yad":
             assert gui_provider.args[0] == "yad"
-            assert gui_provider.args[2] == "--no-headers"
+            assert gui_provider.args[4] == "--no-headers"
         elif gui_cmd == "zenity":
             assert gui_provider.args[0] == "zenity"
             assert gui_provider.args[2] == "--hide-header"
@@ -307,10 +307,13 @@ class TestSelectSteamInstallation:
         # use
         if gui_cmd == "yad":
             assert gui_provider.args[0] == "yad"
-            assert gui_provider.args[2] == "--no-headers"
+            assert gui_provider.args[4] == "--no-headers"
         elif gui_cmd == "zenity":
             assert gui_provider.args[0] == "zenity"
             assert gui_provider.args[2] == "--hide-header"
+
+
+class TestSelectSteamInstallation:
 
     @pytest.mark.parametrize(
         "path,label",
