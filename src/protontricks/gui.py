@@ -28,6 +28,20 @@ __all__ = (
 logger = logging.getLogger("protontricks")
 
 
+@functools.lru_cache(maxsize=1)
+def _is_zenity_rs():
+    """
+    Check if the installed 'zenity' is actually zenity-rs or not. This is done because there's
+    flags that only exist in zenity-rs. See https://gitlab.gnome.org/GNOME/zenity/-/work_items/112
+    """
+    try:
+        result = run(["zenity", "--help"], stdout=PIPE, stderr=PIPE)
+    except FileNotFoundError:
+        return False
+
+    return b"zenity-rs" in result.stdout
+
+
 class LocaleError(Exception):
     pass
 
@@ -53,6 +67,19 @@ def get_gui_provider():
             "'yad' or 'zenity' was not found. Either executable is required "
             "for Protontricks GUI."
         ) from exc
+
+
+def _get_zenity_base_args(gui_provider):
+    """
+    Get the base arguments for the zenity command. When zenity-rs is in use
+    the --name and --class flags are added to set the WM class.
+    """
+    args = [gui_provider]
+
+    if gui_provider == "zenity" and _is_zenity_rs():
+        args += ["--name=protontricks", "--class=protontricks"]
+
+    return args
 
 
 def _get_appid2icon(steam_apps):
@@ -190,8 +217,9 @@ def show_text_dialog(
         return args
 
     def _get_zenity_args():
-        args = [
-            "zenity", "--text-info", "--window-icon", window_icon,
+        args = _get_zenity_base_args(gui_provider)
+        args += [
+            "--text-info", "--window-icon", window_icon,
             "--title", title, "--width", str(width), "--height",
             str(height), "--cancel-label", cancel_label, "--ok-label", ok_label
         ]
@@ -231,14 +259,17 @@ def select_steam_installation(steam_installations):
         ]
 
     def _get_zenity_args():
-        return [
-            "zenity", "--list", "--hide-header",
+        args = _get_zenity_base_args(gui_provider)
+        args += [
+            "--list", "--hide-header",
             "--width", "600",
             "--height", "400",
             "--text", "Select Steam installation",
             "--title", "Protontricks",
             "--column", "Path"
         ]
+
+        return args
 
     if len(steam_installations) == 1:
         return steam_installations[0]
@@ -273,7 +304,7 @@ def select_steam_installation(steam_installations):
 
     if gui_provider == "yad":
         args = _get_yad_args()
-    elif gui_provider == "zenity":
+    else:
         args = _get_zenity_args()
 
     try:
@@ -322,14 +353,17 @@ def select_steam_app_with_gui(steam_apps, steam_path, title=None):
         ]
 
     def _get_zenity_args():
-        return [
-            "zenity", "--list", "--hide-header",
+        args = _get_zenity_base_args(gui_provider)
+        args += [
+            "--list", "--hide-header",
             "--width", "600",
             "--height", "400",
             "--text", title,
             "--title", "Protontricks",
             "--column", "Steam app"
         ]
+
+        return args
 
     if not title:
         title = "Select Steam app"
