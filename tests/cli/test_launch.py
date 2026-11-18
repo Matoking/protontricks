@@ -82,7 +82,7 @@ class TestCLIRun:
         launch_cli(["--no-term", "test.exe"], expect_returncode=1)
 
         assert gui_provider.args[0] == "yad"
-        assert gui_provider.args[1] == "--text-info"
+        assert gui_provider.args[3] == "--text-info"
 
         message = gui_provider.kwargs["input"]
 
@@ -186,7 +186,7 @@ class TestCLIRun:
         )
 
         assert gui_provider.args[0] == "yad"
-        assert gui_provider.args[1] == "--text-info"
+        assert gui_provider.args[3] == "--text-info"
 
         message = gui_provider.kwargs["input"]
 

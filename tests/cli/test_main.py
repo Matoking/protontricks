@@ -432,7 +432,7 @@ class TestCLIRun:
         cli(["--no-term", "10", "winecfg"], expect_returncode=1)
 
         assert gui_provider.args[0] == "yad"
-        assert gui_provider.args[1] == "--text-info"
+        assert gui_provider.args[3] == "--text-info"
 
         message = gui_provider.kwargs["input"]
 
@@ -635,7 +635,7 @@ class TestCLIRun:
         cli(["--no-term", "-s", "Fake"], expect_returncode=1)
 
         assert gui_provider.args[0] == "yad"
-        assert gui_provider.args[1] == "--text-info"
+        assert gui_provider.args[3] == "--text-info"
 
         message = gui_provider.kwargs["input"]
 
