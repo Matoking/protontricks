@@ -1,5 +1,6 @@
 import os
 import shutil
+import struct
 import time
 from pathlib import Path
 
@@ -1652,6 +1653,69 @@ def test_parse_appinfo_v29():
 
     assert app_sections[0]["appinfo"]["appid"] == 5
     assert app_sections[1]["appinfo"]["appid"] == 10
+
+
+def _write_appinfo_shard(path, sections):
+    """Build a version 42 shard with indexed keys and multiple records."""
+    keys = []
+
+    def encode(mapping):
+        result = b""
+        for key, value in mapping.items():
+            if key not in keys:
+                keys.append(key)
+            index = struct.pack("<I", keys.index(key))
+            if isinstance(value, dict):
+                result += b"\x00" + index + encode(value)
+            elif isinstance(value, int):
+                result += b"\x02" + index + struct.pack("<i", value)
+            else:
+                result += b"\x01" + index + value.encode() + b"\x00"
+        return result + b"\x08"
+
+    payloads = [b"\x00" * 20 + encode(section) for section in sections]
+    key_data = b"".join(key.encode() + b"\x00" for key in keys)
+    records = b""
+    offset = 0
+    for section, payload in zip(sections, payloads):
+        records += struct.pack(
+            "<III68x", section["appinfo"]["appid"], offset, len(payload)
+        )
+        offset += len(payload)
+    header = struct.pack(
+        "<4s10I", b"*DV\x07", 1, 0, 256, len(sections), len(records),
+        len(keys), len(key_data), offset, 0, 0
+    )
+    path.write_bytes(header + records + key_data + b"".join(payloads))
+
+
+def test_parse_sharded_appinfo(tmp_path):
+    first = {"appinfo": {"appid": 10, "common": {"name": "Game"}}}
+    second = {"appinfo": {"appid": 20, "common": {"name": "Other"}}}
+    third = {"appinfo": {"appid": 30}}
+    _write_appinfo_shard(tmp_path / "appinfo_00.vdf", [first, second])
+    _write_appinfo_shard(tmp_path / "appinfo_01.vdf", [third])
+    (tmp_path / "unrelated.vdf").write_bytes(b"ignored")
+
+    assert list(iter_appinfo_sections(tmp_path)) == [first, second, third]
+
+
+def test_find_compat_tool_with_sharded_appinfo(
+        steam_dir, steam_app_factory, proton_factory):
+    proton = proton_factory(
+        name="Proton test", appid=777, compat_tool_name="proton_test"
+    )
+    steam_app_factory(name="Game", appid=10, compat_tool_name="proton_test")
+    old_cache = steam_dir / "appcache" / "appinfo.vdf"
+    sections = list(iter_appinfo_sections(old_cache))
+    shard_dir = steam_dir / "appcache" / "appinfo"
+    shard_dir.mkdir()
+    _write_appinfo_shard(shard_dir / "appinfo_00.vdf", sections)
+    old_cache.unlink()
+
+    assert find_steam_compat_tool_app(
+        steam_path=steam_dir, steam_apps=[proton], appid=10
+    ) == proton
 
 
 def test_get_steamapps_subdirs(steam_dir, steam_library_factory):
