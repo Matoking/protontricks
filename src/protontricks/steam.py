@@ -679,7 +679,12 @@ def iter_appinfo_sections(path):
             if i == key_table_offset - 4:
                 return
 
-    logger.debug("Loading appinfo.vdf in %s", path)
+    if path.is_dir():
+        for shard in sorted(path.glob("appinfo_*.vdf")):
+            yield from iter_appinfo_sections(shard)
+        return
+
+    logger.debug("Loading appinfo cache in %s", path)
 
     # appinfo.vdf is not actually a (binary) VDF file, but a binary file
     # containing multiple binary VDF sections.
@@ -702,6 +707,30 @@ def iter_appinfo_sections(path):
         yield from _iter_v28_appinfo(data, i)
     elif magic == b')DV\x07':
         yield from _iter_v29_appinfo(data, i)
+    elif magic == b'*DV\x07':
+        # Version 42 stores a header, a fixed-size record table, a shared
+        # string table and then the binary VDF data for each record.
+        count, records_size, key_count, keys_size, data_size = struct.unpack_from(
+            "<5I", data, 16
+        )
+        records_start = 44
+        keys_start = records_start + records_size
+        data_start = keys_start + keys_size
+        if (records_size != count * 80 or data_start + data_size > len(data)):
+            raise ValueError("Invalid appinfo shard sizes")
+        keys = data[keys_start:data_start].split(b"\0")
+        if len(keys) != key_count + 1 or keys[-1] != b"":
+            raise ValueError("Invalid appinfo shard key table")
+        key_table = [key.decode("utf-8", errors="replace") for key in keys[:-1]]
+        for index in range(count):
+            appid, offset, size = struct.unpack_from(
+                "<III", data, records_start + index * 80
+            )
+            # Each payload starts with a 20-byte digest before the VDF.
+            if size < 20 or offset + size > data_size:
+                raise ValueError("Invalid appinfo shard record size")
+            section = data[data_start + offset + 20:data_start + offset + size]
+            yield lower_dict(vendored_binary_loads(section, key_table=key_table))
     else:
         raise SyntaxError(
             "Invalid file magic number. The appinfo.vdf version might not be "
@@ -848,7 +877,9 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
 
     vdf_data = lower_dict(vdf.loads(content))
 
-    appinfo_path = steam_path / "appcache" / "appinfo.vdf"
+    appinfo_path = steam_path / "appcache" / "appinfo"
+    if not appinfo_path.is_dir():
+        appinfo_path = steam_path / "appcache" / "appinfo.vdf"
     appinfo_sections = [
         section for section in iter_appinfo_sections(appinfo_path)
         if section["appinfo"]["appid"] in (STEAM_PLAY_MANIFESTS_APPID, appid)
