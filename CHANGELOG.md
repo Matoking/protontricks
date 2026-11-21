@@ -76,11 +76,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  - `protontricks` will now launch GUI if no arguments were provided
 
 ### Fixed
- - Fix crash when parsing appinfo.vdf V29 in new Steam client version
+ - Fix crash when parsing appinfo.vdf V41 (`29`) in new Steam client version
  - Fix Protontricks crash when `config.vdf` contains invalid Unicode characters
 
 > [!IMPORTANT]
-> This release bundles a patched version of `vdf` in case the system Python package doesn't have the required `appinfo.vdf` V29 support.
+> This release bundles a patched version of `vdf` in case the system Python package doesn't have the required `appinfo.vdf` V41 (`29`) support.
 > If you're a package maintainer, you will probably want to remove the corresponding
 > commit if the distro you're using already ships a version of `vdf` with the
 > required support.
@@ -131,7 +131,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.10.1]- 2022-12-10
 ### Fixed
  - Fix crash when unknown XDG Flatpak filesystem permissions are enabled
- - Fix crash when parsing appinfo.vdf V28 version introduced in Steam beta
+ - Fix crash when parsing appinfo.vdf V40 (`28`) version introduced in Steam beta
 
 ## [1.10.0] - 2022-11-27
 ### Added

@@ -1635,17 +1635,17 @@ class TestGetWindowsShortcuts:
         )
 
 
-def test_parse_appinfo_v29():
+def test_parse_appinfo_v41():
     """
-    Test parsing an appinfo.vdf V29 file and retrieving the app sections
+    Test parsing an appinfo.vdf V41 file and retrieving the app sections
     correctly.
 
-    Creating proper appinfo.vdf V29 files on demand for test fixtures
+    Creating proper appinfo.vdf V41 files on demand for test fixtures
     involves plenty of work and is probably a rare use case for the library
     to support, so just use a hardcoded test file for the time being.
     """
     app_sections = list(
-        iter_appinfo_sections(Path("./tests/data/appinfo_v29.vdf").resolve())
+        iter_appinfo_sections(Path("./tests/data/appinfo_v41.vdf").resolve())
     )
 
     assert len(app_sections) == 2

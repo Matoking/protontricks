@@ -579,8 +579,12 @@ def find_legacy_steam_runtime_path(steam_root):
 
 
 APPINFO_STRUCT_HEADER = "<4sL"
-APPINFO_V28_STRUCT_SECTION = "<LLLLQ20sL20s"
-APPINFO_V29_STRUCT_SECTION = "<LLLLQ20sL20s"
+APPINFO_V40_STRUCT_SECTION = "<LLLLQ20sL20s"
+APPINFO_V41_STRUCT_SECTION = "<LLLLQ20sL20s"
+
+# For backwards cmopatibility, in case someone relied on the earlier imports
+APPINFO_V28_STRUCT_SECTION = APPINFO_V40_STRUCT_SECTION
+APPINFO_V29_STRUCT_SECTION = APPINFO_V41_STRUCT_SECTION
 
 
 def _appinfo_vdf_binary_loads(data, key_table):
@@ -601,13 +605,13 @@ def _appinfo_vdf_binary_loads(data, key_table):
         return vendored_binary_loads(data, key_table=key_table)
 
 
-def _iter_v28_appinfo(data, start):
+def _iter_v40_appinfo(data, start):
     """
-    Parse and iterate appinfo.vdf version 28.
-    Identical to version 27 except for new VDF SHA1 field.
+    Parse and iterate appinfo.vdf version 40 ('28').
+    Identical to version 39 except for new VDF SHA1 field.
     """
     i = start
-    section_size = struct.calcsize(APPINFO_V28_STRUCT_SECTION)
+    section_size = struct.calcsize(APPINFO_V40_STRUCT_SECTION)
     while True:
         # We don't need any of the fields besides 'entry_size',
         # which is used to determine the length of the variable-length VDF
@@ -615,7 +619,7 @@ def _iter_v28_appinfo(data, start):
         # Still, here they are for posterity's sake.
         (appid, entry_size, infostate, last_updated, access_token,
          sha_hash, change_number, vdf_sha_hash) = struct.unpack(
-            APPINFO_V28_STRUCT_SECTION, data[i:i+section_size])
+            APPINFO_V40_STRUCT_SECTION, data[i:i+section_size])
         vdf_section_size = entry_size - (section_size - 8)
 
         i += section_size
@@ -630,9 +634,9 @@ def _iter_v28_appinfo(data, start):
             return
 
 
-def _iter_v29_appinfo(data, start):
+def _iter_v41_appinfo(data, start):
     """
-    Parse and iterate appinfo.vdf version 29.
+    Parse and iterate appinfo.vdf version 41 ('29').
     """
     i = start
 
@@ -659,7 +663,7 @@ def _iter_v29_appinfo(data, start):
 
     i += 8
 
-    section_size = struct.calcsize(APPINFO_V29_STRUCT_SECTION)
+    section_size = struct.calcsize(APPINFO_V41_STRUCT_SECTION)
     while True:
         # We don't need any of the fields besides 'entry_size',
         # which is used to determine the length of the variable-length VDF
@@ -667,7 +671,7 @@ def _iter_v29_appinfo(data, start):
         # Still, here they are for posterity's sake.
         (appid, entry_size, infostate, last_updated, access_token,
          sha_hash, change_number, vdf_sha_hash) = struct.unpack(
-            APPINFO_V29_STRUCT_SECTION, data[i:i+section_size])
+            APPINFO_V41_STRUCT_SECTION, data[i:i+section_size])
         vdf_section_size = entry_size - (section_size - 8)
 
         i += section_size
@@ -709,9 +713,9 @@ def iter_appinfo_sections(path):
     logger.debug("appinfo.vdf has magic number %s", magic)
 
     if magic == b'(DV\x07':
-        yield from _iter_v28_appinfo(data, i)
+        yield from _iter_v40_appinfo(data, i)
     elif magic == b')DV\x07':
-        yield from _iter_v29_appinfo(data, i)
+        yield from _iter_v41_appinfo(data, i)
     else:
         raise SyntaxError(
             "Invalid file magic number. The appinfo.vdf version might not be "

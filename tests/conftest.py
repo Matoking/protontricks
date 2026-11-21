@@ -17,7 +17,7 @@ from protontricks.cli.main import cli as main_cli_entrypoint
 from protontricks.cli.util import enable_logging
 from protontricks.gui import get_gui_provider
 from protontricks.steam import (APPINFO_STRUCT_HEADER,
-                                APPINFO_V28_STRUCT_SECTION, SteamApp,
+                                APPINFO_V40_STRUCT_SECTION, SteamApp,
                                 get_appid_from_shortcut)
 from protontricks.steam import iter_appinfo_sections
 
@@ -413,7 +413,7 @@ def appinfo_factory(steam_dir):
         # Start with the header.
         content = struct.pack(
             APPINFO_STRUCT_HEADER,
-            b"(DV\x07",  # v28 magic number
+            b"(DV\x07",  # v40 magic number
             1  # Universe, protontricks ignores this
         )
 
@@ -427,14 +427,14 @@ def appinfo_factory(steam_dir):
         sha_hash = b"0"*20
         vdf_sha_hash = b"0"*20
 
-        struct_size = struct.calcsize(APPINFO_V28_STRUCT_SECTION)
+        struct_size = struct.calcsize(APPINFO_V40_STRUCT_SECTION)
 
         for appid_, entry in app_entries.items():
             binary_vdf = vdf.binary_dumps(entry)
             entry_size = len(binary_vdf) + (struct_size - 8)
 
             content += struct.pack(
-                APPINFO_V28_STRUCT_SECTION,
+                APPINFO_V40_STRUCT_SECTION,
                 appid_, entry_size, infostate, last_updated, access_token,
                 sha_hash, change_number, vdf_sha_hash
             )
