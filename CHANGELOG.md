@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.15.1] - 2026-11-21
 ### Fixed
  - Fix crash caused by appmanifest files with an empty or invalid `LastUpdated` value
  - Fix crash when parsing appinfo V42 ('2A') in new Steam client version
@@ -366,7 +366,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.15.0...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.15.1...HEAD
+[1.15.1]: https://github.com/Matoking/protontricks/compare/1.15.0...1.15.1
 [1.15.0]: https://github.com/Matoking/protontricks/compare/1.14.1...1.15.0
 [1.14.1]: https://github.com/Matoking/protontricks/compare/1.14.0...1.14.1
 [1.14.0]: https://github.com/Matoking/protontricks/compare/1.13.1...1.14.0
