@@ -29,6 +29,9 @@ def default_env(monkeypatch):
     user environment from intefering with tests
     """
     monkeypatch.setenv("STEAM_RUNTIME", "")
+    # Ignore host-specific Winetricks configuration during isolated tests.
+    # Tests provide their own fake executable via the temporary PATH.
+    monkeypatch.delenv("WINETRICKS", raising=False)
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
     monkeypatch.delenv("XDG_DATA_HOME", raising=False)

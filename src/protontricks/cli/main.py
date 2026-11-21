@@ -13,6 +13,7 @@ import sys
 from collections import defaultdict
 
 from .. import __version__
+from ..gui import manage_cdrom_drives_gui, select_gui_action
 from ..util import run_command
 from .command import BaseCommand
 from .util import CustomArgumentParser, cli_error_handler, enable_logging
@@ -215,10 +216,29 @@ class RunWinetricksCommand(BaseCommand):
 
 class RunWinetricksGUICommand(BaseCommand):
     steam_app_required = True
-    proton_app_required = True
-    winetricks_required = True
+    # The CDEmu manager only needs the game's prefix, not Proton or Winetricks.
+    proton_app_required = False
+    winetricks_required = False
 
     def run(self):
+        # Explicit Winetricks CLI arguments must not open the CDEmu chooser.
+        action = (
+            "winetricks" if self.cli_args.winetricks_command
+            else select_gui_action()
+        )
+        if action == "cdrom":
+            manage_cdrom_drives_gui(
+                self.steam_app.prefix_path, self.steam_app.name
+            )
+            return
+        if action != "winetricks":
+            return
+
+        # Resolve Proton/Winetricks only for the legacy Winetricks action.
+        self.populate_steam_runtime()
+        self.populate_proton_app()
+        self.populate_winetricks(strict=True)
+
         cwd = \
             str(self.steam_app.install_path) if self.cli_args.cwd_app else None
 

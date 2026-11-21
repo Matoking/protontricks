@@ -90,6 +90,63 @@ Protontricks supports `$STEAM_COMPAT_DATA_PATH` variable to set a custom path to
 
 [Wanna see Protontricks in action?](https://asciinema.org/a/229323)
 
+## Multi-disc CD/DVD manager (optional CDEmu integration)
+
+When [CDEmu](https://cdemu.sourceforge.io/) is installed, `protontricks --gui`
+offers **Manage CD/DVD drives (CDEmu)** after selecting a game, to swap disc
+images while a multi-disc Windows installer is running. Without CDEmu, the
+GUI goes straight to Winetricks as before.
+
+**Requirements:** the CDEmu daemon and `cdemu-client`, `udisksctl`,
+`findmnt`, and YAD or Zenity. Flatpak sandboxes may lack access to the
+devices or disc images.
+
+### Installing a multi-disc game
+
+Installers look for the next disc on the drive letter they were started
+from, so the next disc must be mapped to that same letter.
+
+1. Load and mount Disc 1 with CDEmu (gCDEmu, `cdemu load 0 <image>` or this
+   manager), add the installer on it (for example `setup.exe`) to Steam as a
+   **non-Steam game**, enable Proton for it and launch it. Wine gives the
+   mounted disc a drive letter (often `D:`, but not always) and the
+   installer runs from it.
+2. When the installer asks for the next disc, keep it open, run
+   `protontricks --gui`, select the shortcut and choose **Manage CD/DVD
+   drives (CDEmu)**. The letter Wine gave the disc is listed **first**,
+   marked "disc already mapped by Wine": choose it.
+3. Select the reader holding Disc 1 and choose **Load or replace disc
+   image**. The image is loaded, mounted and mapped to that letter (the
+   `x:` mountpoint and `x::` raw device links of the game's prefix). If the
+   running installer keeps Disc 1 busy, Protontricks never forces the
+   unmount: it offers to load the next disc into an empty reader (adding one
+   if needed) and maps the letter to it. If the letter is not mapped
+   afterwards, use **Map disc to …**.
+4. Click **Retry/OK** in the installer. Repeat for each disc and eject the
+   discs once it has finished.
+
+If no letter is detected (for example the installer was started from a
+copy of the disc), start it from the mapped letter instead:
+`protontricks -c 'wine start /d "D:\\" "D:\\setup.exe"' <APPID>`.
+
+### Menus
+
+- **Main menu:** the CDEmu readers, **Add virtual reader** and **Remove last
+  virtual reader**. CDEmu can only remove its last reader; it must hold no
+  disc image, and the default readers 0 and 1 are never removed.
+- **Reader menu:** **Load or replace disc image**, **Eject disc**, **Map disc
+  to <letter>:** (mounts a loaded disc if needed) and **Back**.
+
+CDEmu readers and images are **system-wide**: adding, removing or ejecting
+them affects every application. Only the drive mappings, plus a backup of
+the original links under `.protontricks-cdrom`, are stored in the game's
+prefix; regular files are never overwritten. Wine itself may add or remove
+these links when a disc is mounted or unmounted, so map the disc again after
+a swap if needed. If no reader shows a `/dev/sr` device, load the `vhba`
+kernel module (`sudo modprobe vhba`). Some installers may still cache drive
+information or use copy protection that remapping a drive letter cannot work
+around.
+
 ## Desktop
 
 Protontricks comes with desktop integration, adding the Protontricks app shortcut and the ability to launch external Windows executables for Proton apps. To run an executable for a Proton app, select **Protontricks Launcher** when opening a Windows executable (eg. **EXE**) in a file manager.

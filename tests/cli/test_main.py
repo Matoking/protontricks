@@ -778,7 +778,8 @@ class TestCLIGUI:
     )
     def test_run_gui(
             self, cli, default_proton, steam_app_factory, gui_provider,
-            command_mock, home_dir, cli_args, expected_winetricks_args):
+            command_mock, home_dir, cli_args, expected_winetricks_args,
+            monkeypatch):
         """
         Start the GUI and fake selecting a game
         """
@@ -787,6 +788,10 @@ class TestCLIGUI:
 
         # Fake the user selecting the game
         gui_provider.mock_stdout = "Fake game 1: 10"
+        monkeypatch.setattr(
+            "protontricks.cli.main.select_gui_action",
+            lambda: "winetricks"
+        )
 
         cli(cli_args)
 
@@ -813,6 +818,43 @@ class TestCLIGUI:
             ])
         )
 
+
+    def test_explicit_gui_args_skip_cdemu_chooser(
+            self, cli, steam_app_factory, default_proton,
+            gui_provider, command_mock, monkeypatch):
+        """Explicit Winetricks args keep the historical GUI behavior."""
+        steam_app_factory(name="Fake game", appid=10)
+        gui_provider.mock_stdout = "Fake game: 10"
+
+        def unexpected_chooser():
+            raise AssertionError("CDEmu chooser must not open")
+
+        monkeypatch.setattr(
+            "protontricks.cli.main.select_gui_action",
+            unexpected_chooser
+        )
+        cli(["--gui", "--", "-q"])
+        assert command_mock.commands[-1].args[1:] == ["--gui", "-q"]
+
+
+    def test_manage_cdrom_from_gui(
+            self, cli, default_proton, steam_app_factory, gui_provider,
+            monkeypatch):
+        """The GUI uses the selected game's actual Proton prefix."""
+        app = steam_app_factory(name="Fake game 1", appid=10)
+        gui_provider.mock_stdout = "Fake game 1: 10"
+        called = []
+        monkeypatch.setattr(
+            "protontricks.cli.main.select_gui_action",
+            lambda: "cdrom"
+        )
+        monkeypatch.setattr(
+            "protontricks.cli.main.manage_cdrom_drives_gui",
+            lambda prefix, name: called.append((prefix, name))
+        )
+        cli(["--gui"])
+        assert called == [(app.prefix_path, app.name)]
+
     def test_run_gui_winetricks_args_require_delimiter(self, cli):
         """
         Require a delimiter before Winetricks arguments in GUI mode
@@ -832,7 +874,8 @@ class TestCLIGUI:
         assert "Found no games" in result
 
     def test_run_gui_proton_incomplete(
-            self, cli, steam_app_factory, default_proton, gui_provider):
+            self, cli, steam_app_factory, default_proton, gui_provider,
+            monkeypatch):
         """
         Try running Protontricks GUI using a Proton installation that
         is incomplete because it hasn't been launched yet.
@@ -846,6 +889,9 @@ class TestCLIGUI:
         # Fake the user selecting the game
         gui_provider.mock_stdout = "Fake game 1: 10"
 
+        monkeypatch.setattr(
+            "protontricks.cli.main.select_gui_action", lambda: "winetricks"
+        )
         result = cli(["--gui"], expect_returncode=1)
 
         assert "Proton installation is incomplete" in result
