@@ -1654,6 +1654,31 @@ def test_parse_appinfo_v41():
     assert app_sections[1]["appinfo"]["appid"] == 10
 
 
+def test_parse_appinfo_v42():
+    """
+    Test parsing a directory with multiple appinfo V42 files and
+    retrieving the app sections correctly.
+
+    The VDF library used by Protontricks does not support serializing
+    binary VDF using key tables, so use two test files as test data.
+    """
+    # Test file set contains two simple appinfo.vdf files:
+    # 'appinfo_00.vdf' containing apps with IDs 5 and 10
+    # 'appinfo_01.vdf' containing apps with IDs 15 and 20
+    app_sections = list(
+        iter_appinfo_sections(Path("./tests/data/appinfo_v42").resolve())
+    )
+
+    app_sections = sorted(
+        app_sections, key=lambda app_section: app_section["appinfo"]["appid"]
+    )
+
+    assert len(app_sections) == 4
+
+    for i in range(0, 4):
+        assert app_sections[i]["appinfo"]["appid"] == (i+1)*5
+
+
 def test_get_steamapps_subdirs(steam_dir, steam_library_factory):
     """
     Retrieve Steam library directory containing multiple 'steamapps'

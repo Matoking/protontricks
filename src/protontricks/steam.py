@@ -582,6 +582,12 @@ APPINFO_STRUCT_HEADER = "<4sL"
 APPINFO_V40_STRUCT_SECTION = "<LLLLQ20sL20s"
 APPINFO_V41_STRUCT_SECTION = "<LLLLQ20sL20s"
 
+APPINFO_V42_STRUCT_HEADER = "<4x4xi4xi4x12x"
+
+# Records are 80 bytes long, but they have only one value we're interested in:
+# the VDF section length
+APPINFO_V42_STRUCT_SECTION = "<4x4xL68x"
+
 # For backwards cmopatibility, in case someone relied on the earlier imports
 APPINFO_V28_STRUCT_SECTION = APPINFO_V40_STRUCT_SECTION
 APPINFO_V29_STRUCT_SECTION = APPINFO_V41_STRUCT_SECTION
@@ -688,40 +694,136 @@ def _iter_v41_appinfo(data, start):
             return
 
 
+def _iter_v42_appinfo_dir(path):
+    """
+    Parse a directory containing multiple 'appinfo.vdf' files
+    using version 42 ('2A') and iterate through all binary VDF objects
+    """
+    def _iter_file(vdf_path):
+        data = vdf_path.read_bytes()
+
+        i = 0
+
+        # Parse the file header
+        header_size = struct.calcsize(APPINFO_STRUCT_HEADER)
+        magic, universe = struct.unpack(
+            APPINFO_STRUCT_HEADER, data[0:header_size]
+        )
+
+        logger.debug("%s has magic number %s", vdf_path.name, magic)
+
+        if magic != b'*DV\x07':
+            raise SyntaxError(
+                "Invalid file magic number. The appinfo.vdf version might not "
+                "be supported by the current version of Protontricks - please "
+                "check for updates."
+            )
+
+        i += header_size
+
+        # Parse the appinfo header, and get the amount of keys in the key table
+        # and the count of app segments after the key table.
+        appinfo_header_length = struct.calcsize(APPINFO_V42_STRUCT_HEADER)
+        vdf_segment_count, key_count = struct.unpack(
+            APPINFO_V42_STRUCT_HEADER, data[i:i+appinfo_header_length]
+        )
+
+        app_segment_sizes = []
+
+        i += appinfo_header_length
+
+        # Parse VDF manifests.
+        # These are similar to the header preceding the binary VDF
+        # in earlier appinfo.vdf versions, except that the header
+        # is now detached and placed in the beginning of the file
+        # to facilitate faster seeking;
+        # for example, if we're looking for a single VDF segment for the given
+        # app ID and want to avoid unnecessary parsing.
+        #
+        # Protontricks parses all VDF segments, however, so we don't
+        # need to parse these manifests comprehensively; just retrieve
+        # the segment length which is all we need.
+        section_size = struct.calcsize(APPINFO_V42_STRUCT_SECTION)
+        for _ in range(0, vdf_segment_count):
+            (app_segment_size,) = struct.unpack(
+                APPINFO_V42_STRUCT_SECTION, data[i:i+section_size]
+            )
+            app_segment_sizes.append(app_segment_size)
+            i += section_size
+
+        # Parse the key table
+        key_table = []
+
+        for _ in range(0, key_count):
+            key = bytearray()
+            while True:
+                key.append(data[i])
+                i += 1
+
+                if key[-1] == 0:
+                    key_table.append(
+                        key[0:-1].decode("utf-8", errors="replace")
+                    )
+                    break
+
+        # Parse app segments (each containing checksum + binary VDF)
+        # comprising the rest of the file
+        for app_segment_size in app_segment_sizes:
+            # Skip the checksum
+            i += 20
+            vdf_section_size = app_segment_size - 20
+
+            vdf_d = _appinfo_vdf_binary_loads(
+                data[i:i+vdf_section_size], key_table=key_table
+            )
+            vdf_d = lower_dict(vdf_d)
+            yield vdf_d
+
+            i += vdf_section_size
+
+    for file in path.glob("appinfo_*.vdf"):
+        yield from _iter_file(file)
+
+
 def iter_appinfo_sections(path):
     """
     Parse an appinfo.vdf file and iterate through all the binary VDF objects
     inside it
     """
-    logger.debug("Loading appinfo.vdf in %s", path)
-
-    # appinfo.vdf is not actually a (binary) VDF file, but a binary file
-    # containing multiple binary VDF sections.
-    # File structure based on comment from vdf developer:
-    # https://github.com/ValvePython/vdf/issues/13#issuecomment-321700244
-    data = path.read_bytes()
-    i = 0
-
-    # Parse the header
-    header_size = struct.calcsize(APPINFO_STRUCT_HEADER)
-    magic, universe = struct.unpack(
-        APPINFO_STRUCT_HEADER, data[0:header_size]
-    )
-
-    i += header_size
-
-    logger.debug("appinfo.vdf has magic number %s", magic)
-
-    if magic == b'(DV\x07':
-        yield from _iter_v40_appinfo(data, i)
-    elif magic == b')DV\x07':
-        yield from _iter_v41_appinfo(data, i)
+    if path.is_dir():
+        # Directory containing multiple appinfo.vdf files
+        yield from _iter_v42_appinfo_dir(path)
     else:
-        raise SyntaxError(
-            "Invalid file magic number. The appinfo.vdf version might not be "
-            "supported by the current version of Protontricks - please "
-            "check for updates."
+        # Single appinfo.vdf file
+        logger.debug("Loading appinfo.vdf in %s", path)
+
+        # appinfo.vdf is not actually a (binary) VDF file, but a binary file
+        # containing multiple binary VDF sections.
+        # File structure based on comment from vdf developer:
+        # https://github.com/ValvePython/vdf/issues/13#issuecomment-321700244
+        data = path.read_bytes()
+        i = 0
+
+        # Parse the header
+        header_size = struct.calcsize(APPINFO_STRUCT_HEADER)
+        magic, universe = struct.unpack(
+            APPINFO_STRUCT_HEADER, data[0:header_size]
         )
+
+        i += header_size
+
+        logger.debug("appinfo.vdf has magic number %s", magic)
+
+        if magic == b'(DV\x07':
+            yield from _iter_v40_appinfo(data, i)
+        elif magic == b')DV\x07':
+            yield from _iter_v41_appinfo(data, i)
+        else:
+            raise SyntaxError(
+                "Invalid file magic number. The appinfo.vdf version might not be "
+                "supported by the current version of Protontricks - please "
+                "check for updates."
+            )
 
 
 def get_appinfo_sections(path):
@@ -862,7 +964,12 @@ def find_steam_compat_tool_app(steam_path, steam_apps, appid=None):
 
     vdf_data = lower_dict(vdf.loads(content))
 
-    appinfo_path = steam_path / "appcache" / "appinfo.vdf"
+    # 'appinfo' can be either a directory with VDF files (v42)
+    # or a single binary file. Prefer the first as it's newer.
+    appinfo_path = steam_path / "appcache" / "appinfo"
+    if not appinfo_path.is_dir():
+        appinfo_path = steam_path / "appcache" / "appinfo.vdf"
+
     appinfo_sections = [
         section for section in iter_appinfo_sections(appinfo_path)
         if section["appinfo"]["appid"] in (STEAM_PLAY_MANIFESTS_APPID, appid)

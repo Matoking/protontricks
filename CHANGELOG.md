@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
  - Fix crash caused by appmanifest files with an empty or invalid `LastUpdated` value
+ - Fix crash when parsing appinfo V42 ('2A') in new Steam client version
 
 ## [1.15.0] - 2026-10-04
 ### Added
