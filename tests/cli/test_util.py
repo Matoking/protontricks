@@ -45,7 +45,7 @@ def test_cli_error_handler_uncaught_exception(
     cli(["--no-term", "-s", "Fake"], expect_returncode=1)
 
     assert gui_provider.args[0] == "yad"
-    assert gui_provider.args[1] == "--text-info"
+    assert gui_provider.args[3] == "--text-info"
 
     message = gui_provider.kwargs["input"]
 
@@ -95,7 +95,7 @@ def test_exit_with_error_no_log_file(gui_provider):
         exit_with_error("Test error", desktop=True)
 
     assert gui_provider.args[0] == "yad"
-    assert gui_provider.args[1] == "--text-info"
+    assert gui_provider.args[3] == "--text-info"
 
     message = gui_provider.kwargs["input"]
 
