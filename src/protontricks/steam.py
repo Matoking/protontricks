@@ -584,9 +584,14 @@ APPINFO_V41_STRUCT_SECTION = "<LLLLQ20sL20s"
 
 APPINFO_V42_STRUCT_HEADER = "<4x4xi4xi4x12x"
 
-# Records are 80 bytes long, but they have only one value we're interested in:
-# the VDF section length
-APPINFO_V42_STRUCT_SECTION = "<4x4xL68x"
+# The VDF manifests after the header are variable length and start with
+# a fixed 16-byte preamble and the variable-length section,
+# usually 64 bytes for a total of 80 bytes.
+#
+# We only care about the preamble, which contains the VDF segment
+# length and the remaining byte count in the manifest
+# (i.e. how much we should skip).
+APPINFO_V42_STRUCT_SECTION = "<4x4xLL"
 
 # For backwards cmopatibility, in case someone relied on the earlier imports
 APPINFO_V28_STRUCT_SECTION = APPINFO_V40_STRUCT_SECTION
@@ -745,11 +750,11 @@ def _iter_v42_appinfo_dir(path):
         # the segment length which is all we need.
         section_size = struct.calcsize(APPINFO_V42_STRUCT_SECTION)
         for _ in range(0, vdf_segment_count):
-            (app_segment_size,) = struct.unpack(
+            app_segment_size, remainder_length = struct.unpack(
                 APPINFO_V42_STRUCT_SECTION, data[i:i+section_size]
             )
             app_segment_sizes.append(app_segment_size)
-            i += section_size
+            i += remainder_length + section_size
 
         # Parse the key table
         key_table = []
