@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.15.2] - 2026-11-28
 ### Fixed
  - Fix crash due to Protontricks not properly parsing variable-length fields in appinfo V42 ('2A') files
 
@@ -370,7 +370,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
  - The last release of Protontricks maintained by [@Sirmentio](https://github.com/Sirmentio).
 
-[Unreleased]: https://github.com/Matoking/protontricks/compare/1.15.1...HEAD
+[Unreleased]: https://github.com/Matoking/protontricks/compare/1.15.2...HEAD
+[1.15.2]: https://github.com/Matoking/protontricks/compare/1.15.1...1.15.2
 [1.15.1]: https://github.com/Matoking/protontricks/compare/1.15.0...1.15.1
 [1.15.0]: https://github.com/Matoking/protontricks/compare/1.14.1...1.15.0
 [1.14.1]: https://github.com/Matoking/protontricks/compare/1.14.0...1.14.1
